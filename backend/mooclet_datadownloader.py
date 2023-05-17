@@ -30,6 +30,10 @@ mooclet_datadownloader_api = Blueprint('mooclet_datadownloader_api', __name__)
 
 @mooclet_datadownloader_api.route("/apis/analysis/data_downloader", methods=["POST"])
 def data_downloader():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     # GET DATA
     try:
         data = request.get_json()

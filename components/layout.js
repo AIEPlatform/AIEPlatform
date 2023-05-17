@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -63,10 +64,10 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft({ children }) {
+export default function Layout({ children }) {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
-
+    const [loggedin, sLoggedIn] = React.useState(false);
     const handleDrawerOpen = () => {
         setOpen(true);
     };
@@ -77,6 +78,16 @@ export default function PersistentDrawerLeft({ children }) {
 
     const links = ['My MOOClet', 'New MOOClet', 'Dataset Downloader', 'Dataset Workshop', 'Data Analysis'];
     const linkURLs = ['/MyMOOClet', '/NewMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis'];
+
+    useEffect(() => {
+        fetch('/apis/checkLoginedOrNot')
+        .then(res => res.json())
+        .then(data => {
+            if(data['status_code'] === 200) {
+                sLoggedIn(true);
+            }
+        })
+    }, []);
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -131,7 +142,7 @@ export default function PersistentDrawerLeft({ children }) {
             </Drawer>
             <Main open={open}>
                 <DrawerHeader />
-                <main>{children}</main>
+                {<main>{children}</main>}
             </Main>
         </Box>
     );

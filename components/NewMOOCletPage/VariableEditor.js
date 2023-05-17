@@ -18,8 +18,8 @@ function VariableEditor(props) {
         fetch(`/apis/availableVariables`)
             .then(res => res.json())
             .then(response => {
-                sExistingVariables(response.data)
-                console.log(response.data)
+                if(response['status_code'] === 200)
+                    sExistingVariables(response.data)
             })
             .catch(error => {
                 alert("something is wrong with loading existing variables. Please try again later.");

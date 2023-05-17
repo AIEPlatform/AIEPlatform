@@ -44,7 +44,8 @@ function MyMOOClet() {
         fetch('/apis/get_mooclets')
             .then(res => res.json())
             .then(data => {
-                sMOOClets(data['data']);
+                if(data['status_code'] === 200)
+                    sMOOClets(data['data']);
             })
     }, []);
 

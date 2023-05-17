@@ -1,15 +1,48 @@
-from flask import Flask
+from flask import Flask, session
+from flask_session import Session
+
 from flask_pymongo import PyMongo
 from mooclet import mooclet_apis
 from mooclet_datadownloader import mooclet_datadownloader_api
-
+from bson import json_util
+from dotenv import load_dotenv
+import os
+load_dotenv()
+MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 
 app = Flask(__name__)
+
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem" # Ideally we should use Redis or Memcached
+Session(app)
 
 # Currently still just use MOOClet APIs.
 
 app.register_blueprint(mooclet_apis)
 app.register_blueprint(mooclet_datadownloader_api)
+
+@app.route("/apis/signUpMOOCletToken/<accessToken>", methods=["GET"])
+def signUpMOOCletToken(accessToken):
+    if accessToken == MOOCLET_TOKEN:
+        session['access'] = True
+    else:
+        session['access'] = False
+    return json_util.dumps({
+        "status_code": 200, 
+        "message": "Try again in the dashboard."
+    }), 200
+
+
+@app.route("/apis/checkLoginedOrNot", methods=["GET"])
+def checkLoginedOrNot():
+    if 'access' in session and session['access'] is True:
+        return json_util.dumps({
+            "status_code": 200
+        }), 200
+    else:
+        return json_util.dumps({
+            "status_code": 403
+        }), 403
     
 
 if __name__ == '__main__':

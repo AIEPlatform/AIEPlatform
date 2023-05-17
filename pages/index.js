@@ -13,6 +13,7 @@ export default function Index() {
         <title>MOOClet Dashboard</title>
       </Head>
       <Typography>Welcome to MOOClet Dashboard!</Typography>
+      <Typography>The Login System is not complete yet. To register your access, please visit: /signUpMOOCletToken/:accessCode</Typography>
     </Layout>
   );
 }

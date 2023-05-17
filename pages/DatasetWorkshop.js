@@ -102,7 +102,8 @@ function DatasetWorkshop(props) {
         fetch('/apis/get_datasets')
             .then(res => res.json())
             .then(data => {
-                sDatasets(data['data']);
+                if(data['status_code'] === 200)
+                    sDatasets(data['data']);
             })
     }, []);
 

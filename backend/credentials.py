@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 load_dotenv()
+from flask import session
 MONGO_DB_CONNECTION_STRING = os.getenv('MONGO_DB_CONNECTION_STRING')
 PSQL_HOST = os.getenv('PSQL_HOST')
 PSQL_PASSWORD = os.getenv('PSQL_PASSWORD')
@@ -20,3 +21,10 @@ conn = psycopg2.connect(
         keepalives_interval=2,
         keepalives_count=2
 )
+
+
+def check_if_loggedin():
+    if 'access' in session and session['access'] is True:
+        return True
+    else:
+        return False

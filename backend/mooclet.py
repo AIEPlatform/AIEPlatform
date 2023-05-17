@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, session
 from bson import json_util
 from flask import request
 from io import BytesIO
@@ -12,7 +12,6 @@ import requests
 import json
 import math
 import numpy as np
-import jsonify
 from psycopg2.extensions import AsIs
 from credentials import *
 
@@ -565,6 +564,10 @@ def update_policy_parameter(mooclet_id, policy_parameter_id, parameters):
 
 @mooclet_apis.route("/apis/create_and_init_mooclet", methods=["POST"])
 def create_and_init_mooclet():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     data = request.get_json()
     mooclet_name = data['moocletName']
     create_mooclet(mooclet_name)
@@ -605,7 +608,10 @@ def create_and_init_mooclet():
 
 @mooclet_apis.route("/apis/get_mooclets", methods=["GET"])
 def get_mooclets():
-
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     headers = {
         'Authorization': MOOCLET_TOKEN, 
         'Content-Type': 'application/json'
@@ -634,6 +640,10 @@ def get_mooclets():
 
 @mooclet_apis.route("/apis/get_mooclet_information/<mooclet_id>", methods=["GET"])
 def get_mooclet_information(mooclet_id):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     cursor = conn.cursor()
     cursor.execute("select distinct(name) from (select * from engine_value where mooclet_id = %s) t1 JOIN engine_variable on (t1.variable_id = engine_variable.id);", [mooclet_id])
     variables = cursor.fetchall()
@@ -654,6 +664,10 @@ def get_mooclet_information(mooclet_id):
 
 @mooclet_apis.route("/apis/analysis/simple_summary_versions", methods=["POST"])
 def simple_summary_versions():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     data = request.get_json()
     mooclet_name = data['moocletName']
     variable_name = data['variableName'][0]
@@ -738,6 +752,10 @@ def simple_summary_versions():
 
 @mooclet_apis.route("/apis/get_datasets", methods=["GET"])
 def get_datasets():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     datasets = Dataset.find({},{"dataset":0})
     return json_util.dumps({
         "status_code": 200, 
@@ -749,6 +767,10 @@ def get_datasets():
 @mooclet_apis.route("/apis/data_downloader/<datasetDescription>", methods=["GET"])
 def data_downloader(datasetDescription):
     # GET DATA
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     try:
         print(datasetDescription)
         dataset = Dataset.find_one({"datasetDescription": datasetDescription})
@@ -772,6 +794,10 @@ def data_downloader(datasetDescription):
 
 @mooclet_apis.route("/apis/upload_local_dataset", methods=["POST"])
 def upload_local_dataset():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     # GET DATA
     csv_file = request.files['csvFile']
     df = pd.read_csv(csv_file)
@@ -800,6 +826,10 @@ def upload_local_dataset():
 @mooclet_apis.route("/apis/data_deletor/<datasetDescription>", methods=["DELETE"])
 def data_deletor(datasetDescription):
     # GET DATA
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     try:
         Dataset.delete_one({"datasetDescription": datasetDescription})
         datasets = Dataset.find({},{"dataset":0})
@@ -818,6 +848,10 @@ def data_deletor(datasetDescription):
 
 @mooclet_apis.route("/apis/availableVariables", methods=["GET"])
 def availableVariables():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     # GET DATA
     try:
         results = []
@@ -841,6 +875,10 @@ def availableVariables():
 
 @mooclet_apis.route("/apis/createNewVariable", methods=["POST"])
 def createNewVariable():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     try:
         data = request.get_json()
         new_variable_name = data['newVariableName']
@@ -866,6 +904,10 @@ def createNewVariable():
 
 @mooclet_apis.route("/apis/getMOOCletVersionsPolicies/<MOOCletName>", methods=["GET"])
 def getMOOCletVersionsPolicies(MOOCletName):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
     try:
         versions = get_versions(MOOCletName)
         policyparameters = get_policyparameters(MOOCletName)
@@ -884,7 +926,6 @@ def getMOOCletVersionsPolicies(MOOCletName):
 
 @mooclet_apis.route("/apis/hello_world", methods=["GET"])
 def hello_world():
-    print("hi")
     return json_util.dumps({
         "status_code": 200, 
         "message": "Hello World."
