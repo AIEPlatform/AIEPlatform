@@ -1,5 +1,5 @@
 {
-  "name": "MOOClet Dashboard",
+  "name": "MOOClet-Dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,9 +17,11 @@
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
     "next": "latest",
+    "plotly.js": "^2.23.1",
     "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-plotly.js": "^2.6.0",
     "react-select": "^5.7.3"
   },
   "devDependencies": {
