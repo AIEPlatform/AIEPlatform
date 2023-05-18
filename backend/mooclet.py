@@ -855,9 +855,10 @@ def availableVariables():
             "status_code": 403,
         }), 403
     # GET DATA
+    cursor = conn.cursor()
     try:
         results = []
-        cursor = conn.cursor()
+        
         cursor.execute("select name from engine_variable;")
         for row in cursor:
             results.append({"name": row[0]})
