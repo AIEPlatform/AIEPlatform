@@ -1,7 +1,12 @@
 import * as React from 'react';
-import {Container, Typography} from '@mui/material';
+import { Container, Typography } from '@mui/material';
 import Layout from '../components/layout';
 import Head from 'next/head';
+import SimpleLineChart from "../components/DataAnalysisPage/SimpleLineChart";
+import Table from "../components/DataAnalysisPage/Table";
+import { Grid } from '@mui/material';
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
+
 
 export default function DataAnalysis(props) {
 
@@ -9,22 +14,52 @@ export default function DataAnalysis(props) {
   return (
     <Layout>
       <Head><title>Data Analysis - MOOClet Dashboard</title></Head>
-    <Container>
-        <Typography paragraph>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua. Rhoncus dolor purus non
-          enim praesent elementum facilisis leo vel. Risus at ultrices mi tempus
-          imperdiet. Semper risus in hendrerit gravida rutrum quisque non tellus.
-          Convallis convallis tellus id interdum velit laoreet id donec ultrices.
-          Odio morbi quis commodo odio aenean sed adipiscing. Amet nisl suscipit
-          adipiscing bibendum est ultricies integer quis. Cursus euismod quis viverra
-          nibh cras. Metus vulputate eu scelerisque felis imperdiet proin fermentum
-          leo. Mauris commodo quis imperdiet massa tincidunt. Cras tincidunt lobortis
-          feugiat vivamus at augue. At augue eget arcu dictum varius duis at
-          consectetur lorem. Velit sed ullamcorper morbi tincidunt. Lorem donec massa
-          sapien faucibus et molestie ac.
-        </Typography>
-    </Container>
+      {/* <Container style={{ maxWidth: '50%', height: '270px' }}>
+        <SimpleLineChart width="200px" height="200px"></SimpleLineChart>
+      </Container> */}
+      <ResponsiveMasonry
+        columnsCountBreakPoints={{ 350: 1, 750: 2}}
+      >
+        <Masonry>
+          <div style={{ width: '100%', height: '300px' }}>
+            <SimpleLineChart style = {{position: "fixed", width: "100vw", height: "100vh"}}/>
+            {/* Content for the first div */}
+          </div>
+
+          <div style={{ maxWidth: '100%', maxHeight: '500px' }}>
+            <Table />
+            {/* Content for the first div */}
+          </div>
+          <div style={{ maxWidth: '100%', height: '400px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+
+          <div style={{ maxWidth: '100%', height: '700px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+          <div style={{ maxWidth: '100%', height: '100px' }}>
+            Test
+          </div>
+          <div style={{ maxWidth: '100%', height: '200px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+          <div style={{ maxWidth: '100%', height: '200px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+          <div style={{ maxWidth: '100%', height: '200px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+          <div style={{ maxWidth: '100%', height: '200px' }}>
+            <SimpleLineChart />
+            {/* Content for the first div */}
+          </div>
+        </Masonry>
+      </ResponsiveMasonry>
     </Layout>
   );
 }

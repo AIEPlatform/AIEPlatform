@@ -14,6 +14,7 @@ import math
 import numpy as np
 from psycopg2.extensions import AsIs
 from credentials import *
+from AnalysisScript.default_table import default_table
 
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
 db = client['mooclet']
@@ -923,6 +924,49 @@ def getMOOCletVersionsPolicies(MOOCletName):
             "message": e
         }), 500
     
+
+
+@mooclet_apis.route("/apis/analysis_default_table/get_contextual_variables", methods=["GET"])
+def get_contextual_variables():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    datasetDescription = request.args.get('datasetDescription')
+    if datasetDescription is None:
+        #TODO
+        pass
+
+    dataset = Dataset.find_one({"datasetDescription": datasetDescription})
+    df = pd.DataFrame(data = dataset['dataset'])
+
+    return json_util.dumps({
+        "status_code": 200,
+        "data": list(df.columns)
+    })
+
+
+@mooclet_apis.route("/apis/analysis_default_table", methods=["GET"])
+def analysis_default_table():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    datasetDescription = request.args.get('datasetDescription')
+    contextualVariable = request.args.get('contextualVariable')
+    if datasetDescription is None or contextualVariable is None:
+        #TODO
+        pass
+
+    dataset = Dataset.find_one({"datasetDescription": datasetDescription})
+    df = pd.DataFrame(data = dataset['dataset'])
+    result_table = default_table(df, contextualVariable)
+    
+    return json_util.dumps({
+        "status_code": 200,
+        "columns": list(result_table.columns), 
+        "rows": [tuple(r) for r in result_table.to_numpy()]
+    })
 
 @mooclet_apis.route("/apis/hello_world", methods=["GET"])
 def hello_world():

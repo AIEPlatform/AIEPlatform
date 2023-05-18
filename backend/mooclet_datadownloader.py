@@ -524,6 +524,7 @@ def data_downloader():
         
         cursor.close()
         df = pd.DataFrame(data = result, columns= [i[0] for i in cursor.description])
+        print(df['value'].unique())
 
         result = []
         available_contextual_names = []
