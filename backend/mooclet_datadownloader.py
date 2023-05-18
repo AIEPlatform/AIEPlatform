@@ -581,7 +581,8 @@ def data_downloader():
         # Create document dictionary
         document = {
             'datasetDescription': dataset_description,
-            'dataset': data_dict
+            'dataset': data_dict, 
+            'mooclet': mooclet_name
         }
         Dataset.insert_one(document)
         print("downloading...")

@@ -9,10 +9,9 @@ function ChooseMOOClet(props) {
     let sSelectedMOOClet = props.sSelectedMOOClet;
     let sVariables = props.sVariables;
     let handleChooseMOOClet = (option) => {
-        console.log(option)
         sSelectedMOOClet(MOOClets[option['value']]);
 
-        fetch(`/apis/get_mooclet_information/${option['value']}`)
+        fetch(`/apis/get_mooclet_information/${MOOClets[option['value']]['id']}`)
             .then(res => res.json())
             .then(response => {
                 sVariables(response['data']['variables'])

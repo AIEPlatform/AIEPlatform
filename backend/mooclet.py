@@ -618,6 +618,7 @@ def get_mooclets():
         'Content-Type': 'application/json'
     }
     # TODO: how many mooclet it returns?
+    print("hello world")
     response = requests.get(
         f'{MOOCLET_ENGINE_URL}/mooclet', headers=headers)
 
@@ -940,9 +941,11 @@ def get_contextual_variables():
     dataset = Dataset.find_one({"datasetDescription": datasetDescription})
     df = pd.DataFrame(data = dataset['dataset'])
 
+    context_columns = [c for c in list(df.columns) if c.startswith("CONTEXTUAL_")]
+
     return json_util.dumps({
         "status_code": 200,
-        "data": list(df.columns)
+        "data": context_columns
     })
 
 
@@ -961,7 +964,6 @@ def analysis_default_table():
     dataset = Dataset.find_one({"datasetDescription": datasetDescription})
     df = pd.DataFrame(data = dataset['dataset'])
     result_table = default_table(df, contextualVariable)
-    
     return json_util.dumps({
         "status_code": 200,
         "columns": list(result_table.columns), 

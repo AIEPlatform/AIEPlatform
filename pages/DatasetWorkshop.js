@@ -12,7 +12,7 @@ function ChooseDataset(props) {
     }
     const options = datasets.map((dataset, index) => ({
         value: index,
-        label: dataset.datasetDescription
+        label: `${dataset.datasetDescription} - ${dataset.mooclet}`
     }));
     return (
         <Select options={options} value={props.selectedDataset ? options[datasets.indexOf(props.selectedDataset)] : null}

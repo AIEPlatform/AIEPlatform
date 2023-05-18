@@ -15,7 +15,11 @@ def get_stats(group):
 
 
 def default_table(data, contextual_name):
-    output_table = data.groupby(['arm', contextual_name]).apply(get_stats)
+    output_table = None
+    if contextual_name == "no contextual":
+        output_table = data.groupby(['arm']).apply(get_stats)
+    else:
+        output_table = data.groupby(['arm', contextual_name]).apply(get_stats)
     # Output table description:
     # ...
     return output_table.reset_index()

@@ -20,12 +20,12 @@ function ChooseDataset(props) {
       sSelectedContextual(null);
       fetch(`/apis/analysis_default_table/get_contextual_variables?datasetDescription=${datasets[option['value']]['datasetDescription']}`).then(res => res.json()).then(data => {
           if (data['status_code'] === 200)
-          sContextuals(data['data']);
+          sContextuals(['no contextual', ...data['data']]);
       })
   }
   const options = datasets.map((dataset, index) => ({
       value: index,
-      label: dataset.datasetDescription
+      label: `${dataset.datasetDescription} - ${dataset.mooclet} - 20230518`
   }));
   return (
       <Select options={options} value={props.selectedDataset ? options[datasets.indexOf(props.selectedDataset)] : null}
