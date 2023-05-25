@@ -15,6 +15,7 @@ import numpy as np
 from psycopg2.extensions import AsIs
 from credentials import *
 from AnalysisScript.default_table import default_table
+import pickle
 
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
 db = client['mooclet']
@@ -776,7 +777,7 @@ def data_downloader(datasetDescription):
     try:
         print(datasetDescription)
         dataset = Dataset.find_one({"datasetDescription": datasetDescription})
-        df = pd.DataFrame(data = dataset['dataset'])
+        df = pickle.loads(dataset['dataset'])
         csv_string = df.to_csv(index=False)
 
         # Create a Flask response object with the CSV data
@@ -940,9 +941,9 @@ def get_contextual_variables():
         pass
 
     dataset = Dataset.find_one({"datasetDescription": datasetDescription})
-    df = pd.DataFrame(data = dataset['dataset'])
+    df = pickle.loads(dataset['dataset'])
 
-    context_columns = [c for c in list(df.columns) if c.startswith("CONTEXTUAL_")]
+    context_columns = [c for c in list(df.columns) if c.startswith("context_value_") and c.startswith("context_value_id_") is False]
 
     return json_util.dumps({
         "status_code": 200,
@@ -963,7 +964,7 @@ def analysis_default_table():
         pass
 
     dataset = Dataset.find_one({"datasetDescription": datasetDescription})
-    df = pd.DataFrame(data = dataset['dataset'])
+    df = pickle.loads(dataset['dataset'])
     result_table = default_table(df, contextualVariable)
     return json_util.dumps({
         "status_code": 200,
