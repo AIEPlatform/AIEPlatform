@@ -10,6 +10,8 @@ PSQL_USER = os.getenv('PSQL_USER')
 PSQL_PORT = os.getenv('PSQL_PORT')
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 MOOCLET_ENGINE_URL = os.getenv('MOOCLET_ENGINE_URL')
+DEBUG = os.getenv('DEBUG') == 'True'
+from pymongo import MongoClient
 
 import psycopg2
 conn = psycopg2.connect(
@@ -22,9 +24,19 @@ conn = psycopg2.connect(
         keepalives_count=2
 )
 
+client = MongoClient(MONGO_DB_CONNECTION_STRING)
+db = client['adexacc']
+Dataset = db['dataset']
+Deployment = db['deployment']
+Study = db['study']
+MOOClet = db['mooclet']
+MOOCletHistory = db['MOOCletHistory']
+VariableValue = db['variableValue']
+Interaction = db['interaction']
+
 
 def check_if_loggedin():
-    if 'access' in session and session['access'] is True:
+    if 'access' in session and session['access'] is True or DEBUG:
         return True
     else:
         return False
