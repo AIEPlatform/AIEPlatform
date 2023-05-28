@@ -17,10 +17,6 @@ from credentials import *
 from AnalysisScript.default_table import default_table
 import pickle
 
-client = MongoClient(MONGO_DB_CONNECTION_STRING)
-db = client['mooclet']
-Dataset = db['dataset']
-
 mooclet_apis = Blueprint('mooclet_apis', __name__)
 
 

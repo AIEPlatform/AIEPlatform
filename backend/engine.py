@@ -1,7 +1,7 @@
 from flask import Flask, session
 from flask_session import Session
-
 from flask_pymongo import PyMongo
+
 from mooclet import mooclet_apis
 from mooclet_datadownloader import mooclet_datadownloader_api
 from bson import json_util
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
-
+DEBUG = os.getenv('DEBUG') == 'True'
 app = Flask(__name__)
 
 app.config["SESSION_PERMANENT"] = False
@@ -35,7 +35,7 @@ def signUpMOOCletToken(accessToken):
 
 @app.route("/apis/checkLoginedOrNot", methods=["GET"])
 def checkLoginedOrNot():
-    if 'access' in session and session['access'] is True:
+    if 'access' in session and session['access'] is True or DEBUG:
         return json_util.dumps({
             "status_code": 200
         }), 200
