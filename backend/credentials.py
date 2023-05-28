@@ -10,7 +10,7 @@ PSQL_USER = os.getenv('PSQL_USER')
 PSQL_PORT = os.getenv('PSQL_PORT')
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 MOOCLET_ENGINE_URL = os.getenv('MOOCLET_ENGINE_URL')
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEV_MODE') == 'True'
 from pymongo import MongoClient
 
 import psycopg2

@@ -8,8 +8,8 @@ from bson import json_util
 from dotenv import load_dotenv
 import os
 load_dotenv()
+from credentials import *
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
-DEBUG = os.getenv('DEBUG') == 'True'
 app = Flask(__name__)
 
 app.config["SESSION_PERMANENT"] = False
