@@ -76,8 +76,8 @@ export default function Layout({ children }) {
         setOpen(false);
     };
 
-    const links = ['My MOOClet', 'New MOOClet', 'Dataset Downloader', 'Dataset Workshop', 'Data Analysis'];
-    const linkURLs = ['/MyMOOClet', '/NewMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis'];
+    const links = ['My MOOClet', 'New Deployment', 'New MOOClet', 'Dataset Downloader', 'Dataset Workshop', 'Data Analysis', 'Multiple Datasets Downloader (local only)'];
+    const linkURLs = ['/MyMOOClet', '/NewDeployment', '/NewMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis', '/MultipleDatasetDownloader'];
 
     useEffect(() => {
         fetch('/apis/checkLoginedOrNot')
@@ -104,7 +104,7 @@ export default function Layout({ children }) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap component="div">
-                        MOOClet
+                        AdExAcc Dashboard
                     </Typography>
                 </Toolbar>
             </AppBar>

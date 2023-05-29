@@ -873,6 +873,8 @@ def availableVariables():
             "message": e
         }), 500
 
+
+# FOR OLD MOOCLET
 @mooclet_apis.route("/apis/createNewVariable", methods=["POST"])
 def createNewVariable():
     if check_if_loggedin() is False:
@@ -974,3 +976,79 @@ def hello_world():
         "status_code": 200, 
         "message": "Hello World."
     }), 200
+
+
+
+
+
+
+# BELOW IS FOR THE NEW ADEXACC
+import datetime
+
+def get_username():
+    return "chenpan"
+
+@mooclet_apis.route("/apis/variables", methods=["GET"])
+def get_variables():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    try:
+        username = get_username()
+        variables = Variable.find({"owner": username})
+        return json_util.dumps({
+            "status_code": 200, 
+            "data": variables
+        }), 200
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+
+@mooclet_apis.route("/apis/variable", methods=["POST"])
+def create_variable():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    try:
+        username = get_username()
+
+        data = request.get_json()
+        new_variable_name = data['newVariableName']
+        new_variable_min = data['newVariableMin']
+        new_variable_max = data['newVariableMax']
+        new_variable_type = data['newVariableType']
+
+        # check if the variable name exists
+        doc = Variable.find_one({"name": new_variable_name})
+        if doc is not None:
+            return json_util.dumps({
+                "status_code": 400, 
+                "message": "The variable name exists."
+            }), 400
+        Variable.insert_one({
+            "name": new_variable_name,
+            "min": new_variable_min,
+            "max": new_variable_max,
+            "type": new_variable_type,
+            "owner": username, 
+            "collaborators": [], 
+            "created_at": datetime.datetime.now()
+        })
+
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "The variable is created successfully."
+        }), 200
+
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    

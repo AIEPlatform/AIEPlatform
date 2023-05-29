@@ -280,3 +280,53 @@ def data_downloader():
             "status_code": 400, 
             "message": e
         }), 500
+    
+
+
+
+
+
+
+
+
+
+
+import io
+import zipfile
+@mooclet_datadownloader_api.route("/apis/analysis/download_multiple_datasets", methods=["POST"])
+def download_multiple_datasets():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    try:
+        dfs = []
+        mooclet_names = request.get_json()['mooclet_names']
+        for mooclet_name in mooclet_names:
+            reward_variable_name = None
+            try:
+                reward_variable_name = find_reward_variable(mooclet_name)
+            except:
+                reward_variable_name = 'dummy reward name'
+            df = data_downloader_local_new(mooclet_name, reward_variable_name)
+            dfs.append(df)
+        # Create an in-memory buffer to write the zip file
+        zip_buffer = io.BytesIO()
+
+        # Create a zip file
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # Write each dataframe as a separate CSV file in the zip
+            for index, df in enumerate(dfs):
+                csv_buffer = io.StringIO()
+                df.to_csv(csv_buffer, index=False)
+                zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
+
+        # Reset the buffer's file pointer to the beginning
+        zip_buffer.seek(0)
+        return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 400, 
+            "message": e
+        }), 500

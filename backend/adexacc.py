@@ -137,7 +137,6 @@ import random
 def get_treatment(deployment, study, user):
     # TODO
     def inductive_get_treatment(mooclet, study):
-        print(mooclet)
         if mooclet['policy'] == 'choose_mooclet':
             keys = list(mooclet['parameters'].keys())
             chances = list(mooclet['parameters'].values())
@@ -146,7 +145,8 @@ def get_treatment(deployment, study, user):
             inductive_get_treatment(next_mooclet, study)
         else:
             # this is a leaf node. we should get a version from it!
-            print(mooclet['name'])
+            # print(mooclet['name'])
+            pass
     study = Study.find_one({'deployment': deployment, 'name': study})
     rootMOOClet = study['rootMOOClet']
     the_root_mooclet = MOOClet.find_one({'name': rootMOOClet, 'study': study['name']})
@@ -154,3 +154,104 @@ def get_treatment(deployment, study, user):
     return 'version1'
 
 get_treatment('test', 'test_study', 'student')
+
+
+mooclets = [
+    {
+        "id": 1,
+        "parent": 0,
+        "droppable": True,
+        "isOpen": True,
+        "text": "mooclet1",
+        "name": "mooclet1",
+        "policy": "choose_mooclet",
+        "parameters": {},
+        "weight": 100
+    },
+    {
+        "id": 2,
+        "parent": 1,
+        "droppable": True,
+        "isOpen": True,
+        "text": "contextual",
+        "name": "contextual",
+        "policy": "thompson_sampling_contextual",
+        "parameters": {
+            "batch_size": "1",
+            "variance_a": "1",
+            "variance_b": "2",
+            "include_intercept": "1",
+            "uniform_threshold": "0"
+        },
+        "weight": 100
+    },
+    {
+        "id": 3,
+        "parent": 1,
+        "droppable": True,
+        "isOpen": True,
+        "text": "unfirom",
+        "name": "unfirom",
+        "policy": "uniform_random",
+        "parameters": {},
+        "weight": 100
+    },
+    {
+        "id": 4,
+        "parent": 1,
+        "droppable": True,
+        "isOpen": True,
+        "text": "mooclet4",
+        "name": "mooclet4",
+        "policy": "uniform_random",
+        "parameters": {},
+        "weight": 100
+    }
+]
+def convert_front_list_mooclets_into_tree(mooclets):
+    # convert it into a tree.
+    #TODO: tell us at least one mooclet is needed.
+    nodes = {}
+
+    # Step 2: Add each node to the dictionary
+    for mooclet in mooclets:
+        node_id = mooclet["id"]
+        nodes[node_id] = mooclet
+
+    # Step 3: Assign children to their respective parent nodes
+    for mooclet in mooclets:
+        parent_id = mooclet["parent"]
+        if parent_id != 0:
+            parent_node = nodes[parent_id]
+            if "children" not in parent_node:
+                parent_node["children"] = []
+            parent_node["children"].append(mooclet)
+
+    # Step 4: Retrieve the root node(s) of the tree
+    root_nodes = None
+    for mooclet in mooclets:
+        if mooclet["parent"] == 0:
+            root_nodes = mooclet
+            break
+
+    #TODO: Need to manually make a root mooclet.
+
+    def clean_mooclet_object_helper(mooclet):
+        for key in ['id', 'parent', 'droppable', 'isOpen', 'text']:
+            mooclet.pop(key, None)
+        if 'children' not in mooclet:
+            mooclet['children'] = []
+        for child in mooclet['children']: 
+            clean_mooclet_object_helper(child)
+
+    clean_mooclet_object_helper(root_nodes)
+    
+
+
+
+    #TODO: Check if everythin is valid or not...
+
+    print(root_nodes)
+    return root_nodes
+
+convert_front_list_mooclets_into_tree(mooclets)

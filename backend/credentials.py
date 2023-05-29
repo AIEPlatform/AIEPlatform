@@ -33,6 +33,7 @@ MOOClet = db['mooclet']
 MOOCletHistory = db['MOOCletHistory']
 VariableValue = db['variableValue']
 Interaction = db['interaction']
+Variable = db['variable']
 
 
 def check_if_loggedin():

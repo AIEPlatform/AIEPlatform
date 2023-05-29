@@ -9,12 +9,10 @@ function VersionEditor(props) {
         let data = [...inputFields];
         data[index]['content'] = event.target.value;
         sInputFields(data);
-
-        console.log(inputFields)
     }
 
     const addFields = () => {
-        let newfield = {}
+        let newfield = {name: `version${inputFields.length + 1}`, content: ''}
         sInputFields([...inputFields, newfield])
     }
 
@@ -37,7 +35,8 @@ function VersionEditor(props) {
                         <TextField
                             required
                             label={`Version(${index + 1}) content`}
-                            onChange={(e) => handleFormChange(index, e)}
+                            onChange={(e) => {handleFormChange(index, e)}}
+                            value={input['content']}
                             rows="2"
                             multiline
                             fullWidth
