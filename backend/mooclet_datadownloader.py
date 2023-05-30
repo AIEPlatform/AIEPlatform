@@ -288,17 +288,16 @@ def data_downloader():
 
 
 
-
-
-
-import io
 import zipfile
+import io
+import smtplib
+from email.mime.text import MIMEText
 @mooclet_datadownloader_api.route("/apis/analysis/download_multiple_datasets", methods=["POST"])
 def download_multiple_datasets():
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
-        }), 403
+        }), 403 
     try:
         dfs = []
         mooclet_names = request.get_json()['mooclet_names']
@@ -310,23 +309,107 @@ def download_multiple_datasets():
                 reward_variable_name = 'dummy reward name'
             df = data_downloader_local_new(mooclet_name, reward_variable_name)
             dfs.append(df)
+
+        df_ids = []
+        for index, df in enumerate(dfs):
+            binary_data = pickle.dumps(df)
+            document = {
+                'dataset': binary_data,
+                'mooclet': mooclet_names[index]
+            }
+            response = MultipleDatasetPieces.insert_one(document)
+            df_ids.append(response.inserted_id)
+
+        
+        document = {
+            'pieces': df_ids
+        }
+
+        response = MultipleDatasets.insert_one(document)
+
+
+
+        subject = "Your MOOClets datasets are ready for download."
+        body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/download_multiple_datasets/{str(response.inserted_id)}'
+        sender = EMAIL_USERNAME
+        recipients = [request.get_json()['email']]
+        password = EMAIL_PASSWORD
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            smtp_server.login(sender, password)
+            smtp_server.sendmail(sender, recipients, msg.as_string())
+
         # Create an in-memory buffer to write the zip file
-        zip_buffer = io.BytesIO()
+        # zip_buffer = io.BytesIO()
 
-        # Create a zip file
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            # Write each dataframe as a separate CSV file in the zip
-            for index, df in enumerate(dfs):
-                csv_buffer = io.StringIO()
-                df.to_csv(csv_buffer, index=False)
-                zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
+        # # Create a zip file
+        # with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        #     # Write each dataframe as a separate CSV file in the zip
+        #     for index, df in enumerate(dfs):
+        #         csv_buffer = io.StringIO()
+        #         df.to_csv(csv_buffer, index=False)
+        #         zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
 
-        # Reset the buffer's file pointer to the beginning
-        zip_buffer.seek(0)
-        return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
+        # # Reset the buffer's file pointer to the beginning
+        # zip_buffer.seek(0)
+        # return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
+        return json_util.dumps({
+            "status_code": 200,
+        }), 200 
     except Exception as e:
-        print(e)
+        subject = "Sorry, downloading mooclet datasets failed. please try again."
+        body = f'Sorry, downloading mooclet datasets failed. please try again.'
+        sender = EMAIL_USERNAME
+        recipients = [request.get_json()['email']]
+        password = EMAIL_PASSWORD
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ', '.join(recipients)
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            smtp_server.login(sender, password)
+            smtp_server.sendmail(sender, recipients, msg.as_string())
         return json_util.dumps({
             "status_code": 400, 
             "message": e
         }), 500
+    
+
+from bson.objectid import ObjectId
+@mooclet_datadownloader_api.route("/apis/analysis/download_multiple_datasets/<id>", methods=["GET"])
+def download_multiple_datasets_get(id):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403 
+    
+    print(id)
+    multiple_datasets = MultipleDatasets.find_one({"_id": ObjectId(id)})
+
+    pieceIds = multiple_datasets['pieces']
+
+    mooclet_names = []
+    dfs = []
+
+    for pieceId in pieceIds:
+        piece = MultipleDatasetPieces.find_one({"_id": pieceId})
+        df = pickle.loads(piece['dataset'])
+        dfs.append(df)
+        mooclet_names.append(piece['mooclet'])
+        # Create an in-memory buffer to write the zip file
+    zip_buffer = io.BytesIO()
+
+    # Create a zip file
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Write each dataframe as a separate CSV file in the zip
+        for index, df in enumerate(dfs):
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
+
+    # Reset the buffer's file pointer to the beginning
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)

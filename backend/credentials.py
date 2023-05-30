@@ -11,6 +11,11 @@ PSQL_PORT = os.getenv('PSQL_PORT')
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 MOOCLET_ENGINE_URL = os.getenv('MOOCLET_ENGINE_URL')
 DEBUG = os.getenv('DEV_MODE') == 'True'
+
+EMAIL_USERNAME=os.getenv('EMAIL_USERNAME')
+EMAIL_PASSWORD=os.getenv('EMAIL_PASSWORD')
+ROOT_URL=os.getenv('ROOT_URL')
+
 from pymongo import MongoClient
 
 import psycopg2
@@ -34,6 +39,13 @@ MOOCletHistory = db['MOOCletHistory']
 VariableValue = db['variableValue']
 Interaction = db['interaction']
 Variable = db['variable']
+MultipleDatasets = db['multipleDatasets']
+MultipleDatasetPieces = db['multipleDatasetPieces']
+
+
+
+
+
 
 
 def check_if_loggedin():

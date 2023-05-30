@@ -8,6 +8,7 @@ function DatasetDownloader(props) {
 
     const [MOOClets, sMOOClets] = React.useState([]);
     const [selectedMOOClets, sSelectedMOOClets] = React.useState([]);
+    const [email, sEmail] = React.useState("")
     React.useEffect(() => {
         fetch('/apis/get_mooclets')
             .then(res => res.json())
@@ -32,7 +33,7 @@ function DatasetDownloader(props) {
     }
 
     const downloadDataSets = async () => {
-        const response = await fetch(`/apis/analysis/download_multiple_datasets`, {
+        const response = fetch(`/apis/analysis/download_multiple_datasets`, {
             method: "POST", // *GET, POST, PUT, DELETE, etc.
             mode: "cors", // no-cors, *cors, same-origin
             cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
@@ -45,54 +46,49 @@ function DatasetDownloader(props) {
             referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
             body: JSON.stringify({
                 mooclet_names: selectedMOOClets.map(selectedMOOClet => { return selectedMOOClet['name'] }),
+                email: email
             }), // body data type must match "Content-Type" header
-            timeout: 600000
         })
 
-        if (response.ok) {
-            const blob = await response.blob();
+        alert("Please wait a little bit and check your email address for the link to download the datasets. (it may be in your spam!)")
+    }
+    return (
+        // MOOClet selector.
+        <Layout>
+            <Head><title>Dataset Downloader - MOOClet Dashboard</title></Head>
+            <Container>
 
-            // Create a temporary anchor element
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'dataframes.zip'; // Set the desired file name
-
-            // Programmatically trigger a click event on the anchor element
-            link.click();
-
-            // Clean up: Revoke the object URL and remove the anchor element
-            URL.revokeObjectURL(link.href);
-            link.remove();
-        }
-}
-return (
-    // MOOClet selector.
-    <Layout>
-        <Head><title>Dataset Downloader - MOOClet Dashboard</title></Head>
-        <Container>
-            <Typography>Please select MOOClets from the following dropdown.</Typography>
-            {
-                MOOClets.length > 0 && <Select
-                    isMulti
-                    value={selectedMOOClets}
-                    name="mooclets"
-                    options={MOOClets}
-                    onChange={handleMOOCletPickUp}
-                    getOptionLabel={(option) => option.name}
-                    getOptionValue={(option) => option.id}
-                    className="basic-multi-select"
-                    classNamePrefix="select"
+            <TextField
+                    required
+                    id="email-input"
+                    label="Your email"
+                    value={email}
+                    onChange={(e) => sEmail(e.target.value)}
+                    width="100%"
                 />
-            }
+                <Typography>Please select MOOClets from the following dropdown.</Typography>
+                {
+                    MOOClets.length > 0 && <Select
+                        isMulti
+                        value={selectedMOOClets}
+                        name="mooclets"
+                        options={MOOClets}
+                        onChange={handleMOOCletPickUp}
+                        getOptionLabel={(option) => option.name}
+                        getOptionValue={(option) => option.id}
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                    />
+                }
 
-            <Box>
-                {selectedMOOClets.length > 0 && <button onClick={downloadDataSets} style={{ marginTop: '16px' }}>
-                    Download Datasets
-                </button>}
-            </Box>
-        </Container>
-    </Layout>
-);
+                <Box>
+                    {selectedMOOClets.length > 0 && <button onClick={downloadDataSets} style={{ marginTop: '16px' }}>
+                        Download Datasets
+                    </button>}
+                </Box>
+            </Container>
+        </Layout>
+    );
 }
 
 export default DatasetDownloader;
