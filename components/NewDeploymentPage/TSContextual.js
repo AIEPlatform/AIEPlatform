@@ -1,14 +1,10 @@
 import { React, useState } from 'react';
 import { Typography, Paper, TextField, Bo, Button, Box, MenuItem } from '@mui/material';
 import Select from 'react-select';
-const options = [
-    { value: 'ocean', label: 'Ocean' },
-    { value: 'blue', label: 'Blue' }
-]
-function TSConfigurable(props) {
+
+function TSContextual(props) {
     let versions = props.versions;
     let variables = props.variables;
-    let [regressionFormulaItems, sRegressionFormulaItems] = useState([]);
     let mooclets = props.mooclets;
     let sMooclets = props.sMooclets;
     let myId = props.myId;
@@ -16,14 +12,7 @@ function TSConfigurable(props) {
     let tree = [...mooclets];
     let mooclet = tree.find(mooclet => mooclet.id === myId);
 
-
-    if('regressionFormulaItems' in mooclet['parameters']) {
-        sRegressionFormulaItems(mooclet['parameters']['regressionFormulaItems'])
-    }
-
-    let regressionFormulaVariables = variables.concat(versions).map((variable, index) => {
-        return { value: variable['name'], label: variable['name'] }
-    })
+    let regressionFormulaVariables = variables.concat(versions);
 
     let handleWeightChange = (event, name) => {
         mooclet['parameters'][name] = event.target.value;
@@ -33,30 +22,34 @@ function TSConfigurable(props) {
 
     const addFields = () => {
         let newfield = []
-        sRegressionFormulaItems([...regressionFormulaItems, newfield])
+        let temp = [[]]
+        if(mooclet['parameters']['regressionFormulaItems']) {
+            temp = [...mooclet['parameters']['regressionFormulaItems'], newfield]
+        }
+        mooclet['parameters']['regressionFormulaItems'] = temp
+
+        
+        sMooclets(tree)
     }
 
     const removeFields = (index) => {
-        let data = [...regressionFormulaItems];
-        data.splice(index, 1)
-        sRegressionFormulaItems(data);
+        let data = [...mooclet['parameters']['regressionFormulaItems']];
+        data.splice(index, 1);
+        sMooclets(tree);
     }
 
     const handleRegressionFormulaItemPickup = (option, index) => {
-        const filteredArrayB = variables.concat(versions).filter((elementB) =>
-            option.some((elementA) => elementA.value === elementB.name)
-        );
+        // const filteredArrayB = variables.concat(versions).filter((elementB) =>
+        //     option.some((elementA) => elementA.value === elementB.name)
+        // );
 
-        if(!mooclet['parameters']['regressionFormulaItems']) {
-            mooclet['parameters']['regressionFormulaItems'] = [];
-        }
-        let data = [...mooclet['parameters']["regressionFormulaItems"]];
-        data[index] = filteredArrayB;
+
+        // let data = [...mooclet['parameters']["regressionFormulaItems"]];
+        // data[index] = filteredArrayB;
         // sRegressionFormulaItems(data);
-        mooclet['parameters']["regressionFormulaItems"] = data;
-
-        console.log(tree)
-        //sMooclets(tree)
+        mooclet['parameters']["regressionFormulaItems"][index] = option;
+        console.log(option)
+        sMooclets(tree)
     };
 
 
@@ -105,16 +98,18 @@ function TSConfigurable(props) {
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>
 
-                {regressionFormulaItems.map((regressionFormulaItem, index) => {
+                {mooclet['parameters']['regressionFormulaItems'] && mooclet['parameters']['regressionFormulaItems'].map((regressionFormulaItem, index) => {
                     return (
                         <Box key={index} margin="10px 0" style={{ position: "relative" }}>
                             <Select
                                 isMulti
                                 name="contextuals"
                                 options={regressionFormulaVariables}
+                                getOptionValue={(option) => option.name}
+                                getOptionLabel={(option) => option.name}
                                 className="basic-multi-select"
                                 classNamePrefix="select"
-                                value={regressionFormulaItem.map((interactingVariable) => { return { value: interactingVariable['name'], label: interactingVariable['name'] } })}
+                                value={regressionFormulaItem}
                                 onChange={(option) => {
                                     handleRegressionFormulaItemPickup(option, index);
                                 }}
@@ -135,4 +130,4 @@ function TSConfigurable(props) {
 }
 
 
-export default TSConfigurable;
+export default TSContextual;

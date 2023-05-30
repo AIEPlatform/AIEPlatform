@@ -6,14 +6,14 @@ function WeightedRandom(props) {
     let mooclets = props.mooclets;
     let myId = props.myId;
     let sMooclets = props.sMooclets;
+    let tree = [...mooclets];
+    let mooclet = tree.find(mooclet => mooclet.id === myId);
 
     let handleWeightChange =(index, event) => {
         let data = [...mooclets];
         let mooclet = data.find(mooclet => mooclet.id === myId);
         mooclet['parameters'][versions[index]['name']] = event.target.value;
         sMooclets(data);
-        console.log(mooclets)
-        
     }
     return (
         <Box>
@@ -25,6 +25,7 @@ function WeightedRandom(props) {
                         <Box key = {index} sx={{mt: 2}}>
                             <TextField
                                 required
+                                value={mooclet['parameters'][versions[index]['name']] ? mooclet['parameters'][versions[index]['name']] : ""}
                                 label={`Version(${index+1}) weight`}
                                 onChange={(e) => handleWeightChange(index, e)}
                                 type="number"

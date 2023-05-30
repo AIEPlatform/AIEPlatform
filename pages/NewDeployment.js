@@ -80,8 +80,6 @@ function NewDeployment() {
         sTreeData(data);
     }
 
-
-
     return (
         <Layout>
             <Head><title>New Deployment - MOOClet Dashboard</title></Head>
