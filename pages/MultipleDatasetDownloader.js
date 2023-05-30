@@ -46,6 +46,7 @@ function DatasetDownloader(props) {
             body: JSON.stringify({
                 mooclet_names: selectedMOOClets.map(selectedMOOClet => { return selectedMOOClet['name'] }),
             }), // body data type must match "Content-Type" header
+            timeout: 600000
         })
 
         if (response.ok) {

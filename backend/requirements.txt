@@ -7,4 +7,4 @@ pymongo==4.3.3
 python-dotenv==1.0.0
 Requests==2.30.0
 Flask-Session==0.5.0
-scipy=1.10.1
+scipy==1.10.1
