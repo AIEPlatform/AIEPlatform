@@ -25,9 +25,9 @@ const availablePolicies = [
 
 
 function MOOCletEditor(props) {
-    let mooclets = props.treeData;
+    let mooclets = props.mooclets;
     let myId = props.idToEdit;
-    let sMooclets = props.sTreeData;
+    let sMooclets = props.sMooclets;
     let [chosenPolicy, sChosenPolicy] = useState(null);
     let versions = props.versions;
     let variables = props.variables;

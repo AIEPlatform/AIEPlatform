@@ -39,16 +39,7 @@ function TSContextual(props) {
     }
 
     const handleRegressionFormulaItemPickup = (option, index) => {
-        // const filteredArrayB = variables.concat(versions).filter((elementB) =>
-        //     option.some((elementA) => elementA.value === elementB.name)
-        // );
-
-
-        // let data = [...mooclet['parameters']["regressionFormulaItems"]];
-        // data[index] = filteredArrayB;
-        // sRegressionFormulaItems(data);
         mooclet['parameters']["regressionFormulaItems"][index] = option;
-        console.log(option)
         sMooclets(tree)
     };
 

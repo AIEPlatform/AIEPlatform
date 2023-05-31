@@ -29,7 +29,7 @@ let initialData = [
         "isOpen": true,
         "text": "mooclet1",
         "name": "mooclet1",
-        "policy": "choose_mooclet",
+        "policy": "uniform_random",
         "parameters": {}, 
         "weight": 100
     }
@@ -45,8 +45,8 @@ function NewDeployment() {
     const [versions, sVersions] = useState([
     ])
 
-    const [treeData, sTreeData] = useState(initialData);
-    const handleDrop = (newTreeData) => sTreeData(newTreeData);
+    const [mooclets, sMooclets] = useState(initialData);
+    const handleDrop = (newTreeData) => sMooclets(newTreeData);
 
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
 
@@ -54,18 +54,18 @@ function NewDeployment() {
 
     const addMOOClet = () => {
         let newMOOClet = {
-            "id": treeData.length + 1,
+            "id": mooclets.length + 1,
             "parent": 1,
             "droppable": true,
             "isOpen": true,
             "isOpen": true,
-            "text": `mooclet${treeData.length + 1}`,
-            "name": `mooclet${treeData.length + 1}`,
+            "text": `mooclet${mooclets.length + 1}`,
+            "name": `mooclet${mooclets.length + 1}`,
             "policy": "uniform_random",
             "parameters": {}, 
             "weight": 100
         }
-        sTreeData([...treeData, newMOOClet]);
+        sMooclets([...mooclets, newMOOClet]);
     };
 
     const handleMOOCletModalClose = () => {
@@ -74,10 +74,42 @@ function NewDeployment() {
     };
 
     const handleMOOCletWeightChange = (event, myId) => {
-        let data = [...treeData];
+        let data = [...mooclets];
         let mooclet = data.find(mooclet => mooclet.id === myId);
         mooclet['weight'] = event.target.value;
-        sTreeData(data);
+        sMooclets(data);
+    }
+
+    const handleMOOCletRemove = (myId) => {
+        let Tree = [...mooclets];
+        function removeNode(id) {
+            // Find the index of the node with the given id
+            const nodeIndex = Tree.findIndex((node) => node.id === id);
+          
+            if (nodeIndex !== -1) {
+              const node = Tree[nodeIndex];
+              const childIds = getChildIds(node.id);
+          
+              // Remove the node from the Tree
+              Tree.splice(nodeIndex, 1);
+          
+              // Remove the descendants recursively
+              childIds.forEach(removeNode);
+            }
+          }
+          
+          function getChildIds(parentId) {
+            return Tree
+              .filter((node) => node.parent === parentId)
+              .map((node) => node.id);
+          }
+
+        removeNode(myId);
+
+        sMooclets(Tree);
+
+        console.log(Tree)
+
     }
 
     return (
@@ -91,7 +123,7 @@ function NewDeployment() {
                             aria-controls="panel1a-content"
                             id="panel1a-header"
                         >
-                            <Typography>Variables</Typography>
+                            <Typography variant='h6'>Variables</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <VariableEditor selectedVariables={variables} sSelectedVariables={sVariables} />
@@ -104,7 +136,7 @@ function NewDeployment() {
                             aria-controls="panel1a-content"
                             id="panel1a-header"
                         >
-                            <Typography>Versions</Typography>
+                            <Typography variant='h6'>Versions</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <VersionEditor inputFields={versions} sInputFields={sVersions} />
@@ -116,13 +148,13 @@ function NewDeployment() {
                             aria-controls="mooclet-graph"
                             id="mooclet-graph"
                         >
-                            <Typography>MOOClet Graph</Typography>
+                            <Typography variant='h6'>MOOClet Graph</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <DndProvider backend={MultiBackend} options={getBackendOptions()}>
                                 {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
                                 <Tree
-                                    tree={treeData}
+                                    tree={mooclets}
                                     rootId={0}
                                     onDrop={handleDrop}
                                     initialOpen={true}
@@ -136,16 +168,19 @@ function NewDeployment() {
                                                 sIdToEdit(node.id);
                                                 sMoocletModalOpen(true);
                                             }}> Modify</button>
-                                            Weights: <input type="number" value={node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)}></input>
+                                            Weights: <input type="number" value={node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)}></input> <button onClick={() => {
+                                                handleMOOCletRemove(node.id)
+                                            }}> Remove</button>
                                         </div>
                                     )}
                                 />
                             </DndProvider>
-                            <button onClick={addMOOClet}>add new mooclet</button>
+                            <Button sx = {{m: 2}} variant="contained" onClick={addMOOClet}>Add a new MOOClet</Button>
+
+                            <Button sx = {{m: 2}} variant="contained" fullWidth>Create this study.</Button>
                         </AccordionDetails>
                     </Accordion>
                 </Box>
-                <Button>Create this study.</Button>
             </Container>
 
             <Modal
@@ -155,7 +190,7 @@ function NewDeployment() {
                 
             >
                 <Box style={{background: "white"}}>
-                    <MOOCletEditor treeData={treeData} sTreeData={sTreeData} idToEdit={idToEdit} variables = {variables} versions={versions}></MOOCletEditor>
+                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables = {variables} versions={versions}></MOOCletEditor>
                 </Box>
             </Modal>
         </Layout>
