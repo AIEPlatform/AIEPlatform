@@ -53,121 +53,123 @@ class ThompsonSamplingContextual(Policy):
 
     def choose_arm(self, user, where, other_information):
         current_time = datetime.datetime.now()
+        lucky_version = self.get_consistent_assignment(user, where)
         try:
-            all_versions = self.study['versions']
-            all_versions = {d['name']: d['content'] for d in all_versions}
-            parameters = self.parameters
-            # Store regression equation string
-            regression_formula = parameters['regression_formula']
-            # Include intercept can be true or false
+            if lucky_version is None:
+                all_versions = self.study['versions']
+                all_versions = {d['name']: d['content'] for d in all_versions}
+                parameters = self.parameters
+                # Store regression equation string
+                regression_formula = parameters['regression_formula']
+                # Include intercept can be true or false
 
-            include_intercept = parameters['include_intercept']
-            # Store contextual variables
-            
-            contextual_vars = parameters['contextual_variables']
-            
-            # Get the contextual variables for the learner (most recent ones), or auto init ones.
-
-            column_name = 'variableName'
-            array_list = contextual_vars  # Example array list
-
-            print(array_list)
-
-            # Aggregation pipeline to filter and keep the last occurrence
-            pipeline = [
-                {
-                    '$match': {
-                        column_name: {'$in': array_list}
-                    }
-                },
-                {
-                    '$sort': {
-                        column_name: 1,  # Sort ascending by column A
-                        '_id': -1       # Sort descending by _id (to get the last occurrence)
-                    }
-                },
-                {
-                    '$group': {
-                        '_id': '$' + column_name,
-                        'last_document': {'$first': '$$ROOT'}
-                    }
-                },
-                {
-                    '$replaceRoot': {'newRoot': '$last_document'}
-                }
-            ]
-
-            # Execute the aggregation pipeline
-            result = list(VariableValue.aggregate(pipeline))
-
-            # Iterate over the array list
-            for value in array_list:
-                has_document = False
-
-                # Check if a document exists for the current value
-                for document in result:
-                    if document[column_name] == value:
-                        has_document = True
-                        break
-
-                # Insert a document into the other collection if no document exists
-                if not has_document:
-                    document_to_insert = {
-                        "variableName": value, 
-                        'value': 1,   # TODO: impute based on a better rule.
-                        'user': user,
-                        'where': 'auto init', 
-                        'timestamp': current_time
-                    }
-                    VariableValue.insert_one(document_to_insert)
+                include_intercept = parameters['include_intercept']
+                # Store contextual variables
                 
-            contextual_values = list(VariableValue.aggregate(pipeline))
-
-            print(contextual_values)
-
-            contextual_vars_dict = {}
-            contextual_vars_id_dict = {}
-
-            for contextual_value in contextual_values:
-                contextual_vars_dict[contextual_value['variableName']] = contextual_value['value']
-                contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
-            
-            current_enrolled = len(list(Interaction.find({"moocletId": self._id}))) #TODO: is it number of learners or number of observations????
-
-            if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
-                version_to_show = random.choice(list(all_versions.values()))
-                # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                return version_to_show
-            
-            mean = parameters['coef_mean']
-            cov = parameters['coef_cov']
-            variance_a = float(parameters['variance_a'])
-            variance_b = float(parameters['variance_b'])
-            
-            precesion_draw = invgamma.rvs(variance_a, 0, variance_b, size=1)
-            coef_draw = np.random.multivariate_normal(mean, precesion_draw * cov)
-            
-            # Compute outcome for each action
-            best_outcome = -np.inf
-            best_action = None
-
-            for version in all_versions:
-                independent_vars = {}
-                for contextual_var in contextual_vars_dict:
-                    independent_vars[contextual_var] = contextual_vars_dict[contextual_var]
-                for version2 in all_versions:
-                    if version2 == version:
-                        independent_vars[version2] = 1
-                    else:
-                        independent_vars[version2] = 0
-                outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
-                # print(version)
-                # print(independent_vars)
-                if best_action is None or outcome > best_outcome:
-                    best_outcome = outcome
-                    best_action = version
+                contextual_vars = parameters['contextual_variables']
                 
-            print(f'best action: {best_action}')
+                # Get the contextual variables for the learner (most recent ones), or auto init ones.
+
+                column_name = 'variableName'
+                array_list = contextual_vars  # Example array list
+
+                print(array_list)
+
+                # Aggregation pipeline to filter and keep the last occurrence
+                pipeline = [
+                    {
+                        '$match': {
+                            column_name: {'$in': array_list}
+                        }
+                    },
+                    {
+                        '$sort': {
+                            column_name: 1,  # Sort ascending by column A
+                            '_id': -1       # Sort descending by _id (to get the last occurrence)
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$' + column_name,
+                            'last_document': {'$first': '$$ROOT'}
+                        }
+                    },
+                    {
+                        '$replaceRoot': {'newRoot': '$last_document'}
+                    }
+                ]
+
+                # Execute the aggregation pipeline
+                result = list(VariableValue.aggregate(pipeline))
+
+                # Iterate over the array list
+                for value in array_list:
+                    has_document = False
+
+                    # Check if a document exists for the current value
+                    for document in result:
+                        if document[column_name] == value:
+                            has_document = True
+                            break
+
+                    # Insert a document into the other collection if no document exists
+                    if not has_document:
+                        document_to_insert = {
+                            "variableName": value, 
+                            'value': 1,   # TODO: impute based on a better rule.
+                            'user': user,
+                            'where': 'auto init', 
+                            'timestamp': current_time
+                        }
+                        VariableValue.insert_one(document_to_insert)
+                    
+                contextual_values = list(VariableValue.aggregate(pipeline))
+
+                print(contextual_values)
+
+                contextual_vars_dict = {}
+                contextual_vars_id_dict = {}
+
+                for contextual_value in contextual_values:
+                    contextual_vars_dict[contextual_value['variableName']] = contextual_value['value']
+                    contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+                
+                current_enrolled = len(list(Interaction.find({"moocletId": self._id}))) #TODO: is it number of learners or number of observations????
+
+                if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
+                    version_to_show = random.choice(list(all_versions.values()))
+                    # TODO: Make a new interaction. Remember to indicate this is from uniform.
+                    return version_to_show
+                
+                mean = parameters['coef_mean']
+                cov = parameters['coef_cov']
+                variance_a = float(parameters['variance_a'])
+                variance_b = float(parameters['variance_b'])
+                
+                precesion_draw = invgamma.rvs(variance_a, 0, variance_b, size=1)
+                coef_draw = np.random.multivariate_normal(mean, precesion_draw * cov)
+                
+                # Compute outcome for each action
+                best_outcome = -np.inf
+                best_action = None
+
+                for version in all_versions:
+                    independent_vars = {}
+                    for contextual_var in contextual_vars_dict:
+                        independent_vars[contextual_var] = contextual_vars_dict[contextual_var]
+                    for version2 in all_versions:
+                        if version2 == version:
+                            independent_vars[version2] = 1
+                        else:
+                            independent_vars[version2] = 0
+                    outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
+                    # print(version)
+                    # print(independent_vars)
+                    if best_action is None or outcome > best_outcome:
+                        best_outcome = outcome
+                        best_action = version
+
+                lucky_version = next(version for version in self.study['versions'] if version['name'] == best_action)
 
             # Interaction
             # – learner
@@ -182,7 +184,7 @@ class ThompsonSamplingContextual(Policy):
 
             new_interaction = {
                 "user": user,
-                "treatment": best_action,
+                "treatment": lucky_version,
                 "outcome": None,
                 "where": where,
                 "moocletId": self._id,
@@ -206,7 +208,7 @@ class ThompsonSamplingContextual(Policy):
         else:
             print("Giving reward...")
             Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
-            
+
             # Note that TS Contextual won't update inmediately.
             # We should do a check if to see if should update the parameters or not.
             if True:

@@ -246,5 +246,5 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-#print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-get_reward(deployment_name = 'test', study_name = 'test2 study', user = 'student', value = 1)
+print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+#get_reward(deployment_name = 'test', study_name = 'test2 study', user = 'student', value = 1)

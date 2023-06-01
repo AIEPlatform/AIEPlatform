@@ -6,7 +6,9 @@ class UniformRandom(Policy):
 	def choose_arm(self, user, where, other_information):
 		# TODO: Check if consistent assignment!
 		try:
-			lucky_version = random.choice(self.study['versions'])
+			lucky_version = self.get_consistent_assignment(user, where)
+			if lucky_version is None:
+				lucky_version = random.choice(self.study['versions'])
 			new_interaction = {
 				"user": user,
 				"treatment": lucky_version,
