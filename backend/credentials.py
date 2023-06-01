@@ -44,6 +44,7 @@ Interaction = db['interaction']
 Variable = db['variable']
 MultipleDatasets = db['multipleDatasets']
 MultipleDatasetPieces = db['multipleDatasetPieces']
+Lock = db['lock']
 
 
 
