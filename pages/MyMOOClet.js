@@ -54,7 +54,7 @@ function MyMOOClet() {
 
     return (
         <Layout>
-            <Head><title>My MOOClets - MOOClet Dashboard</title></Head>
+            <Head><title>My MOOClets - DataArrow</title></Head>
             <Container>
                 {MOOClets === null && <Typography>Loading MOOClets...</Typography>}
                 {MOOClets !== null && MOOClets.length == 0 && <Typography>You don't have any MOOClet yet.</Typography>}

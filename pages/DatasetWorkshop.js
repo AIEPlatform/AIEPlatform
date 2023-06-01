@@ -110,7 +110,7 @@ function DatasetWorkshop(props) {
     return (
         // MOOClet selector.
         <Layout>
-            <Head><title>Dataset Workshop - MOOClet Dashboard</title></Head>
+            <Head><title>Dataset Workshop - DataArrow</title></Head>
             <Container>
                 {datasets.length > 0 && <Typography>Please select a Dataset from the following dropdown.</Typography>}
                 {datasets.length === 0 && <Typography>Please download a dataset at Dataset Downloader first.</Typography>}

@@ -120,7 +120,7 @@ function DatasetDownloader(props) {
     return (
         // MOOClet selector.
         <Layout>
-            <Head><title>Dataset Downloader - MOOClet Dashboard</title></Head>
+            <Head><title>Dataset Downloader - DataArrow</title></Head>
             <Container>
                 <Typography>Please select a MOOClet from the following dropdown.</Typography>
                 {MOOClets.length > 0 && <Paper

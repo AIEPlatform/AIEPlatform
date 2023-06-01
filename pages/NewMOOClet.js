@@ -68,7 +68,7 @@ function NewMOOClet() {
 
     return (
         <Layout>
-            <Head><title>New MOOClet - MOOClet Dashboard</title></Head>
+            <Head><title>New MOOClet - DataArrow</title></Head>
             <Container>
                 <Typography variant="p">Please following the steps to create your desgined MOOClet (adaptive experiments)</Typography>
                 <Box>

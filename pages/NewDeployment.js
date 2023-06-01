@@ -136,7 +136,7 @@ function NewDeployment() {
 
     return (
         <Layout>
-            <Head><title>New Deployment - MOOClet Dashboard</title></Head>
+            <Head><title>New Deployment - DataArrow</title></Head>
             <Container>
                 <Box>
                     <TextField sx = {{mb: 3}} label="Study name" value = {studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>

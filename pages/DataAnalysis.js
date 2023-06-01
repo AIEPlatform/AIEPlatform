@@ -13,7 +13,7 @@ export default function DataAnalysis(props) {
 
   return (
     <Layout>
-      <Head><title>Data Analysis - MOOClet Dashboard</title></Head>
+      <Head><title>Data Analysis - DataArrow</title></Head>
       {/* <Container style={{ maxWidth: '50%', height: '270px' }}>
         <SimpleLineChart width="200px" height="200px"></SimpleLineChart>
       </Container> */}

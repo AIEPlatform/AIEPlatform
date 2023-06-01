@@ -10,10 +10,10 @@ export default function Index() {
   return (
     <Layout>
       <Head>
-        <title>MOOClet Dashboard</title>
+        <title>DataArrow</title>
       </Head>
-      <Typography>Welcome to MOOClet Dashboard!</Typography>
-      <Typography>The Login System is not complete yet. To register your access, please visit: /signUpMOOCletToken/:accessCode</Typography>
+      <Typography>Welcome to Dashboard!</Typography>
+      <Typography>To register your access, please visit: /signUpMOOCletToken/:accessCode</Typography>
     </Layout>
   );
 }

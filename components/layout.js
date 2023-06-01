@@ -104,7 +104,7 @@ export default function Layout({ children }) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap component="div">
-                        AdExAcc Dashboard
+                        Dashboard
                     </Typography>
                 </Toolbar>
             </AppBar>
