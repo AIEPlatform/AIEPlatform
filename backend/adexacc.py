@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 import random
 from helpers import *
 from Policies.UniformRandom import UniformRandom
+from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 adexacc_apis = Blueprint('adexacc_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
