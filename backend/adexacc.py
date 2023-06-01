@@ -7,6 +7,7 @@ import random
 from helpers import *
 from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
+import datetime
 adexacc_apis = Blueprint('adexacc_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
@@ -15,55 +16,6 @@ def create_mooclet_instance(the_mooclet):
         return cls(**the_mooclet)
     else:
         raise ValueError(f"Invalid policy name")
-
-mooclets = {
-    'name': 'top_level_choose_mooclet', 
-    'policy': 'choose_mooclet',
-    'parameters': {
-        'uniform_random1': 0.4,
-        'ts_contextual1': 0.6
-    },
-    'children': [
-        {
-            'name': 'uniform_random1', 
-            'policy': 'UniformRandom',
-            'parameters': {
-            }, 
-            'children': []
-        },
-        {
-            'name': 'ts_contextual1', 
-            'policy': 'ts_contextual',
-            'parameters': {
-                'contextual_variables': ['contextual1', 'contextual2'], 
-                'regression_formula': 'reward ~ contextual1 * version1 + contextual2 * version1 + version1 + contextual1 + contextual2', 
-                'include_intercept': 1,
-                'uniform_threshold': 0, 
-                'precesion_draw': 1, 
-                'coef_cov': [[10, 0, 0, 0], [0, 10, 0, 0], [0, 0, 10, 0], [0, 0, 0, 10]], 
-                'coef_mean': [0, 0, 0, 0],
-                "batch_size": 2, 
-                "variance_a": 2, 
-                "variance_b": 1
-            }, 
-            'children': []
-        }
-    ]
-}
-
-versions = {
-    'version1': 'this is version 1',
-    'version2': 'this is version 2'
-}
-
-variables = [
-    {
-        'name': 'contextual1', 'type': 'integer', 'minValue': 0, 'maxValue': 1
-    }, 
-    {
-        'name': 'contextual2', 'type': 'integer', 'minValue': 0, 'maxValue': 1
-    }
-]
 
 def convert_front_list_mooclets_into_tree(mooclets):
     # Create a study for a deployment.
@@ -241,10 +193,87 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
     # Get MOOClet!
     the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
     mooclet = create_mooclet_instance(the_mooclet)
-    mooclet.get_reward(user, value, where, other_information)
+    return mooclet.get_reward(user, value, where, other_information)
 
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
 # print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+#print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
 #get_reward(deployment_name = 'test', study_name = 'test2 study', user = 'student', value = 1)
+
+
+
+# https://security.stackexchange.com/questions/154462/why-cant-we-use-post-method-for-all-requests
+# GET : does not change anything server side, multiple GET with same parameters should get same response - typically get an account value
+# POST : can make changes server side, multiple POST with same parameters can lead to different results and responses - typically add an amount to an account
+# PUT : can make changes server side, multiple PUT with same parameters should lead to same result and response - typically set an account value
+
+@adexacc_apis.route("/apis/get_treatment", methods=["POST"])
+def get_treatment():
+    # read request body.
+    try:
+        deployment = request.json['deployment'] if 'deployment' in request.json else None
+        study = request.json['study'] if 'study' in request.json else None
+        user = request.json['user'] if 'user' in request.json else None
+        where = request.json['where'] if 'where' in request.json else None
+        other_information = request.json['other_information'] if 'other_information' in request.json else None
+
+        if deployment is None or study is None or user is None:
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "Please make sure deployment, study, user are provided."
+            }), 400    
+        else:        
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "This is your treatment.", 
+                "treatment": assign_treatment(deployment, study, user, where, other_information)
+        }), 200
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500,
+            "message": "Server is down please try again later."
+        }), 500
+    
+
+
+@adexacc_apis.route("/apis/give_reward", methods=["POST"])
+def give_reward():
+    # read request body.
+    try:
+        deployment = request.json['deployment'] if 'deployment' in request.json else None
+        study = request.json['study'] if 'study' in request.json else None
+        user = request.json['user'] if 'user' in request.json else None
+        where = request.json['where'] if 'where' in request.json else None
+        other_information = request.json['other_information'] if 'other_information' in request.json else None
+        value = request.json['value'] if 'value' in request.json else None
+
+        if deployment is None or study is None or user is None or value is None:
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "Please make sure deployment, study, user are provided."
+            }), 400    
+        else:        
+            result = get_reward(deployment, study, user, value, where, other_information)
+            if result != 200:
+                return json_util.dumps({
+                    "status_code": 400,
+                    "message": "No reward is saved."
+                }), 400
+            else:
+                return json_util.dumps({
+                    "status_code": 200,
+                    "message": "Reward is saved."
+                }), 200
+
+
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500,
+            "message": "Server is down please try again later."
+        }), 500
+
+
+

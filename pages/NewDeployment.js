@@ -38,7 +38,7 @@ let initialData = [
 function NewDeployment() {
     const [deploymentName, sDeploymentName] = useState("test2");
     const [deploymentDescription, sDeploymentDescription] = useState("test2 description");
-    const [studyName, sStudyName] = useState("test2 study");
+    const [studyName, sStudyName] = useState("");
     const [variables, sVariables] = useState([
     ])
 
@@ -139,6 +139,7 @@ function NewDeployment() {
             <Head><title>New Deployment - MOOClet Dashboard</title></Head>
             <Container>
                 <Box>
+                    <TextField sx = {{mb: 3}} label="Study name" value = {studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>
                     <Accordion>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}

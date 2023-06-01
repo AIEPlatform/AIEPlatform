@@ -10,7 +10,7 @@ function TSConfigurable(props) {
 
     let handleWeightChange = (event, name) => {
         let data = [...policies];
-        data[policyIndex]['parameter'][name] = event.target.value;
+        data[policyIndex]['parameter'][name] = handleWeightChange(event.target.value);
         sPolicies(data);
         console.log(data)
     }

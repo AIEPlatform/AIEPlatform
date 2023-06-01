@@ -10,7 +10,7 @@ function WeightedRandom(props) {
     let handleWeightChange =(index, event) => {
         console.log(policies[policyIndex])
         let data = [...policies];
-        data[policyIndex]['parameter'][`version-${index+1}`] = parseFloat(event.target.value);
+        data[policyIndex]['parameter'][`version-${index+1}`] = Number(event.target.value);
         sPolicies(data);
     }
     return (

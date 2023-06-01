@@ -12,7 +12,7 @@ function WeightedRandom(props) {
     let handleWeightChange =(index, event) => {
         let data = [...mooclets];
         let mooclet = data.find(mooclet => mooclet.id === myId);
-        mooclet['parameters'][versions[index]['name']] = event.target.value;
+        mooclet['parameters'][versions[index]['name']] = Number(event.target.value);
         sMooclets(data);
     }
     return (

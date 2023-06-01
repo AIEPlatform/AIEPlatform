@@ -21,7 +21,6 @@ class ThompsonSamplingContextual(Policy):
     # map dict to version
     # get the current user's context as a dict
     # store normal-inverse-gamma parameters
-    # TODO: Check if consistent assignment!
     # 
     # 
     def __init__(self, **mooclet_obj_from_db):
@@ -205,7 +204,7 @@ class ThompsonSamplingContextual(Policy):
             }
 
             Interaction.insert_one(new_interaction)
-            return best_action
+            return lucky_version
         except Exception as e:
             print(e)
             return None
