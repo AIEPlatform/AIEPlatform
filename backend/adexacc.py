@@ -268,7 +268,7 @@ def create_study():
 import random
 from helpers import *
 from policy import *
-def get_treatment(deployment_name, study_name, user):
+def assign_treatment(deployment_name, study_name, user):
     # TODO
     def inductive_get_treatment(mooclet, versions, variables, user):
         if len(mooclet['children']) > 0:
@@ -296,4 +296,10 @@ def get_treatment(deployment_name, study_name, user):
     root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
     return inductive_get_treatment(root_mooclet, versions, variables, user)
 
-get_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student')
+
+def get_reward(deployment_name, study_name, user, value):
+    # Get MOOClet!
+    study = Study.find_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
+    mooclets_of_this_study = MOOClet.find({'studyId': study['_id']})
+
+assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student')
