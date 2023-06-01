@@ -68,7 +68,6 @@ class ThompsonSamplingContextual(Policy):
                     break
                 time.sleep(0.5)  # Adjust the sleep interval if needed
         try:
-
             # because it's TS Contextual, 
             if lucky_version is None:
                 all_versions = self.study['versions']
@@ -92,7 +91,8 @@ class ThompsonSamplingContextual(Policy):
                 pipeline = [
                     {
                         '$match': {
-                            column_name: {'$in': array_list}
+                            column_name: {'$in': array_list}, 
+                            'user': user
                         }
                     },
                     {
@@ -148,14 +148,28 @@ class ThompsonSamplingContextual(Policy):
                 current_enrolled = len(list(Interaction.find({"moocletId": self._id}))) #TODO: is it number of learners or number of observations????
 
                 if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
-                    version_to_show = random.choice(list(all_versions.values()))
-                    # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    return version_to_show
+                    lucky_version = random.choice(self.study['versions'])
+                    # # TODO: Make a new interaction. Remember to indicate this is from uniform.
+                    new_interaction = {
+                        "user": user,
+                        "treatment": lucky_version,
+                        "outcome": None,
+                        "where": where,
+                        "moocletId": self._id,
+                        "timestamp": datetime.datetime.now(),
+                        "otherInformation": other_information, 
+                        "contextuals": contextual_vars_dict,
+                        "contextualIds": contextual_vars_id_dict, 
+                        'isUniform': True
+                    }
+                    Interaction.insert_one(new_interaction)
+                    return lucky_version
                 
                 mean = parameters['coef_mean']
                 cov = parameters['coef_cov']
                 variance_a = float(parameters['variance_a'])
                 variance_b = float(parameters['variance_b'])
+                
                 
                 precesion_draw = invgamma.rvs(variance_a, 0, variance_b, size=1)
                 coef_draw = np.random.multivariate_normal(mean, precesion_draw * cov)
@@ -163,6 +177,7 @@ class ThompsonSamplingContextual(Policy):
                 # Compute outcome for each action
                 best_outcome = -np.inf
                 best_action = None
+
 
                 for version in all_versions:
                     independent_vars = {}
@@ -228,11 +243,11 @@ class ThompsonSamplingContextual(Policy):
         # TODO: consider if we can make sure that everything after this interaction are not used??
         earliest_unused = Interaction.find_one(
                         {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
-                         )
-        
+                         ) # TODO: Shall we exclute those from uniform (I don't think so?)
         if earliest_unused is None:
             return False
         if (current_time - earliest_unused['rewardTimestamp']).total_seconds() / 60 > float(self.updatedPerMinute):
+            print("Update Model")
             return True
         else:
             return False
@@ -281,12 +296,13 @@ class ThompsonSamplingContextual(Policy):
 
                     # construct design matrix.
                     design_matrix = np.zeros((len(interactions_for_posterior), len(vars_list)))
+                    print(interactions_for_posterior)
                     for i in range(len(interactions_for_posterior)):
                         interaction = interactions_for_posterior[i]
                         contextual_vars_dict = interaction['contextuals']
                         independent_vars = contextual_vars_dict
                         for version in all_versions:
-                            if version == interaction['treatment']:
+                            if version == interaction['treatment']['name']:
                                 independent_vars[version] = 1
                             else:
                                 independent_vars[version] = 0
@@ -312,6 +328,8 @@ class ThompsonSamplingContextual(Policy):
 
                             design_matrix[i][j] = value
                     posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
+
+                    print(design_matrix)
 
                     # Update parameters in DB.
                     MOOClet.update_one({"_id": self._id}, {"$set": {

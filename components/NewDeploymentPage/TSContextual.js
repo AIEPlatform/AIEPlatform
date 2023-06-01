@@ -248,8 +248,8 @@ function TSContextual(props) {
                 required
                 label={`Posterior Update Frequency (in min)`}
                 type="number"
-                value={mooclet['parameters']['posterior_update_frequency'] || ''}
-                onChange={(e) => handleWeightChange(e, 'posterior_update_frequency')}
+                value={mooclet['parameters']['updatedPerMinute'] || ''}
+                onChange={(e) => handleWeightChange(e, 'updatedPerMinute')}
             />
             <Box>
                 <FormControlLabel

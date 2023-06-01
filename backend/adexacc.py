@@ -179,7 +179,6 @@ def get_mooclet_for_user(deployment_name, study_name, user):
         the_mooclet = MOOClet.find_one({'_id': the_interaction['moocletId']})
         return (the_mooclet)
     else:
-        print(study['rootMOOClet'])
         root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
         return inductive_get_mooclet(root_mooclet, user)
 
@@ -194,12 +193,6 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
     the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
     mooclet = create_mooclet_instance(the_mooclet)
     return mooclet.get_reward(user, value, where, other_information)
-
-# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-#print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
-#get_reward(deployment_name = 'test', study_name = 'test2 study', user = 'student', value = 1)
 
 
 

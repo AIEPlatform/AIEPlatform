@@ -6,7 +6,7 @@ import TSContextual from './TSContextual';
 
 const availablePolicies = [
     {
-        value: 'uniform_random1',
+        value: 'UniformRandom',
         label: 'Uniform Sample',
     },
     {
