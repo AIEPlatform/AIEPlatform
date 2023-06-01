@@ -4,6 +4,7 @@ from flask_pymongo import PyMongo
 
 from mooclet import mooclet_apis
 from mooclet_datadownloader import mooclet_datadownloader_api
+from adexacc import adexacc_apis
 from bson import json_util
 from dotenv import load_dotenv
 import os
@@ -20,7 +21,7 @@ Session(app)
 
 app.register_blueprint(mooclet_apis)
 app.register_blueprint(mooclet_datadownloader_api)
-
+app.register_blueprint(adexacc_apis)
 @app.route("/apis/signUpMOOCletToken/<accessToken>", methods=["GET"])
 def signUpMOOCletToken(accessToken):
     if accessToken == MOOCLET_TOKEN:

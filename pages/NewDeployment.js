@@ -112,6 +112,28 @@ function NewDeployment() {
 
     }
 
+
+    const handleCreateStudy = () => {
+        fetch('/apis/study', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "studyName": studyName,
+                "description": deploymentDescription,
+                "mooclets": mooclets, 
+                "variables": variables,
+                "versions": versions
+        })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            alert("Study created successfully!");
+        })
+    };
+
     return (
         <Layout>
             <Head><title>New Deployment - MOOClet Dashboard</title></Head>
@@ -176,10 +198,9 @@ function NewDeployment() {
                                 />
                             </DndProvider>
                             <Button sx = {{m: 2}} variant="contained" onClick={addMOOClet}>Add a new MOOClet</Button>
-
-                            <Button sx = {{m: 2}} variant="contained" fullWidth>Create this study.</Button>
                         </AccordionDetails>
                     </Accordion>
+                    <Button sx = {{mt: 2}} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>
                 </Box>
             </Container>
 

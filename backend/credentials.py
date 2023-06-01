@@ -17,6 +17,8 @@ EMAIL_PASSWORD=os.getenv('EMAIL_PASSWORD')
 ROOT_URL=os.getenv('ROOT_URL')
 
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+
 
 import psycopg2
 conn = psycopg2.connect(
@@ -29,6 +31,7 @@ conn = psycopg2.connect(
         keepalives_count=2
 )
 
+print(MONGO_DB_CONNECTION_STRING)
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
 db = client['adexacc']
 Dataset = db['dataset']

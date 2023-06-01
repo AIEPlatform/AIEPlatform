@@ -1,16 +1,10 @@
 from flask import Blueprint, session
 from bson import json_util
 from flask import request
-from io import BytesIO
 from flask import send_file, make_response
-import psycopg2
 import pandas as pd
-import pymongo
-from pymongo import MongoClient
-import os
 import requests
 import json
-import math
 import numpy as np
 from psycopg2.extensions import AsIs
 from credentials import *

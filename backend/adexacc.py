@@ -132,83 +132,15 @@ variables = [
 create_deployment('test', 'this is a test', ['chenpan'])
 add_study('test_study', versions, variables, mooclets, 'test', 'chenpan')
 
+from flask import Blueprint, session
+from flask import request
+from bson import json_util
+from bson.objectid import ObjectId
+adexacc_apis = Blueprint('adexacc_apis', __name__)
 
-import random
-def get_treatment(deployment, study, user):
-    # TODO
-    def inductive_get_treatment(mooclet, study):
-        if mooclet['policy'] == 'choose_mooclet':
-            keys = list(mooclet['parameters'].keys())
-            chances = list(mooclet['parameters'].values())
-            random_key = random.choices(keys, chances)[0]
-            next_mooclet = MOOClet.find_one({'name': random_key, 'study': study})
-            inductive_get_treatment(next_mooclet, study)
-        else:
-            # this is a leaf node. we should get a version from it!
-            # print(mooclet['name'])
-            pass
-    study = Study.find_one({'deployment': deployment, 'name': study})
-    rootMOOClet = study['rootMOOClet']
-    the_root_mooclet = MOOClet.find_one({'name': rootMOOClet, 'study': study['name']})
-    inductive_get_treatment(the_root_mooclet, study['name'])
-    return 'version1'
-
-get_treatment('test', 'test_study', 'student')
-
-
-mooclets = [
-    {
-        "id": 1,
-        "parent": 0,
-        "droppable": True,
-        "isOpen": True,
-        "text": "mooclet1",
-        "name": "mooclet1",
-        "policy": "choose_mooclet",
-        "parameters": {},
-        "weight": 100
-    },
-    {
-        "id": 2,
-        "parent": 1,
-        "droppable": True,
-        "isOpen": True,
-        "text": "contextual",
-        "name": "contextual",
-        "policy": "thompson_sampling_contextual",
-        "parameters": {
-            "batch_size": "1",
-            "variance_a": "1",
-            "variance_b": "2",
-            "include_intercept": "1",
-            "uniform_threshold": "0"
-        },
-        "weight": 100
-    },
-    {
-        "id": 3,
-        "parent": 1,
-        "droppable": True,
-        "isOpen": True,
-        "text": "unfirom",
-        "name": "unfirom",
-        "policy": "uniform_random",
-        "parameters": {},
-        "weight": 100
-    },
-    {
-        "id": 4,
-        "parent": 1,
-        "droppable": True,
-        "isOpen": True,
-        "text": "mooclet4",
-        "name": "mooclet4",
-        "policy": "uniform_random",
-        "parameters": {},
-        "weight": 100
-    }
-]
 def convert_front_list_mooclets_into_tree(mooclets):
+    # Create a study for a deployment.
+
     # convert it into a tree.
     #TODO: tell us at least one mooclet is needed.
     nodes = {}
@@ -251,7 +183,117 @@ def convert_front_list_mooclets_into_tree(mooclets):
 
     #TODO: Check if everythin is valid or not...
 
-    print(root_nodes)
     return root_nodes
 
-convert_front_list_mooclets_into_tree(mooclets)
+
+def create_mooclet(mooclet, study_id, session):
+    my_children = []
+    for child in mooclet['children']:
+        child_mooclet_id = create_mooclet(child, study_id, session)
+        my_children.append(child_mooclet_id)
+
+    doc = MOOClet.find_one({'name': mooclet['name'], 'studyId': study_id})
+    if doc is not None: return doc['_id'] #TODO: check if it's correct.
+
+    new_mooclet = {
+        "name": mooclet['name'],
+        "policy": mooclet['policy'],
+        "parameters": mooclet['parameters'],
+        "studyId": study_id,
+        "isConsistent": False, 
+        "updatedPerMinute": False, 
+        "autoZeroPerMinute": False, 
+        "children": my_children, 
+        "weight": mooclet['weight']
+    }
+
+    response = MOOClet.insert_one(new_mooclet, session=session)
+    return response.inserted_id
+
+@adexacc_apis.route("/apis/study", methods=["POST"])
+def create_study():
+    if check_if_loggedin() == False:
+        return json_util.dumps({
+            "status_code": 401
+        }), 401
+    
+    study_name = request.json['studyName']
+    mooclets = request.json['mooclets']
+    versions = request.json['versions']
+    variables = request.json['variables']
+
+    deploymentId = '6470c7ae9c36a48e2d5149cb'
+
+    mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
+
+    doc = Study.find_one({'deploymentId': deploymentId, 'name': study_name})
+    if doc is not None: 
+        return json_util.dumps({
+            "status_code": 404, 
+            "message": "Study name already exists."
+        }), 404
+
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+            the_study = {
+                'name': study_name,
+                'deploymentId': ObjectId(deploymentId),
+                'versions': versions,
+                'variables': variables
+            }
+            # Induction to create mooclet
+            response = Study.insert_one(the_study, session=session)
+            study_id = response.inserted_id
+            root_mooclet = create_mooclet(mooclet_trees, study_id, session=session)
+            Study.update_one({'_id': study_id}, {'$set': {'rootMOOClet': root_mooclet}}, session=session)
+            session.commit_transaction()
+        except Exception as e:
+            print(e)
+            session.abort_transaction()
+            print("Transaction rolled back!")
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Not successful, please try again later."
+            }), 500
+
+    return json_util.dumps({
+        "status_code": 200, 
+        "message": "success"
+    }), 200
+
+
+
+
+import random
+from helpers import *
+from policy import *
+def get_treatment(deployment_name, study_name, user):
+    # TODO
+    def inductive_get_treatment(mooclet, versions, variables, user):
+        if len(mooclet['children']) > 0:
+            children = MOOClet.find({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
+
+            # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
+            next_mooclet_id = random_by_weight(list(children))['_id']
+            next_mooclet = MOOClet.find_one({'_id': next_mooclet_id})
+            print(next_mooclet)
+            inductive_get_treatment(next_mooclet, versions, variables, study)
+        else:
+            # this is a leaf node. we should get a version from it!
+            # print(mooclet['name'])
+            
+            #TODO: Write into modular.
+            if mooclet['policy'] == "uniform_random":
+                version_to_show = uniform_random_assign_treatment(mooclet, versions, variables, user)
+                return version_to_show
+            pass
+
+    deployment = Deployment.find_one({'name': deployment_name})
+    study = Study.find_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
+    versions = study['versions']
+    variables = study['variables']
+    root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
+    return inductive_get_treatment(root_mooclet, versions, variables, user)
+
+get_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student')

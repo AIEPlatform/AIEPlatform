@@ -23,12 +23,12 @@ function TSContextual(props) {
     const addFields = () => {
         let newfield = []
         let temp = [[]]
-        if(mooclet['parameters']['regressionFormulaItems']) {
+        if (mooclet['parameters']['regressionFormulaItems']) {
             temp = [...mooclet['parameters']['regressionFormulaItems'], newfield]
         }
         mooclet['parameters']['regressionFormulaItems'] = temp
 
-        
+
         sMooclets(tree)
     }
 
@@ -86,6 +86,15 @@ function TSContextual(props) {
                 value={mooclet['parameters']['uniform_threshold'] || ''}
                 onChange={(e) => handleWeightChange(e, 'uniform_threshold')}
             />
+
+            <TextField
+                sx={{ m: 1 }}
+                required
+                label={`Posterior Update Frequency (in min)`}
+                type="number"
+                value={mooclet['parameters']['posterior_update_frequency'] || ''}
+                onChange={(e) => handleWeightChange(e, 'posterior_update_frequency')}
+            />
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>
 
@@ -109,7 +118,7 @@ function TSContextual(props) {
                                     menu: provided => ({ ...provided, zIndex: 9999 })
                                 }}
                             />
-                            <Button onClick={() => removeFields(index)} variant="contained" sx = {{m: 1}} color="error">Remove</Button>
+                            <Button onClick={() => removeFields(index)} variant="contained" sx={{ m: 1 }} color="error">Remove</Button>
                         </Box>
                     )
                 })}

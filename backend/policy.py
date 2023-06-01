@@ -376,3 +376,34 @@ def thompson_sampling_contextual_get_reward(study, mooclet, learner, deployment,
 
 #thompson_sampling_contextual_assign_treatment("test_study", "ts_contextual1", "chenpan", "test")
 thompson_sampling_contextual_get_reward("test_study", "ts_contextual1", "chenpan", "test", 1, "test page")
+
+
+
+
+def uniform_random_assign_treatment(mooclet, versions, variables, user):
+	# TODO: Check if consistent assignment!
+	try:
+		lucky_version = random.choice(versions)
+		new_interaction = {
+			"user": user,
+			"treatment": lucky_version,
+			"outcome": None,
+			"where": "test page",
+			"moocletId": mooclet['_id'],
+			"timestamp": datetime.datetime.now(),
+			"otherInformation": {}
+		}
+
+		Interaction.insert_one(new_interaction)
+		return lucky_version
+	except:
+		return None
+
+def uniform_random_get_reward(mooclet, versions, variables, user, value):
+	time = datetime.datetime.now()
+	last_interaction = Interaction.find_one({"user": user, "moocletId": mooclet['_id'], "where": "test page"}, sort=[("timestamp", -1)])
+	if last_interaction is None or last_interaction['outcome'] is not None:
+		return False
+	else:
+		Interaction.update_one({"_id": last_interaction['_id']}, {"$set": {"outcome": value, "rewardTimestamp": datetime.datetime.now()}})
+		return True
