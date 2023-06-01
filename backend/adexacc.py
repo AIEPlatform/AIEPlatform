@@ -1,84 +1,19 @@
 from credentials import *
-
-def check_duplicated(collection, field, value):
-    # TODO
-    doc = list(collection.find({field: value}))
-    if len(doc) > 0: return True
-    return False
-
-def is_collaborator(deployment_id, user_id):
-    # TODO
-    return True
-
-def is_auth():
-    # TODO
-    return True
-
-# Create a deployment with no study
-def create_deployment(name, description, collaborators):
-    if not is_auth(): return False
-    if len(collaborators) == 0: return False
-    if check_duplicated(Deployment, 'name', name): return False
-    new_deployment = {
-        'name': name,
-        'description': description,
-        'collaborators': collaborators
-    }
-    Deployment.insert_one(new_deployment)
-
-# Add study to a deployment
-def add_study(name, versions, variables, mooclets, deployment, user):
-    # TODO: check if study exists
-    if not is_auth(): return False
-    if not is_collaborator(deployment, user): return False
-    doc = Study.find_one({'deployment': deployment, 'name': name})
-    if doc is not None: return False
-
-    # TODO: USE TRANSACTION TO MAKE SURE WE CAN UNDO IF ANYTHING GOES WRONG!!!!!
-    def create_mooclet(mooclet):
-        for child in mooclet['children']:
-            create_mooclet(child)
-
-        doc = MOOClet.find_one({'name': mooclet['name'], 'study': name})
-        if doc is not None: return doc['name']
-
-        new_mooclet = {
-            "name": mooclet['name'],
-            "policy": mooclet['policy'],
-            "parameters": mooclet['parameters'],
-            "study": name,
-            "isConsistent": False, 
-            "updatedPerMinute": False, 
-            "autoZeroPerMinute": False
-        }
-
-        MOOClet.insert_one(new_mooclet)
-        return mooclet['name']
-    
-    root_mooclet = create_mooclet(mooclets)
-    the_study = {
-        'name': name,
-        'deployment': deployment,
-        'versions': versions,
-        'variables': variables,
-        'rootMOOClet': root_mooclet
-    }
-    # Induction to create mooclet
-    Study.insert_one(the_study)
-
-
-    # versions: {
-    # 'version1': text, 
-    # 'version2': text
-    # }
-
-    # variables: [
-    # {name, type, minValue, maxValue}, ...
-    # ]
-
-    # mooclets: 
-    # {name, parameters, children = []}
-    # 
+from flask import Blueprint, session
+from flask import request
+from bson import json_util
+from bson.objectid import ObjectId
+import random
+from helpers import *
+from Policies.UniformRandom import UniformRandom
+adexacc_apis = Blueprint('adexacc_apis', __name__)
+		
+def create_mooclet_instance(the_mooclet):
+    cls = globals().get(the_mooclet['policy'])
+    if cls:
+        return cls(**the_mooclet)
+    else:
+        raise ValueError(f"Invalid policy name")
 
 mooclets = {
     'name': 'top_level_choose_mooclet', 
@@ -90,7 +25,7 @@ mooclets = {
     'children': [
         {
             'name': 'uniform_random1', 
-            'policy': 'uniform_random',
+            'policy': 'UniformRandom',
             'parameters': {
             }, 
             'children': []
@@ -128,15 +63,6 @@ variables = [
         'name': 'contextual2', 'type': 'integer', 'minValue': 0, 'maxValue': 1
     }
 ]
-
-create_deployment('test', 'this is a test', ['chenpan'])
-add_study('test_study', versions, variables, mooclets, 'test', 'chenpan')
-
-from flask import Blueprint, session
-from flask import request
-from bson import json_util
-from bson.objectid import ObjectId
-adexacc_apis = Blueprint('adexacc_apis', __name__)
 
 def convert_front_list_mooclets_into_tree(mooclets):
     # Create a study for a deployment.
@@ -187,6 +113,7 @@ def convert_front_list_mooclets_into_tree(mooclets):
 
 
 def create_mooclet(mooclet, study_id, session):
+    time = datetime.datetime.utcnow()
     my_children = []
     for child in mooclet['children']:
         child_mooclet_id = create_mooclet(child, study_id, session)
@@ -204,7 +131,8 @@ def create_mooclet(mooclet, study_id, session):
         "updatedPerMinute": False, 
         "autoZeroPerMinute": False, 
         "children": my_children, 
-        "weight": mooclet['weight']
+        "weight": float(mooclet['weight']), 
+        "createdAt": time
     }
 
     response = MOOClet.insert_one(new_mooclet, session=session)
@@ -226,12 +154,12 @@ def create_study():
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
-    doc = Study.find_one({'deploymentId': deploymentId, 'name': study_name})
+    doc = Study.find_one({'deploymentId': ObjectId(deploymentId), 'name': study_name})
     if doc is not None: 
         return json_util.dumps({
-            "status_code": 404, 
+            "status_code": 400, 
             "message": "Study name already exists."
-        }), 404
+        }), 400
 
     with client.start_session() as session:
         try:
@@ -263,43 +191,59 @@ def create_study():
     }), 200
 
 
+def inductive_get_mooclet(mooclet, user):
+    if len(mooclet['children']) > 0:
+        children = MOOClet.find({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
 
+        # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
+        next_mooclet_id = random_by_weight(list(children))['_id']
+        next_mooclet = MOOClet.find_one({'_id': next_mooclet_id})
+        return inductive_get_mooclet(next_mooclet, user)
+    else:
+        # this is a leaf node. return it!
+        return mooclet
 
-import random
-from helpers import *
-from policy import *
-def assign_treatment(deployment_name, study_name, user):
-    # TODO
-    def inductive_get_treatment(mooclet, versions, variables, user):
-        if len(mooclet['children']) > 0:
-            children = MOOClet.find({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
-
-            # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
-            next_mooclet_id = random_by_weight(list(children))['_id']
-            next_mooclet = MOOClet.find_one({'_id': next_mooclet_id})
-            print(next_mooclet)
-            inductive_get_treatment(next_mooclet, versions, variables, study)
-        else:
-            # this is a leaf node. we should get a version from it!
-            # print(mooclet['name'])
-            
-            #TODO: Write into modular.
-            if mooclet['policy'] == "uniform_random":
-                version_to_show = uniform_random_assign_treatment(mooclet, versions, variables, user)
-                return version_to_show
-            pass
-
+def get_mooclet_for_user(deployment_name, study_name, user):
+    # Note that, a deployment + study_name + user uniquely identify a mooclet.
+    # OR, this function will decide one and return.
     deployment = Deployment.find_one({'name': deployment_name})
     study = Study.find_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
-    versions = study['versions']
-    variables = study['variables']
-    root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
-    return inductive_get_treatment(root_mooclet, versions, variables, user)
+    # TODO: Check if re-assignment is needed. For example, the mooclet is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
 
+    mooclets = list(MOOClet.find(
+        {
+            'studyId': study['_id'],
+        }, {'_id': 1}
+    ))
 
-def get_reward(deployment_name, study_name, user, value):
+    # Find the latest interaction.
+    the_interaction = Interaction.find_one({
+        'user': user,
+        'moocletId': {'$in': [mooclet['_id'] for mooclet in mooclets]}
+    })
+
+    if the_interaction is not None:
+        the_mooclet = MOOClet.find_one({'_id': the_interaction['moocletId']})
+        return (the_mooclet)
+    else:
+        print(study['rootMOOClet'])
+        root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
+        return inductive_get_mooclet(root_mooclet, user)
+
+def assign_treatment(deployment_name, study_name, user, where = None, other_information = None):
+    the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
+    mooclet = create_mooclet_instance(the_mooclet)
+    version_to_show = mooclet.choose_arm(user, where, other_information)
+    return version_to_show
+
+def get_reward(deployment_name, study_name, user, value, where = None, other_information = None):
     # Get MOOClet!
-    study = Study.find_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
-    mooclets_of_this_study = MOOClet.find({'studyId': study['_id']})
+    the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
+    mooclet = create_mooclet_instance(the_mooclet)
+    mooclet.get_reward(user, value, where, other_information)
 
-assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student')
+# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+# print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+#print(assign_treatment(deployment_name = 'test', study_name = 'test2 study', user = 'student'))
+get_reward(deployment_name = 'test', study_name = 'test2 study', user = 'student', value = 1)

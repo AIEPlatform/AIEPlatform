@@ -1,4 +1,5 @@
 import random
+from credentials import *
 def random_by_weight(options):
     # options is a list of dict {..., weight: weight}
     total_weight = sum(element["weight"] for element in options)

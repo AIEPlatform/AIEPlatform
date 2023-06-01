@@ -29,7 +29,7 @@ let initialData = [
         "isOpen": true,
         "text": "mooclet1",
         "name": "mooclet1",
-        "policy": "uniform_random",
+        "policy": "UniformRandom",
         "parameters": {}, 
         "weight": 100
     }
@@ -61,7 +61,7 @@ function NewDeployment() {
             "isOpen": true,
             "text": `mooclet${mooclets.length + 1}`,
             "name": `mooclet${mooclets.length + 1}`,
-            "policy": "uniform_random",
+            "policy": "UniformRandom",
             "parameters": {}, 
             "weight": 100
         }

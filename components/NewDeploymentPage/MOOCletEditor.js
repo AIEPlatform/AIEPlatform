@@ -6,19 +6,19 @@ import TSContextual from './TSContextual';
 
 const availablePolicies = [
     {
-        value: 'uniform_random',
+        value: 'uniform_random1',
         label: 'Uniform Sample',
     },
     {
-        value: 'weighted_random',
+        value: 'WeightedRandom',
         label: 'Weighted Random',
     },
     {
-        value: 'ts_configurable',
+        value: 'TSConfigurable',
         label: 'TS Configurable',
     },
     {
-        value: 'thompson_sampling_contextual',
+        value: 'ThompsonSamplingContextual',
         label: 'Thompson Sampling Contextual'
     }
 ];
@@ -84,10 +84,10 @@ function MOOCletEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy Parameters</Typography>
-                {mooclet.policy === 'uniform_random' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
-                {mooclet.policy === 'weighted_random' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId}></WeightedRandom>}
+                {mooclet.policy === 'UniformRandom' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
+                {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId}></WeightedRandom>}
                 {/* {mooclet.policy === 'ts_configurable' && <TSConfigurable versions={versions} policyIndex={policyIndex} policies={policies} sPolicies={sPolicies} variables={variables}></TSConfigurable>} */}
-                {mooclet.policy === 'thompson_sampling_contextual' && <TSContextual versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId} variables={variables}></TSContextual>}
+                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId} variables={variables}></TSContextual>}
             </Box>
         </Paper>
     );
