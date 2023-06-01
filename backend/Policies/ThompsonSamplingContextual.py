@@ -64,7 +64,7 @@ class ThompsonSamplingContextual(Policy):
             p.start()
             start_time = time.time()
             while p.is_alive():
-                if time.time() - start_time > USER_CAN_WAIT_FOR_MODEL_UPDATE:
+                if (time.time() - start_time) > USER_CAN_WAIT_FOR_MODEL_UPDATE:
                     # Timeout reached, proceed without waiting
                     break
                 time.sleep(0.5)  # Adjust the sleep interval if needed
