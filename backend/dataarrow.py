@@ -10,7 +10,7 @@ from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 import datetime
 import time
 import threading
-adexacc_apis = Blueprint('adexacc_apis', __name__)
+dataarrow_apis = Blueprint('dataarrow_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
     cls = globals().get(the_mooclet['policy'])
@@ -92,7 +92,7 @@ def create_mooclet(mooclet, study_id, session):
     response = MOOClet.insert_one(new_mooclet, session=session)
     return response.inserted_id
 
-@adexacc_apis.route("/apis/study", methods=["POST"])
+@dataarrow_apis.route("/apis/study", methods=["POST"])
 def create_study():
     if check_if_loggedin() == False:
         return json_util.dumps({
@@ -251,7 +251,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
 # POST : can make changes server side, multiple POST with same parameters can lead to different results and responses - typically add an amount to an account
 # PUT : can make changes server side, multiple PUT with same parameters should lead to same result and response - typically set an account value
 
-@adexacc_apis.route("/apis/get_treatment", methods=["POST"])
+@dataarrow_apis.route("/apis/get_treatment", methods=["POST"])
 def get_treatment():
     # read request body.
     try:
@@ -284,7 +284,7 @@ def get_treatment():
     
 
 
-@adexacc_apis.route("/apis/give_reward", methods=["POST"])
+@dataarrow_apis.route("/apis/give_reward", methods=["POST"])
 def give_reward():
     # read request body.
     try:
@@ -337,7 +337,7 @@ def give_variable_value(variableName, user, value, where = None, other_informati
     }
     VariableValue.insert_one(the_variable)
 
-@adexacc_apis.route("/apis/give_variable", methods=["POST"])
+@dataarrow_apis.route("/apis/give_variable", methods=["POST"])
 def give_variable():
     # save a contextual varialble.
     try:
@@ -377,7 +377,7 @@ def give_variable():
 
 
 
-@adexacc_apis.route("/apis/my_deployments", methods=["GET"])
+@dataarrow_apis.route("/apis/my_deployments", methods=["GET"])
 def my_deployments():
     user = "chenpan"
     my_deployments = Deployment.find({"collaborators": {"$in": [user]}})
@@ -388,7 +388,7 @@ def my_deployments():
     }), 200
 
 
-@adexacc_apis.route("/apis/the_studies", methods=["GET"])
+@dataarrow_apis.route("/apis/the_studies", methods=["GET"])
 def the_studies():
     user = "chenpan"
     deployment_id = request.args.get('deployment_id')
@@ -401,7 +401,7 @@ def the_studies():
 
 
 
-@adexacc_apis.route("/apis/create_deployment", methods = ["POST"])
+@dataarrow_apis.route("/apis/create_deployment", methods = ["POST"])
 def create_deployment():
     user = "chenpan"
     name = request.json['name'] if 'name' in request.json else None

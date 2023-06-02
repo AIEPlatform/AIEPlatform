@@ -35,7 +35,7 @@ conn = psycopg2.connect(
 
 print(MONGO_DB_CONNECTION_STRING)
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
-db = client['adexacc']
+db = client['dataarrow']
 Dataset = db['dataset']
 Deployment = db['deployment']
 Study = db['study']

@@ -976,7 +976,7 @@ def hello_world():
 
 
 
-# BELOW IS FOR THE NEW ADEXACC
+# BELOW IS FOR THE NEW dataarrow
 import datetime
 
 def get_username():
