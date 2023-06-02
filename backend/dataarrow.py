@@ -430,3 +430,38 @@ def create_deployment():
                 "message": "Deployment is created."
             }), 200
         
+
+
+# {"studyName":"sim","description":"test2 description","mooclets":[{"id":1,"parent":0,"droppable":true,"isOpen":true,"text":"mooclet1","name":"mooclet1","policy":"ThompsonSamplingContextual","parameters":{"batch_size":1,"variance_a":1,"variance_b":5,"uniform_threshold":1,"precision_draw":1,"updatedPerMinute":0,"include_intercept":true,"coef_cov":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"coef_mean":[0,0,0,0],"regressionFormulaItems":[[{"name":"test","index":0}],[{"name":"version1","content":"v1"}],[{"name":"test","index":0},{"name":"version1","content":"v1"}]]},"weight":100}],"variables":[{"name":"test","index":0}],"versions":[{"name":"version1","content":"v1"},{"name":"version2","content":"v2"}]}
+
+def convert_mooclet_tree_to_list(mooclet, myId, parentId, mooclet_list):
+    mooclet_list.append({
+        "id": myId,
+        "parent": parentId,
+        "droppable": True,
+        "isOpen": True,
+        "text": mooclet["name"],
+        "name": mooclet["name"],
+        "policy": mooclet["policy"],
+        "parameters": mooclet["parameters"],
+        "weight": mooclet["weight"], 
+        "isConsistent": mooclet["isConsistent"] if "isConsistent" in mooclet else None,
+        "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
+    })
+    new_id = myId
+    print(mooclet)
+    for child in mooclet["children"]:
+        new_id += 1
+        child_mooclet = MOOClet.find_one({"_id": child}, {'createdAt': 0})
+        convert_mooclet_tree_to_list(child_mooclet, new_id, myId, mooclet_list)
+
+
+def build_json_for_study(studyId):
+    the_study = Study.find_one({"_id": studyId})
+    the_root_mooclet = MOOClet.find_one({"_id": the_study["rootMOOClet"]}, {'createdAt': 0})
+    mooclet_list = []
+    convert_mooclet_tree_to_list(the_root_mooclet, 1, 0, mooclet_list)
+    print(mooclet_list)
+    return
+
+build_json_for_study(ObjectId("647a661c7c9b18cd1e4312d6"))

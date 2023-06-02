@@ -9,12 +9,25 @@ function VariableEditor(props) {
     let [newVariableMin, sNewVariableMin] = useState(0);
     let [newVariableMax, sNewVariableMax] = useState(1);
     let [newVariableType, sNewVariableType] = useState("discrete");
+    
+
+    let [newVariableMissingStrategy, sNewVariableMissingStrategy] = useState("Random");
 
     let variableTypes = [
         { value: 'discrete', label: 'discrete' },
         { value: 'continuous', label: 'continuous' },
         { value: 'ordinary', label: 'ordinary'}
-    ]
+    ];
+
+    let missingDataOptions = [
+        { value: 'Random', label: 'Random' },
+        { value: 'Average', label: 'Average' },
+        { value: 'Closest', label: 'Closest' }, 
+        { value: 'Most Frequent', label: 'Most Frequent' }, 
+        { value: 'Error', label: 'Error' }
+    ];
+
+    let [selectedVariableMissingStrategyOption, sSelectedVariableMissingStrategyOption] = useState(missingDataOptions[0]);
 
     let [selectedVariableTypeOption, sSelectedVariableTypeOption] = useState(variableTypes[0]);
     const handleSelectChange = (option) => {
@@ -137,6 +150,23 @@ function VariableEditor(props) {
                     sSelectedVariableTypeOption(option);
                 }}
                 value={selectedVariableTypeOption}
+                styles={{
+                    // Fixes the overlapping problem of the component
+                    menu: provided => ({ ...provided, zIndex: 9999 })
+                }}
+            />
+            <label htmlFor="variable-missing-option">Missing strategy:</label>
+            <Select
+                name="colors"
+                instanceId="variable-missing-option"
+                options={missingDataOptions}
+                className="basic-multi-select"
+                classNamePrefix="select"
+                onChange={(option) => {
+                    sNewVariableMissingStrategy(option.value);
+                    sSelectedVariableMissingStrategyOption(option);
+                }}
+                value={selectedVariableMissingStrategyOption}
                 styles={{
                     // Fixes the overlapping problem of the component
                     menu: provided => ({ ...provided, zIndex: 9999 })
