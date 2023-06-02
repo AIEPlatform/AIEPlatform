@@ -64,12 +64,20 @@ class ThompsonSamplingContextual(Policy):
 
             someone_is_updating = False
             lock.acquire()
-            print("checking lock...")
-            new_lock_id = check_lock(self._id)
+            print(f'{user} checking lock...')
+            # TODO: check if it prevents the lock being occupied infinitely.
+            try:
+                new_lock_id = check_lock(self._id)
+            except Exception as e:
+                print(e)
+                print("error in check_lock")
+                new_lock_id = None
             if new_lock_id is None:
                 someone_is_updating = True
+                print(f'{user} finds someone\'s updating the model...')
             lock.release()
             if not someone_is_updating:
+                print(f'{user} updating model..')
                 p = threading.Thread(target=self.update_model, args=(new_lock_id, ))
                 p.start()
                 start_time = time.time()
@@ -230,6 +238,7 @@ class ThompsonSamplingContextual(Policy):
             }
 
             Interaction.insert_one(new_interaction)
+            print(f'{user} gets a treatment...')
             return lucky_version
         except Exception as e:
             print(e)
@@ -241,7 +250,7 @@ class ThompsonSamplingContextual(Policy):
         if latest_interaction is None:
             return 400
         else:
-            print("get reward...")
+            print(f'{user} sends reward...')
             Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
 
             # Note that TS Contextual won't update inmediately.
@@ -258,21 +267,18 @@ class ThompsonSamplingContextual(Policy):
                          ) # TODO: Shall we exclute those from uniform (I don't think so?)
         if earliest_unused is None:
             return False
-        if (current_time - earliest_unused['rewardTimestamp']).total_seconds() / 60 > float(self.updatedPerMinute):
+        if (current_time - earliest_unused['rewardTimestamp']).total_seconds() / 60 > float(self.parameters['updatedPerMinute']):
             return True
         else:
             return False
         
     def update_model(self, new_lock_id):
         # First, see if this is already being updated by someone.
-        print("Hello!")
+        current_time = datetime.datetime.now()
         with client.start_session() as session:
             session.start_transaction()
 
             try:
-
-                print("update model...")
-                
 
                 current_params = self.parameters
                 coef_mean, coef_cov, variance_a, variance_b, include_intercept = current_params['coef_mean'], current_params['coef_cov'], float(current_params['variance_a']), float(current_params['variance_b']), float(current_params['include_intercept'])
@@ -338,13 +344,15 @@ class ThompsonSamplingContextual(Policy):
                     "parameters.variance_a": posterior_vals['variance_a'],
                     "parameters.variance_b": posterior_vals['variance_b'],
                 }}, session=session)
+    
                 # Release lock.
-                Lock.delete_one({"_id": new_lock_id})
                 session.commit_transaction()
+                print(f'model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
+                Lock.delete_one({"_id": new_lock_id})
                 return
             except Exception as e:
                 print(e)
-                print("rollback...")
+                print(f'model update failed, rollback...')
                 Lock.delete_one({"_id": new_lock_id})
                 session.abort_transaction()
                 return
@@ -415,7 +423,6 @@ def check_lock(mooceltId):
     try:
         lock_exists = Lock.find_one({"mooceltId": mooceltId})
         if lock_exists:
-            print("??????")
             return None
         else:
             # Create lock

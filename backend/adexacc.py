@@ -83,7 +83,6 @@ def create_mooclet(mooclet, study_id, session):
         "parameters": mooclet['parameters'],
         "studyId": study_id,
         "isConsistent": False, 
-        "updatedPerMinute": False, 
         "autoZeroPerMinute": False, 
         "children": my_children, 
         "weight": float(mooclet['weight']), 

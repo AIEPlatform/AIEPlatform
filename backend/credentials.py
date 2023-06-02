@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask import session
+import pymongo
+
 MONGO_DB_CONNECTION_STRING = os.getenv('MONGO_DB_CONNECTION_STRING')
 PSQL_HOST = os.getenv('PSQL_HOST')
 PSQL_PASSWORD = os.getenv('PSQL_PASSWORD')
@@ -49,6 +51,16 @@ Lock = db['lock']
 TreatmentLog = db['treatmentLog']
 RewardLog = db['rewardLog']
 
+Deployment.create_index("name", unique=True)
+Study.create_index([('name', pymongo.ASCENDING), ('deploymentId', pymongo.ASCENDING)], unique=True)
+VariableValue.create_index([('variableName', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
+VariableValue.create_index("variableName")
+
+MOOClet.create_index([('name', pymongo.ASCENDING), ('studyId', pymongo.ASCENDING)], unique=True)
+
+Interaction.create_index([('moocletId', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
+
+Variable.create_index("name", unique=True)
 Lock.create_index("moocletId", unique=True)
 
 
