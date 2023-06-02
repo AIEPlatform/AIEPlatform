@@ -9,9 +9,11 @@ from helpers import *
 from multiprocessing import Process
 import os
 import time
+import threading
 
 
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 5
+lock = threading.Lock()
 
 class ThompsonSamplingContextual(Policy):
 
@@ -59,7 +61,7 @@ class ThompsonSamplingContextual(Policy):
         current_time = datetime.datetime.now()
         lucky_version = self.get_consistent_assignment(user, where)
         if self.should_update_model(current_time):
-            p = Process(target=self.update_model)
+            p = threading.Thread(target=self.update_model)
             p.start()
             start_time = time.time()
             while p.is_alive():
@@ -230,6 +232,7 @@ class ThompsonSamplingContextual(Policy):
         if latest_interaction is None:
             return 400
         else:
+            print("get reward...")
             Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
 
             # Note that TS Contextual won't update inmediately.
@@ -247,106 +250,100 @@ class ThompsonSamplingContextual(Policy):
         if earliest_unused is None:
             return False
         if (current_time - earliest_unused['rewardTimestamp']).total_seconds() / 60 > float(self.updatedPerMinute):
-            print("Update Model")
             return True
         else:
             return False
-
-
+        
     def update_model(self):
         # First, see if this is already being updated by someone.
-        the_lock = Lock.find_one({"moocletId": self._id})
-        # If so, return.
-        if the_lock is not None:
-            return
-        else:
-            with client.start_session() as session:
-                session.start_transaction()
-                new_lock = {
-                    "moocletId": self._id,
-                    "processId": os.getpid(),
-                    "timestamp": datetime.datetime.now()
-                }
-                new_lock_id = Lock.insert_one(new_lock, session=session).inserted_id
+        with client.start_session() as session:
+            session.start_transaction()
 
-                try:
-                    # get design matrix.
-                    current_params = self.parameters
-                    coef_mean, coef_cov, variance_a, variance_b, include_intercept = current_params['coef_mean'], current_params['coef_cov'], float(current_params['variance_a']), float(current_params['variance_b']), float(current_params['include_intercept'])
+            try:
+                lock.acquire()
+                print("checking lock...")
+                new_lock_id = check_lock(self._id)
+                if new_lock_id is None:
+                    lock.release()
+                    return False
+                lock.release()
 
-                    interactions_for_posterior = list(Interaction.find(
-                        {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
-                        )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
-                    
-                    Interaction.update_many(
-                        {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
-                        )
-                    numpy_rewards = np.array([interaction['outcome'] for interaction in interactions_for_posterior])
-                    
-                    regression_formula = current_params['regression_formula']
-                    all_versions = self.study['versions']
-                    all_versions = {d['name']: d['content'] for d in all_versions}
+                print("update model...")
+                
 
-                    formula = regression_formula.strip()
+                current_params = self.parameters
+                coef_mean, coef_cov, variance_a, variance_b, include_intercept = current_params['coef_mean'], current_params['coef_cov'], float(current_params['variance_a']), float(current_params['variance_b']), float(current_params['include_intercept'])
 
-                    # Split RHS of equation into variable list (context, action, interactions)
-                    vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
-                    if include_intercept:
-                        vars_list.insert(0,1.)
+                interactions_for_posterior = list(Interaction.find(
+                    {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
+                    )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
+                
+                Interaction.update_many(
+                    {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
+                    )
+                numpy_rewards = np.array([interaction['outcome'] for interaction in interactions_for_posterior])
+                
+                regression_formula = current_params['regression_formula']
+                all_versions = self.study['versions']
+                all_versions = {d['name']: d['content'] for d in all_versions}
 
-                    # construct design matrix.
-                    design_matrix = np.zeros((len(interactions_for_posterior), len(vars_list)))
-                    print(interactions_for_posterior)
-                    for i in range(len(interactions_for_posterior)):
-                        interaction = interactions_for_posterior[i]
-                        contextual_vars_dict = interaction['contextuals']
-                        independent_vars = contextual_vars_dict
-                        for version in all_versions:
-                            if version == interaction['treatment']['name']:
-                                independent_vars[version] = 1
-                            else:
-                                independent_vars[version] = 0
-                        for j in range(len(vars_list)):
-                            var = vars_list[j]
-                            ## Determine value in variable list
-                            # Initialize value (can change in loop)
+                formula = regression_formula.strip()
+
+                # Split RHS of equation into variable list (context, action, interactions)
+                vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
+                if include_intercept:
+                    vars_list.insert(0,1.)
+
+                # construct design matrix.
+                design_matrix = np.zeros((len(interactions_for_posterior), len(vars_list)))
+                for i in range(len(interactions_for_posterior)):
+                    interaction = interactions_for_posterior[i]
+                    contextual_vars_dict = interaction['contextuals']
+                    independent_vars = contextual_vars_dict
+                    for version in all_versions:
+                        if version == interaction['treatment']['name']:
+                            independent_vars[version] = 1
+                        else:
+                            independent_vars[version] = 0
+                    for j in range(len(vars_list)):
+                        var = vars_list[j]
+                        ## Determine value in variable list
+                        # Initialize value (can change in loop)
+                        value = 1.
+                        # Intercept has value 1
+                        if type(var) == float:
                             value = 1.
-                            # Intercept has value 1
-                            if type(var) == float:
-                                value = 1.
 
-                            # Interaction term value
-                            elif '*' in var:
-                                interacting_vars = var.split('*')
-                                interacting_vars = list(map(str.strip,interacting_vars))
-                                # Product of variable values in interaction term
-                                for interacting_var in interacting_vars:
-                                    value *= independent_vars[interacting_var]
-                            # Action or context value
-                            else:
-                                value = independent_vars[var]
+                        # Interaction term value
+                        elif '*' in var:
+                            interacting_vars = var.split('*')
+                            interacting_vars = list(map(str.strip,interacting_vars))
+                            # Product of variable values in interaction term
+                            for interacting_var in interacting_vars:
+                                value *= independent_vars[interacting_var]
+                        # Action or context value
+                        else:
+                            value = independent_vars[var]
 
-                            design_matrix[i][j] = value
-                    posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
+                        design_matrix[i][j] = value
+                posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
 
-                    print(design_matrix)
+                # Update parameters in DB.
+                MOOClet.update_one({"_id": self._id}, {"$set": {
+                    "parameters.coef_mean": posterior_vals['coef_mean'].tolist(),
+                    "parameters.coef_cov": posterior_vals['coef_cov'].tolist(),
+                    "parameters.variance_a": posterior_vals['variance_a'],
+                    "parameters.variance_b": posterior_vals['variance_b'],
+                }}, session=session)
+                # Release lock.
+                Lock.delete_one({"_id": new_lock_id}, session=session)
 
-                    # Update parameters in DB.
-                    MOOClet.update_one({"_id": self._id}, {"$set": {
-                        "parameters.coef_mean": posterior_vals['coef_mean'].tolist(),
-                        "parameters.coef_cov": posterior_vals['coef_cov'].tolist(),
-                        "parameters.variance_a": posterior_vals['variance_a'],
-                        "parameters.variance_b": posterior_vals['variance_b'],
-                    }}, session=session)
-                    # Release lock.
-                    Lock.delete_one({"_id": new_lock_id}, session=session)
-                    session.commit_transaction()
-                    return
-                except Exception as e:
-                    print(e)
-                    Lock.delete_one({"_id": new_lock_id}, session=session)
-                    session.abort_transaction()
-                    return
+                session.commit_transaction()
+                return
+            except Exception as e:
+                print(e)
+                session.abort_transaction()
+                return
 
 # Compute expected reward given context and action of user
 # Inputs: (design matrix row as dict, coeff. vector, intercept, reg. eqn.)
@@ -409,6 +406,20 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     return outcome
 
 
+def check_lock(mooceltId):
+    # Check if lock exists
+    try:
+        lock_exists = Lock.find_one({"mooceltId": mooceltId})
+        if lock_exists:
+            print("??????")
+            return None
+        else:
+            # Create lock
+            response = Lock.insert_one({"mooceltId": mooceltId})
+            return response.inserted_id
+    except Exception as e:
+        print(e)
+        return None
 
 def posteriors(y, X, m_pre, V_pre, a1_pre, a2_pre):
     #y = list of uotcomes

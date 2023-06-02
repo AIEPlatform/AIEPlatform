@@ -47,6 +47,9 @@ MultipleDatasetPieces = db['multipleDatasetPieces']
 Lock = db['lock']
 
 
+Lock.create_index("moocletId", unique=True)
+
+
 
 
 

@@ -223,6 +223,7 @@ def get_treatment():
                 "treatment": assign_treatment(deployment, study, user, where, other_information)
         }), 200
     except Exception as e:
+        print("Error in get_treatment:")
         print(e)
         return json_util.dumps({
             "status_code": 500,
@@ -262,6 +263,7 @@ def give_reward():
 
 
     except Exception as e:
+        print("Error in give_reward:")
         print(e)
         return json_util.dumps({
             "status_code": 500,
@@ -270,3 +272,52 @@ def give_reward():
 
 
 
+def give_variable_value(variableName, user, value, where = None, other_information = None):
+    current_time = datetime.datetime.now()
+    the_variable = {
+        "variableName": variableName,
+        "user": user,
+        "value": value,
+        "where": where,
+        "other_information": other_information,
+        "timestamp": current_time
+    }
+    VariableValue.insert_one(the_variable)
+
+@adexacc_apis.route("/apis/give_variable", methods=["POST"])
+def give_variable():
+    # save a contextual varialble.
+    try:
+        deployment = request.json['deployment'] if 'deployment' in request.json else None
+        study = request.json['study'] if 'study' in request.json else None
+        variableName = request.json['variableName'] if 'variableName' in request.json else None
+        user = request.json['user'] if 'user' in request.json else None
+        value = request.json['value'] if 'value' in request.json else None
+        where = request.json['where'] if 'where' in request.json else None
+        other_information = request.json['other_information'] if 'other_information' in request.json else None
+
+        if deployment is None or study is None or variableName is None or user is None or value is None:
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "Please make sure variableName, user, value are provided."
+            }), 400
+        else:
+            doc = Variable.find_one({"name": variableName})
+            if doc is None:
+                return json_util.dumps({
+                    "status_code": 400,
+                    "message": "Variable is not found."
+                }), 400
+            
+            give_variable_value(deployment, study, variableName, user, value, where, other_information)
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "Variable is saved."
+            }), 200
+    except Exception as e:
+        print("Error in giving_variable:")
+        print(e)
+        return json_util.dumps({
+            "status_code": 500,
+            "message": "Server is down please try again later."
+        }), 500

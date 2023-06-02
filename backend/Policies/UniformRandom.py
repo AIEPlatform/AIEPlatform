@@ -31,6 +31,6 @@ class UniformRandom(Policy):
 		if latest_interaction is None:
 			return 400
 		else:
-			print("Giving reward...")
+			print("Giving reward by uniform...")
 			Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
 			return 200
