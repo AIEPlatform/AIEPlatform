@@ -61,14 +61,23 @@ class ThompsonSamplingContextual(Policy):
         current_time = datetime.datetime.now()
         lucky_version = self.get_consistent_assignment(user, where)
         if self.should_update_model(current_time):
-            p = threading.Thread(target=self.update_model)
-            p.start()
-            start_time = time.time()
-            while p.is_alive():
-                if (time.time() - start_time) > USER_CAN_WAIT_FOR_MODEL_UPDATE:
-                    # Timeout reached, proceed without waiting
-                    break
-                time.sleep(0.5)  # Adjust the sleep interval if needed
+
+            someone_is_updating = False
+            lock.acquire()
+            print("checking lock...")
+            new_lock_id = check_lock(self._id)
+            if new_lock_id is None:
+                someone_is_updating = True
+            lock.release()
+            if not someone_is_updating:
+                p = threading.Thread(target=self.update_model, args=(new_lock_id, ))
+                p.start()
+                start_time = time.time()
+                while p.is_alive():
+                    if (time.time() - start_time) > USER_CAN_WAIT_FOR_MODEL_UPDATE:
+                        # Timeout reached, proceed without waiting
+                        break
+                    time.sleep(0.5)  # Adjust the sleep interval if needed
         try:
             # because it's TS Contextual, 
             if lucky_version is None:
@@ -254,19 +263,13 @@ class ThompsonSamplingContextual(Policy):
         else:
             return False
         
-    def update_model(self):
+    def update_model(self, new_lock_id):
         # First, see if this is already being updated by someone.
+        print("Hello!")
         with client.start_session() as session:
             session.start_transaction()
 
             try:
-                lock.acquire()
-                print("checking lock...")
-                new_lock_id = check_lock(self._id)
-                if new_lock_id is None:
-                    lock.release()
-                    return False
-                lock.release()
 
                 print("update model...")
                 
@@ -336,12 +339,13 @@ class ThompsonSamplingContextual(Policy):
                     "parameters.variance_b": posterior_vals['variance_b'],
                 }}, session=session)
                 # Release lock.
-                Lock.delete_one({"_id": new_lock_id}, session=session)
-
+                Lock.delete_one({"_id": new_lock_id})
                 session.commit_transaction()
                 return
             except Exception as e:
                 print(e)
+                print("rollback...")
+                Lock.delete_one({"_id": new_lock_id})
                 session.abort_transaction()
                 return
 

@@ -1,15 +1,16 @@
 deployment = 'test'
 study = 'sim'
 variable = 'test variable'
-num_users = 3000
+num_users = 1000
 import time
 import random
 from adexacc import *
 users = []
 users_status = {}
 import threading
+from credentials import *
 
-
+Lock.delete_many({})
 # {"studyName":"sim","description":"test2 description","mooclets":[{"id":1,"parent":0,"droppable":true,"isOpen":true,"text":"mooclet1","name":"mooclet1","policy":"UniformRandom","parameters":{},"weight":100},{"id":2,"parent":1,"droppable":true,"isOpen":true,"text":"mooclet2","name":"mooclet2","policy":"UniformRandom","parameters":{},"weight":100},{"id":3,"parent":1,"droppable":true,"isOpen":true,"text":"mooclet3","name":"mooclet3","policy":"ThompsonSamplingContextual","parameters":{"batch_size":1,"variance_a":1,"variance_b":2,"uniform_threshold":1,"precision_draw":1,"updatedPerMinute":3,"include_intercept":true,"coef_cov":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"coef_mean":[0,0,0,0],"regressionFormulaItems":[[{"name":"test variable","index":0}],[{"name":"version1","content":"version 1"}],[{"name":"test variable","index":0},{"name":"version1","content":"version 1"}]]},"weight":100}],"variables":[{"name":"test variable","index":0}],"versions":[{"name":"version1","content":"version 1"},{"name":"version2","content":"version 2"}]}
 
 for user in range(1, num_users + 1):

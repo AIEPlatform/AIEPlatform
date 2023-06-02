@@ -197,7 +197,9 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
 
             the_log = {
                 "policy": the_mooclet['policy'],
-                "execution_time": execution_time
+                "execution_time": execution_time, 
+                "threads": threading.active_count(), 
+                "timestamp": datetime.datetime.now()
             }
             TreatmentLog.insert_one(the_log)
         return version_to_show
@@ -207,7 +209,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
                 "policy": the_mooclet['policy'],
                 "error": True,
                 "error_message": str(e), 
-                "threads": threading.active_count()
+                "threads": threading.active_count(), 
+                "timestamp": datetime.datetime.now()
             }
             TreatmentLog.insert_one(the_log)
         return None
@@ -226,7 +229,9 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
 
             the_log = {
                 "policy": the_mooclet['policy'],
-                "execution_time": execution_time
+                "execution_time": execution_time, 
+                "threads": threading.active_count(), 
+                "timestamp": datetime.datetime.now()
             }
             RewardLog.insert_one(the_log)
         return response
@@ -234,7 +239,9 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
         if DEBUG:
             the_log = {
                 "policy": the_mooclet['policy'],
-                "error": True
+                "error": True, 
+                "threads": threading.active_count(), 
+                "timestamp": datetime.datetime.now()
             }
             RewardLog.insert_one(the_log)
 
