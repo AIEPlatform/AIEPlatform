@@ -8,6 +8,7 @@ from helpers import *
 from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 import datetime
+import time
 adexacc_apis = Blueprint('adexacc_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
@@ -183,16 +184,56 @@ def get_mooclet_for_user(deployment_name, study_name, user):
         return inductive_get_mooclet(root_mooclet, user)
 
 def assign_treatment(deployment_name, study_name, user, where = None, other_information = None):
-    the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
-    mooclet = create_mooclet_instance(the_mooclet)
-    version_to_show = mooclet.choose_arm(user, where, other_information)
-    return version_to_show
+    try:
+        start_time = time.time()
+        the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
+        mooclet = create_mooclet_instance(the_mooclet)
+        version_to_show = mooclet.choose_arm(user, where, other_information)
+        
+        if DEBUG:
+            end_time = time.time()
+            execution_time = end_time - start_time
+
+            the_log = {
+                "policy": the_mooclet['policy'],
+                "execution_time": execution_time
+            }
+            TreatmentLog.insert_one(the_log)
+        return version_to_show
+    except Exception as e:
+        if DEBUG:
+            the_log = {
+                "policy": the_mooclet['policy'],
+                "error": True
+            }
+            TreatmentLog.insert_one(the_log)
+        return None
 
 def get_reward(deployment_name, study_name, user, value, where = None, other_information = None):
     # Get MOOClet!
-    the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
-    mooclet = create_mooclet_instance(the_mooclet)
-    return mooclet.get_reward(user, value, where, other_information)
+    try:
+        start_time = time.time()
+        the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
+        mooclet = create_mooclet_instance(the_mooclet)
+        response = mooclet.get_reward(user, value, where, other_information)
+
+        if DEBUG:
+            end_time = time.time()
+            execution_time = end_time - start_time
+
+            the_log = {
+                "policy": the_mooclet['policy'],
+                "execution_time": execution_time
+            }
+            RewardLog.insert_one(the_log)
+        return response
+    except Exception as e:
+        if DEBUG:
+            the_log = {
+                "policy": the_mooclet['policy'],
+                "error": True
+            }
+            RewardLog.insert_one(the_log)
 
 
 
@@ -205,6 +246,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
 def get_treatment():
     # read request body.
     try:
+        start_time = time.time()
         deployment = request.json['deployment'] if 'deployment' in request.json else None
         study = request.json['study'] if 'study' in request.json else None
         user = request.json['user'] if 'user' in request.json else None
@@ -221,9 +263,10 @@ def get_treatment():
                 "status_code": 200,
                 "message": "This is your treatment.", 
                 "treatment": assign_treatment(deployment, study, user, where, other_information)
-        }), 200
+            }), 200
+
+
     except Exception as e:
-        print("Error in get_treatment:")
         print(e)
         return json_util.dumps({
             "status_code": 500,
@@ -236,6 +279,7 @@ def get_treatment():
 def give_reward():
     # read request body.
     try:
+        start_time = time.time()
         deployment = request.json['deployment'] if 'deployment' in request.json else None
         study = request.json['study'] if 'study' in request.json else None
         user = request.json['user'] if 'user' in request.json else None
@@ -256,6 +300,7 @@ def give_reward():
                     "message": "No reward is saved."
                 }), 400
             else:
+
                 return json_util.dumps({
                     "status_code": 200,
                     "message": "Reward is saved."
@@ -263,7 +308,6 @@ def give_reward():
 
 
     except Exception as e:
-        print("Error in give_reward:")
         print(e)
         return json_util.dumps({
             "status_code": 500,
