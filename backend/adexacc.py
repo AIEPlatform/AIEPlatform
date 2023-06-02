@@ -9,6 +9,7 @@ from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 import datetime
 import time
+import threading
 adexacc_apis = Blueprint('adexacc_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
@@ -205,7 +206,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             the_log = {
                 "policy": the_mooclet['policy'],
                 "error": True,
-                "error_message": str(e)
+                "error_message": str(e), 
+                "threads": threading.active_count()
             }
             TreatmentLog.insert_one(the_log)
         return None
