@@ -374,3 +374,59 @@ def give_variable():
             "status_code": 500,
             "message": "Server is down please try again later."
         }), 500
+
+
+
+@adexacc_apis.route("/apis/my_deployments", methods=["GET"])
+def my_deployments():
+    user = "chenpan"
+    my_deployments = Deployment.find({"collaborators": {"$in": [user]}})
+    return json_util.dumps({
+        "status_code": 200,
+        "message": "These are my deployments.",
+        "my_deployments": my_deployments
+    }), 200
+
+
+@adexacc_apis.route("/apis/the_studies", methods=["GET"])
+def the_studies():
+    user = "chenpan"
+    deployment_id = request.args.get('deployment_id')
+    studies = Study.find({"deploymentId": ObjectId(deployment_id)})
+    return json_util.dumps({
+        "status_code": 200,
+        "message": "These are my studies.",
+        "studies": studies
+    }), 200
+
+
+
+@adexacc_apis.route("/apis/create_deployment", methods = ["POST"])
+def create_deployment():
+    user = "chenpan"
+    name = request.json['name'] if 'name' in request.json else None
+    description = request.json['description'] if 'description' in request.json else None
+    collaborators = request.json['collaborators'] if 'collaborators' in request.json else None
+    if name is None or description is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure deployment_name, deployment_studies are provided."
+        }), 400
+    else:
+        the_Deployment = Deployment.find_one({"name": name})
+        if the_Deployment is not None:
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "Deployment name is already used."
+            }), 400
+        else:
+            Deployment.insert_one({
+                "name": name,
+                "description": description,
+                "collaborators": collaborators,
+            })
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "Deployment is created."
+            }), 200
+        
