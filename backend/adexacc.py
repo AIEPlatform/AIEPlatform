@@ -204,7 +204,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
         if DEBUG:
             the_log = {
                 "policy": the_mooclet['policy'],
-                "error": True
+                "error": True,
+                "error_message": str(e)
             }
             TreatmentLog.insert_one(the_log)
         return None
