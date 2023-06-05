@@ -76,8 +76,8 @@ export default function Layout({ children }) {
         setOpen(false);
     };
 
-    const links = ['My MOOClet', 'New Deployment', 'Manage Deployment', 'New MOOClet', 'Dataset Downloader', 'Dataset Workshop', 'Data Analysis', 'Multiple Datasets Downloader (local only)'];
-    const linkURLs = ['/MyMOOClet', '/NewDeployment', '/ManageDeployment', '/NewMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis', '/MultipleDatasetDownloader'];
+    const links = ['New Deployment', 'Manage Deployment', 'Data Workshop', 'New MOOClet', 'My MOOClet', 'MOOClet Dataset Downloader', 'MOOClet Dataset Workshop', 'MOOClet Data Analysis', 'Multiple MOOClet Datasets Downloader (local only)'];
+    const linkURLs = ['/NewDeployment', '/ManageDeployment', 'DataWorkshop', '/NewMOOClet', '/MyMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis', '/MultipleDatasetDownloader'];
 
     useEffect(() => {
         fetch('/apis/checkLoginedOrNot')

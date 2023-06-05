@@ -184,9 +184,9 @@ def get_mooclet_for_user(deployment_name, study_name, user):
         return inductive_get_mooclet(root_mooclet, user)
 
 def assign_treatment(deployment_name, study_name, user, where = None, other_information = None):
+    start_time = time.time()
+    the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
     try:
-        start_time = time.time()
-        the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
         mooclet = create_mooclet_instance(the_mooclet)
         version_to_show = mooclet.choose_arm(user, where, other_information)
         
@@ -325,7 +325,13 @@ def give_reward():
 
 
 
-def give_variable_value(variableName, user, value, where = None, other_information = None):
+def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
+
+    the_deployment = Deployment.find_one({"name": deployment})
+    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$elemMatch": {"name": variableName}}})
+
+    if the_study is None:
+        return 400
     current_time = datetime.datetime.now()
     the_variable = {
         "variableName": variableName,
@@ -336,6 +342,7 @@ def give_variable_value(variableName, user, value, where = None, other_informati
         "timestamp": current_time
     }
     VariableValue.insert_one(the_variable)
+    return 200
 
 @dataarrow_apis.route("/apis/give_variable", methods=["POST"])
 def give_variable():
@@ -361,6 +368,8 @@ def give_variable():
                     "status_code": 400,
                     "message": "Variable is not found."
                 }), 400
+        
+
             
             give_variable_value(deployment, study, variableName, user, value, where, other_information)
             return json_util.dumps({
@@ -449,7 +458,6 @@ def convert_mooclet_tree_to_list(mooclet, myId, parentId, mooclet_list):
         "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
     })
     new_id = myId
-    print(mooclet)
     for child in mooclet["children"]:
         new_id += 1
         child_mooclet = MOOClet.find_one({"_id": child}, {'createdAt': 0})
@@ -461,7 +469,151 @@ def build_json_for_study(studyId):
     the_root_mooclet = MOOClet.find_one({"_id": the_study["rootMOOClet"]}, {'createdAt': 0})
     mooclet_list = []
     convert_mooclet_tree_to_list(the_root_mooclet, 1, 0, mooclet_list)
-    print(mooclet_list)
     return
 
-build_json_for_study(ObjectId("647a661c7c9b18cd1e4312d6"))
+# build_json_for_study(ObjectId("647a661c7c9b18cd1e4312d6"))
+
+
+
+import pandas as pd
+from flatten_json import flatten
+
+def create_df_from_mongo(study_name, deployment_name):
+    the_deployment = Deployment.find_one({"name": deployment_name})
+    the_study = Study.find_one({"name": study_name, "deploymentId": the_deployment['_id']})
+    the_mooclets = list(MOOClet.find({"studyId": the_study['_id']}, {"_id": 1}))
+
+    the_mooclets = [r['_id'] for r in the_mooclets]
+
+    result = Interaction.aggregate([
+        {
+            '$match': {
+                'moocletId': {"$in": the_mooclets}  # Specify the filter condition for collection1
+            }
+        },
+        {
+            '$lookup': {
+                'from': 'mooclet',
+                'localField': 'moocletId',  # The field in collection1 to match
+                'foreignField': '_id',  # The field in collection2 to match
+                'as': 'joined_data',  # The name of the field in the output documents
+            }
+        }, 
+        {
+            '$unwind': '$joined_data'  # Unwind the 'joined_data' array
+        }, 
+        {
+            '$project': {"_id": 1, "policy": '$joined_data.policy', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
+        }
+    ])
+
+    list_cur = list(result)
+    df = pd.DataFrame(list_cur)
+
+    df_normalized = pd.json_normalize(df['contextuals'].apply(flatten, args = (".",)))
+
+    # Concatenate the flattened DataFrame with the original DataFrame
+    df = pd.concat([df.drop('contextuals', axis=1), df_normalized], axis=1)
+
+    df = df.rename(columns={
+        "treatment$timestamp": "treatment.timestamp", 
+        "outcome$timestamp": "outcome.timestamp"
+        })
+        
+
+    return df
+
+create_df_from_mongo("sim", "test")
+
+
+import pickle
+import smtplib
+from email.mime.text import MIMEText
+
+@dataarrow_apis.route("/apis/create_dataset", methods = ["POST"])
+def create_dataset():
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+    email = request.json['email'] if 'email' in request.json else None
+    if deployment is None or study is None or email is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure deployment, study, email are provided."
+        }), 400
+    else:
+        try:
+            df = create_df_from_mongo(study, deployment)
+            binary_data = pickle.dumps(df)
+            document = {
+                'dataset': binary_data,
+                'deployment': deployment, 
+                'study': study
+            }
+            response = Dataset.insert_one(document)
+
+            subject = "Your MOOClets datasets are ready for download."
+            body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
+            sender = EMAIL_USERNAME
+            recipients = [request.get_json()['email']]
+            password = EMAIL_PASSWORD
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = sender
+            msg['To'] = ', '.join(recipients)
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+                smtp_server.login(sender, password)
+                smtp_server.sendmail(sender, recipients, msg.as_string())
+
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "Dataset is created."
+            }), 200
+        except:
+            subject = "Sorry, downloading mooclet datasets failed. please try again."
+            body = f'Sorry, downloading mooclet datasets failed. please try again.'
+            sender = EMAIL_USERNAME
+            recipients = [request.get_json()['email']]
+            password = EMAIL_PASSWORD
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = sender
+            msg['To'] = ', '.join(recipients)
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+                smtp_server.login(sender, password)
+                smtp_server.sendmail(sender, recipients, msg.as_string())
+            return json_util.dumps({
+                "status_code": 500, 
+                "message": "Sorry, downloading mooclet datasets failed. please try again."
+            }), 500
+        
+
+
+from bson.objectid import ObjectId
+from flask import send_file, make_response
+
+@dataarrow_apis.route("/apis/analysis/downloadArrowDataset/<id>", methods=["GET"])
+def downloadArrowDataset(id):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403 
+    
+    try:
+        dataset = Dataset.find_one({"_id": ObjectId(id)})
+
+        df = pickle.loads(dataset['dataset'])
+        print(len(df))
+        csv_string = df.to_csv(index=False)
+
+        # Create a Flask response object with the CSV data
+        response = make_response(csv_string)
+
+        # Set the headers to tell the browser to download the file as a CSV
+        response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
+        response.headers['Content-type'] = 'text/csv'
+        return response
+    except:
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": "downloading error"
+        }), 500

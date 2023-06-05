@@ -166,7 +166,7 @@ function NewStudy() {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6'>MOOClet Graph</Typography>
+                        <Typography variant='h6'>Design Graph</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <DndProvider backend={MultiBackend} options={getBackendOptions()}>

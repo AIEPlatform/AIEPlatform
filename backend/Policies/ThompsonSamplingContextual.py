@@ -116,18 +116,17 @@ class ThompsonSamplingContextual(Policy):
                     },
                     {
                         '$sort': {
-                            column_name: 1,  # Sort ascending by column A
-                            '_id': -1       # Sort descending by _id (to get the last occurrence)
+                            'timestamp': 1       # Sort descending by _id (to get the last occurrence)
                         }
                     },
                     {
                         '$group': {
                             '_id': '$' + column_name,
-                            'last_document': {'$first': '$$ROOT'}
+                            'lastDocument': {'$last': '$$ROOT'}
                         }
                     },
                     {
-                        '$replaceRoot': {'newRoot': '$last_document'}
+                        '$replaceRoot': {'newRoot': '$lastDocument'}
                     }
                 ]
 
@@ -161,7 +160,8 @@ class ThompsonSamplingContextual(Policy):
                 contextual_vars_id_dict = {}
 
                 for contextual_value in contextual_values:
-                    contextual_vars_dict[contextual_value['variableName']] = contextual_value['value']
+                    print(contextual_value['value'])
+                    contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                     contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
                 
                 current_enrolled = len(list(Interaction.find({"moocletId": self._id}))) #TODO: is it number of learners or number of observations????
@@ -201,7 +201,7 @@ class ThompsonSamplingContextual(Policy):
                 for version in all_versions:
                     independent_vars = {}
                     for contextual_var in contextual_vars_dict:
-                        independent_vars[contextual_var] = contextual_vars_dict[contextual_var]
+                        independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
                     for version2 in all_versions:
                         if version2 == version:
                             independent_vars[version2] = 1
@@ -307,7 +307,12 @@ class ThompsonSamplingContextual(Policy):
                 design_matrix = np.zeros((len(interactions_for_posterior), len(vars_list)))
                 for i in range(len(interactions_for_posterior)):
                     interaction = interactions_for_posterior[i]
-                    contextual_vars_dict = interaction['contextuals']
+                    contextual_vars_dict = {}
+
+
+                    for key, sub_dict in interaction['contextuals'].items():
+                        contextual_vars_dict[key] = sub_dict["value"]
+                        
                     independent_vars = contextual_vars_dict
                     for version in all_versions:
                         if version == interaction['treatment']['name']:
