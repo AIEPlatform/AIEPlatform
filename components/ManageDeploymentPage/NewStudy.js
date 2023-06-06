@@ -24,8 +24,8 @@ let initialData = [
         "parent": 0,
         "droppable": true,
         "isOpen": true,
-        "text": "mooclet1",
-        "name": "mooclet1",
+        "text": "assigner1",
+        "name": "assigner1",
         "policy": "UniformRandom",
         "parameters": {},
         "weight": 100
@@ -56,8 +56,8 @@ function NewStudy() {
             "droppable": true,
             "isOpen": true,
             "isOpen": true,
-            "text": `mooclet${mooclets.length + 1}`,
-            "name": `mooclet${mooclets.length + 1}`,
+            "text": `assigner${mooclets.length + 1}`,
+            "name": `assigner${mooclets.length + 1}`,
             "policy": "UniformRandom",
             "parameters": {},
             "weight": 100
@@ -193,7 +193,7 @@ function NewStudy() {
                                 )}
                             />
                         </DndProvider>
-                        <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new MOOClet</Button>
+                        <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new Assigner</Button>
                     </AccordionDetails>
                 </Accordion>
                 <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>

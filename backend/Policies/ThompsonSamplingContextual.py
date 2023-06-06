@@ -10,6 +10,7 @@ from multiprocessing import Process
 import os
 import time
 import threading
+from impute import *
 
 
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 5
@@ -143,11 +144,14 @@ class ThompsonSamplingContextual(Policy):
                             has_document = True
                             break
 
+
+                    imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
+
                     # Insert a document into the other collection if no document exists
                     if not has_document:
                         document_to_insert = {
                             "variableName": value, 
-                            'value': 1,   # TODO: impute based on a better rule.
+                            'value': imputed_value,   # TODO: impute based on a better rule.
                             'user': user,
                             'where': 'auto init', 
                             'timestamp': current_time

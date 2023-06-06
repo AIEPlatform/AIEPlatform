@@ -1,7 +1,7 @@
 deployment = 'test'
 study = 'sim'
-variable = 'test'
-num_users = 1
+variable = 'gender'
+num_users = 100
 import time
 import random
 from dataarrow import *

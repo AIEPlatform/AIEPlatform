@@ -479,6 +479,9 @@ import pandas as pd
 from flatten_json import flatten
 
 def create_df_from_mongo(study_name, deployment_name):
+
+    print(study_name)
+    print(deployment_name)
     the_deployment = Deployment.find_one({"name": deployment_name})
     the_study = Study.find_one({"name": study_name, "deploymentId": the_deployment['_id']})
     the_mooclets = list(MOOClet.find({"studyId": the_study['_id']}, {"_id": 1}))
@@ -523,8 +526,6 @@ def create_df_from_mongo(study_name, deployment_name):
 
     return df
 
-create_df_from_mongo("sim", "test")
-
 
 import pickle
 import smtplib
@@ -543,6 +544,7 @@ def create_dataset():
     else:
         try:
             df = create_df_from_mongo(study, deployment)
+
             binary_data = pickle.dumps(df)
             document = {
                 'dataset': binary_data,
@@ -568,7 +570,8 @@ def create_dataset():
                 "status_code": 200,
                 "message": "Dataset is created."
             }), 200
-        except:
+        except Exception as e:
+            print(e)
             subject = "Sorry, downloading mooclet datasets failed. please try again."
             body = f'Sorry, downloading mooclet datasets failed. please try again.'
             sender = EMAIL_USERNAME
