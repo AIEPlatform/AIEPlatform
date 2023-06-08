@@ -96,7 +96,7 @@ function VariableEditor(props) {
                 onChange={(e) => sNewVariable(e.target.value)}
                 width="100%"
             />
-            <Button onClick={handleCreateNewVariable} variant="contained" color="primary" sx={{ m: 1 }}>Add a new reward</Button>
+            <Button onClick={handleCreateNewVariable} variant="contained" color="primary" sx={{ m: 1 }}>Add a new variable</Button>
         </Paper>
     )
 }

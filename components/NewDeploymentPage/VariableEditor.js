@@ -73,7 +73,7 @@ function VariableEditor(props) {
                             { name: newVariable } // and one new item at the end
                         ]
                     );
-                    newVariable['index'] = existingVariables.length
+                    newVariable = {name: newVariable, index: existingVariables.length}
                     sSelectedVariables(
                         [
                             ...selectedVariables,
@@ -172,7 +172,7 @@ function VariableEditor(props) {
                     menu: provided => ({ ...provided, zIndex: 9999 })
                 }}
             />
-            <Button onClick={handleCreateNewVariable} variant="contained" color="primary" sx={{ m: 1 }}>Add a new reward</Button>
+            <Button onClick={handleCreateNewVariable} variant="contained" color="primary" sx={{ m: 1 }}>Add a new variable</Button>
         </Paper>
     )
 }
