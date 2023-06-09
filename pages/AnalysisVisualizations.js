@@ -60,6 +60,7 @@ export default function DataAnalysis(props) {
             }}
           />
         </Box>
+        <Typography variant="p" align="center" sx={{ mb: 3 }}>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</Typography>
       </Container>
 
       <ResponsiveMasonry

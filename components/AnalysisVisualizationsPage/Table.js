@@ -153,7 +153,7 @@ export default function BasicTable(props) {
               >
                 {
                   row.map((cell, columnIndex) => (
-                    <TableCell key={columnIndex}>{JSON.stringify(cell)}</TableCell>
+                    <TableCell key={columnIndex}>{cell}</TableCell>
                   ))
                 }
               </TableRow>
