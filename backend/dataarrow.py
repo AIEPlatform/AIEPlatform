@@ -479,9 +479,6 @@ import pandas as pd
 from flatten_json import flatten
 
 def create_df_from_mongo(study_name, deployment_name):
-
-    print(study_name)
-    print(deployment_name)
     the_deployment = Deployment.find_one({"name": deployment_name})
     the_study = Study.find_one({"name": study_name, "deploymentId": the_deployment['_id']})
     the_mooclets = list(MOOClet.find({"studyId": the_study['_id']}, {"_id": 1}))
@@ -506,7 +503,7 @@ def create_df_from_mongo(study_name, deployment_name):
             '$unwind': '$joined_data'  # Unwind the 'joined_data' array
         }, 
         {
-            '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
+            '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', "assigner": '$jojined_data.name', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
         }
     ])
 
