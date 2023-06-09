@@ -11,6 +11,7 @@ function DataDownloader() {
     const [theStudy, sTheStudy] = useState(null);
     const [theDeployment, sTheDeployment] = useState(null);
     const [email, sEmail] = useState("");
+    const [datasetName, sDatasetName] = useState("");
     useEffect(() => {
         fetch('/apis/my_deployments')
             .then(response => response.json())
@@ -38,7 +39,8 @@ function DataDownloader() {
             body: JSON.stringify({
                 study: theStudy["name"],
                 email: email,
-                deployment: theDeployment["name"]
+                deployment: theDeployment["name"], 
+                datasetName: datasetName
             })
         })
             .then(response => response.json())
@@ -77,6 +79,11 @@ function DataDownloader() {
                 <Box sx = {{mb: 3}}>
                     <Typography variant="p">Email: </Typography>
                     <Box><TextField value = {email} onChange = {(e) => sEmail(e.target.value)}></TextField></Box>
+                </Box>
+
+                <Box sx = {{mb: 3}}>
+                    <Typography variant="p">Datataset Name: </Typography>
+                    <Box><TextField value = {datasetName} onChange = {(e) => sDatasetName(e.target.value)}></TextField></Box>
                 </Box>
                 {theStudy && <Box><Button onClick={handleDownloadData}>Make a dataset snapshot to work on.</Button></Box>}
             </Container>

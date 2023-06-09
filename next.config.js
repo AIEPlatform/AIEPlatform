@@ -1,6 +1,6 @@
 const API_URL = 'http://127.0.0.1:20110';
 module.exports = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   async rewrites() {
     return [
       {

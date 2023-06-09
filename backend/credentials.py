@@ -66,6 +66,15 @@ Lock.create_index("moocletId", unique=True)
 
 
 
+from bson.objectid import ObjectId
+import pickle
+
+def getDataset(datasetId):
+    theDataset = Dataset.find_one({"_id": ObjectId(datasetId)}) # Only 
+    df = pickle.loads(theDataset['dataset'])
+    return df
+
+
 
 
 

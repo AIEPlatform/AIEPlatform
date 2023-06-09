@@ -506,7 +506,7 @@ def create_df_from_mongo(study_name, deployment_name):
             '$unwind': '$joined_data'  # Unwind the 'joined_data' array
         }, 
         {
-            '$project': {"_id": 1, "policy": '$joined_data.policy', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
+            '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
         }
     ])
 
@@ -514,7 +514,6 @@ def create_df_from_mongo(study_name, deployment_name):
     df = pd.DataFrame(list_cur)
 
     df_normalized = pd.json_normalize(df['contextuals'].apply(flatten, args = (".",)))
-
     # Concatenate the flattened DataFrame with the original DataFrame
     df = pd.concat([df.drop('contextuals', axis=1), df_normalized], axis=1)
 
@@ -522,6 +521,15 @@ def create_df_from_mongo(study_name, deployment_name):
         "treatment$timestamp": "treatment.timestamp", 
         "outcome$timestamp": "outcome.timestamp"
         })
+    
+
+    column_names_without_dot_values = [c.replace(".value", "") for c in df.columns]
+
+    print(column_names_without_dot_values)
+    column_mapping = dict(zip(df.columns, column_names_without_dot_values))
+
+    # Rename the columns
+    df = df.rename(columns=column_mapping)
         
 
     return df
@@ -536,7 +544,8 @@ def create_dataset():
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
     email = request.json['email'] if 'email' in request.json else None
-    if deployment is None or study is None or email is None:
+    dataset_name = request.json['datasetName'] if 'datasetName' in request.json else None
+    if deployment is None or study is None or email is None or dataset_name is None:
         return json_util.dumps({
             "status_code": 400,
             "message": "Please make sure deployment, study, email are provided."
@@ -545,11 +554,24 @@ def create_dataset():
         try:
             df = create_df_from_mongo(study, deployment)
 
+            the_deployment = Deployment.find_one({"name": deployment})
+            the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+
+            possible_variables = [v['name'] for v in the_study['variables']]
+
+
+            variables = [v for v in list(df.columns) if v in possible_variables]
+
+
             binary_data = pickle.dumps(df)
+            # TODO: Check if name is already used
             document = {
                 'dataset': binary_data,
                 'deployment': deployment, 
-                'study': study
+                'name': dataset_name,
+                'study': study, 
+                'variables': variables,
+                'deploymentId': Deployment.find_one({"name": deployment})['_id'],
             }
             response = Dataset.insert_one(document)
 
@@ -605,7 +627,6 @@ def downloadArrowDataset(id):
         dataset = Dataset.find_one({"_id": ObjectId(id)})
 
         df = pickle.loads(dataset['dataset'])
-        print(len(df))
         csv_string = df.to_csv(index=False)
 
         # Create a Flask response object with the CSV data
@@ -620,3 +641,45 @@ def downloadArrowDataset(id):
             "status_code": 500, 
             "message": "downloading error"
         }), 500
+    
+
+
+@dataarrow_apis.route("/apis/analysis/get_deployment_datasets", methods=["GET"])
+def get_deployment_datasets():
+    # load from params.
+    deployment = request.args.get('deployment')
+    the_deployment = Deployment.find_one({"name": deployment})
+    the_datasets = Dataset.find({"deploymentId": the_deployment['_id']}, {'dataset': 0})
+
+    return json_util.dumps(
+        {
+        "status_code": 200,
+        "datasets": the_datasets
+        }
+    ), 200
+        
+
+from Analysis.basic_reward_summary_table import basic_reward_summary_table
+
+@dataarrow_apis.route("/apis/analysis/basic_reward_summary_table", methods = ["POST"])
+def basic_reward_summary_table_api():
+    theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
+    
+    selected_variables = request.json['selectedVariables'] if 'selectedVariables' in request.json else None
+ 
+    if theDatasetId is None or selected_variables is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure the_study_basic_info, selected_variables are provided."
+        }), 400
+    else:
+        df = getDataset(theDatasetId)
+        result_df = basic_reward_summary_table(df, selected_variables)
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "Table returned.",
+            "result": {
+                "columns": list(result_df.columns), 
+                "rows": [tuple(r) for r in result_df.to_numpy()]
+            }
+        }), 200
