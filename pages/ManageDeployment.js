@@ -15,6 +15,7 @@ function ManageDeployment() {
     const [myDeployments, sMyDeployments] = useState([]);
     const [theStudies, sTheStudies] = useState([]);
     const [theStudy, sTheStudy] = useState(null);
+    const [deploymentName, sDeploymentName] = useState(null);
     useEffect(() => {
         fetch('/apis/my_deployments')
             .then(response => response.json())
@@ -28,6 +29,7 @@ function ManageDeployment() {
             .then(response => response.json())
             .then(data => {
                 sTheStudies([newStudy].concat(data["studies"]));
+                sDeploymentName(option['name'])
             });
     }
 
@@ -58,7 +60,7 @@ function ManageDeployment() {
                 </Box>
 
             </Container>
-            {theStudy && theStudy['name'] == "Create New Study" && <NewStudy></NewStudy>}
+            {theStudy && theStudy['name'] == "Create New Study" && <NewStudy deploymentName={deploymentName}></NewStudy>}
                 {theStudy && theStudy['name'] !== "Create New Study" && "Edit existing studies is not supported yet."}
         </Layout>
     );

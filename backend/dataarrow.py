@@ -103,12 +103,15 @@ def create_study():
     mooclets = request.json['mooclets']
     versions = request.json['versions']
     variables = request.json['variables']
+    deploymentName = request.json['deploymentName']
 
-    deploymentId = '6470c7ae9c36a48e2d5149cb'
+    the_deployment = Deployment.find_one({'name': deploymentName})
+
+    # TODO: Check if the deployment exists or not.
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
-    doc = Study.find_one({'deploymentId': ObjectId(deploymentId), 'name': study_name})
+    doc = Study.find_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name})
     if doc is not None: 
         return json_util.dumps({
             "status_code": 400, 
@@ -120,7 +123,7 @@ def create_study():
             session.start_transaction()
             the_study = {
                 'name': study_name,
-                'deploymentId': ObjectId(deploymentId),
+                'deploymentId': the_deployment['_id'],
                 'versions': versions,
                 'variables': variables
             }

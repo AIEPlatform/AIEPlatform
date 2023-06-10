@@ -1,6 +1,6 @@
 deployment = 'test'
-study = 'sim'
-variable = 'gender'
+study = '2 variables'
+variables = ['isHappy', 'wantToTravel']
 num_users = 100
 import time
 import random
@@ -41,14 +41,15 @@ def one_user(user):
                     value = random.choice([0, 1])
                     get_reward(deployment, study, user, value)
                     users_status[user] = "no_arm"
-        # else:
-        # contextual
-        new_value = random.choice([0, 1])
-        print(give_variable_value(deployment, study, variable, user, new_value))
+        else:
+            # contextual
+            for variable in variables:
+                new_value = random.choice([0, 1])
+                print(give_variable_value(deployment, study, variable, user, new_value))
 
 
 
-
+Interaction.delete_many({})
 Lock.delete_many({})
 RewardLog.delete_many({})
 TreatmentLog.delete_many({})

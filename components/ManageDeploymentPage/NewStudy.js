@@ -1,13 +1,13 @@
-import { React, useState } from 'react';
-import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } from '@mui/material';
+import { React, useState, useRef, use, useEffect } from 'react';
+import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../NewDeploymentPage/VariableEditor';
 import VersionEditor from '../NewMOOCletPage/VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Layout from '../layout';
-import Head from 'next/head';
+import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
 
@@ -32,9 +32,8 @@ let initialData = [
     }
 ]
 
-function NewStudy() {
-    const [deploymentName, sDeploymentName] = useState("test2");
-    const [deploymentDescription, sDeploymentDescription] = useState("test2 description");
+function NewStudy(props) {
+    const deploymentName = props.deploymentName;
     const [studyName, sStudyName] = useState("");
     const [variables, sVariables] = useState([
     ])
@@ -49,20 +48,26 @@ function NewStudy() {
 
     const [idToEdit, sIdToEdit] = useState(null);
 
+
+    const treeRef = useRef(null);
+    const handleOpen = (nodeId) => treeRef.current.open(nodeId);
+
     const addMOOClet = () => {
+        let newId = mooclets.length + 1;
         let newMOOClet = {
-            "id": mooclets.length + 1,
+            "id": newId,
             "parent": 1,
             "droppable": true,
             "isOpen": true,
-            "isOpen": true,
-            "text": `assigner${mooclets.length + 1}`,
-            "name": `assigner${mooclets.length + 1}`,
+            "text": `assigner${newId}`,
+            "name": `assigner${newId}`,
             "policy": "UniformRandom",
             "parameters": {},
             "weight": 100
         }
         sMooclets([...mooclets, newMOOClet]);
+
+        handleOpen(newId);
     };
 
     const handleMOOCletModalClose = () => {
@@ -117,8 +122,8 @@ function NewStudy() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                "deploymentName": deploymentName, // TODO: change to "deploymentId
                 "studyName": studyName,
-                "description": deploymentDescription,
                 "mooclets": mooclets,
                 "variables": variables,
                 "versions": versions
@@ -130,6 +135,11 @@ function NewStudy() {
                 alert("Study created successfully!");
             })
     };
+
+    useEffect(() => {
+        handleOpen(1);
+        // TODO: Think about how to open all the mooclets from cookies.
+    });
 
     return (
         <Container sx={{mt: 4}}>
@@ -172,24 +182,29 @@ function NewStudy() {
                         <DndProvider backend={MultiBackend} options={getBackendOptions()}>
                             {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
                             <Tree
+                                ref={treeRef}
                                 tree={mooclets}
                                 rootId={0}
                                 onDrop={handleDrop}
                                 initialOpen={true}
                                 sort={false}
                                 render={(node, { depth, isOpen, onToggle }) => (
-                                    <div style={{ marginLeft: depth * 10 }}>
+                                    <Box style={{ marginLeft: depth * 10 }}>
                                         {node.droppable && (
                                             <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
                                         )}
-                                        {node.name}: <button onClick={() => {
+                                        <Typography sx={{m: 0.5}}variant='span' component='strong'>{node.name}</Typography>
+                                        <Typography sx={{m: 0.5}} variant='span'>Weight:</Typography>
+                                        <Input className="assigner-weight-input" type="number" variant="standard" onChange={(event) => handleMOOCletWeightChange(event, node.id)} />
+                                        <Button onClick={() => {
                                             sIdToEdit(node.id);
                                             sMoocletModalOpen(true);
-                                        }}> Modify</button>
-                                        Weights: <input type="number" value={node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)}></input> <button onClick={() => {
+                                        }}><EditIcon/></Button>
+                                        
+                                        <Button onClick={() => {
                                             handleMOOCletRemove(node.id)
-                                        }}> Remove</button>
-                                    </div>
+                                        }} color = 'error'> <CloseIcon/></Button>
+                                    </Box>
                                 )}
                             />
                         </DndProvider>
