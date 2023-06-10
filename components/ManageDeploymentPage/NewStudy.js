@@ -1,7 +1,7 @@
 import { React, useState, useRef, use, useEffect } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../NewDeploymentPage/VariableEditor';
-import VersionEditor from '../NewMOOCletPage/VersionEditor';
+import VersionEditor from '../ManageDeploymentPage/VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
