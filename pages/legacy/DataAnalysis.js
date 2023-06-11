@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Container, Typography } from '@mui/material';
-import Layout from '../components/layout';
+import Layout from '../../components/layout';
 import Head from 'next/head';
-import SimpleLineChart from "../components/DataAnalysisPage/SimpleLineChart";
-import Table from "../components/DataAnalysisPage/Table";
+import SimpleLineChart from "../components/legacy/DataAnalysisPage/SimpleLineChart";
+import Table from "../components/legacy/DDataAnalysisPage/Table";
 import { Grid } from '@mui/material';
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
 

@@ -1,15 +1,15 @@
 import { React, useState } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } from '@mui/material';
-import VariableEditor from '../components/NewMOOCletPage/VariableEditor';
-import MoocletNameEditor from '../components/NewMOOCletPage/MoocletNameEditor';
-import VersionEditor from '../components/NewMOOCletPage/VersionEditor';
-import PolicyEditor from '../components/NewMOOCletPage/PolicyEditor';
-import ChoosePolicyGroup from '../components/NewMOOCletPage/ChoosePolicyGroup';
+import VariableEditor from '../components/legacy/DNewMOOCletPage/VariableEditor';
+import MoocletNameEditor from '../components/legacy/DNewMOOCletPage/MoocletNameEditor';
+import VersionEditor from '../components/legacy/DNewMOOCletPage/VersionEditor';
+import PolicyEditor from '../components/legacy/DNewMOOCletPage/PolicyEditor';
+import ChoosePolicyGroup from '../components/legacy/DNewMOOCletPage/ChoosePolicyGroup';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Layout from '../components/layout';
+import Layout from '../../components/layout';
 import Head from 'next/head';
 
 

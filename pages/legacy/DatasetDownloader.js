@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Container, Paper, Typography, Box, TextField } from "@mui/material";
 import Select from 'react-select'
-import Layout from '../components/layout';
+import Layout from '../../components/layout';
 import Head from 'next/head';
 
 function ChooseMOOClet(props) {

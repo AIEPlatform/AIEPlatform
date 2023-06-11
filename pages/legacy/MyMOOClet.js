@@ -5,8 +5,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Select from 'react-select'
-import VersionEditor from '../components/MyMOOCletPage/VersionEditor';
-import Layout from '../components/layout';
+import VersionEditor from '../components/legacy/MyMOOCletPage/VersionEditor';
+import Layout from '../../components/layout';
 import Head from 'next/head';
 
 function ChooseMOOClet(props) {
