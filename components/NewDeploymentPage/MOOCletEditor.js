@@ -68,7 +68,7 @@ function MOOCletEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy</Typography>
-                <Select
+                {mooclet.dbId == undefined && <Select
                     name="policies"
                     options={availablePolicies}
                     className="basic-multi-select"
@@ -79,15 +79,17 @@ function MOOCletEditor(props) {
                         // Fixes the overlapping problem of the component
                         menu: provided => ({ ...provided, zIndex: 9999 })
                     }}
-                />
+                />}
+
+                {mooclet.dbId !== undefined && <Typography>{mooclet.policy}</Typography>}
             </Box>
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy Parameters</Typography>
                 {mooclet.policy === 'UniformRandom' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
-                {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId}></WeightedRandom>}
+                {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
                 {/* {mooclet.policy === 'ts_configurable' && <TSConfigurable versions={versions} policyIndex={policyIndex} policies={policies} sPolicies={sPolicies} variables={variables}></TSConfigurable>} */}
-                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual versions={versions} mooclets={mooclets} sMooclets = {sMooclets} myId={myId} variables={variables}></TSContextual>}
+                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
             </Box>
         </Paper>
     );

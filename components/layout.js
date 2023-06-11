@@ -16,8 +16,17 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import Link from 'next/link';
+import Button from '@mui/material/Button';
 
-const drawerWidth = 240;
+import AddIcon from '@mui/icons-material/Add';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import DatasetIcon from '@mui/icons-material/Dataset';
+import InsightsIcon from '@mui/icons-material/Insights';
+import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption';
+import LogoutIcon from '@mui/icons-material/Logout';
+
+
+const drawerWidth = 250;
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
     ({ theme, open }) => ({
@@ -76,17 +85,29 @@ export default function Layout({ children }) {
         setOpen(false);
     };
 
-    const links = ['New Deployment', 'Manage Deployment', 'Data Workshop', 'Analysis & Visualizations', 'New MOOClet', 'My MOOClet', 'MOOClet Dataset Downloader', 'MOOClet Dataset Workshop', 'MOOClet Data Analysis', 'Multiple MOOClet Datasets Downloader (local only)'];
-    const linkURLs = ['/NewDeployment', '/ManageDeployment', '/DataWorkshop', '/AnalysisVisualizations', '/NewMOOClet', '/MyMOOClet', '/DatasetDownloader', '/DatasetWorkshop', '/DataAnalysis', '/MultipleDatasetDownloader'];
+    const handleLogout = () => {
+        fetch('/apis/auth/logout')
+            .then(res => res.json())
+            .then(data => {
+                if (data['status_code'] === 200) {
+                    sLoggedIn(false);
+                }
+            })
+    }
+
+
+    const links = ['New Deployment', 'Manage Deployment', 'Data Workshop', 'Analysis & Visualizations'];
+    const linkURLs = ['/NewDeployment', '/ManageDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
+    const icons = [<AddIcon />, <AutoFixHighIcon />, <DatasetIcon />, <InsightsIcon />]
 
     useEffect(() => {
         fetch('/apis/checkLoginedOrNot')
-        .then(res => res.json())
-        .then(data => {
-            if(data['status_code'] === 200) {
-                sLoggedIn(true);
-            }
-        })
+            .then(res => res.json())
+            .then(data => {
+                if (data['status_code'] === 200) {
+                    sLoggedIn(true);
+                }
+            })
     }, []);
 
     return (
@@ -126,19 +147,36 @@ export default function Layout({ children }) {
                         {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
                     </IconButton>
                 </DrawerHeader>
+                <Typography variant='h6' style={{ textAlign: "center" }}>My experiments</Typography>
                 <Divider />
                 <List>
                     {links.map((text, index) => (
-                        <Link key = {index} href={linkURLs[index]} style={{ textDecoration: 'none' }}>
-                        <ListItem key={index} disablePadding>
-                            <ListItemButton>
-                                {links[index]}
-                            </ListItemButton>
-                        </ListItem>
+                        <Link key={index} href={linkURLs[index]} style={{ textDecoration: 'none', color: 'black' }}>
+                            <ListItem key={index} disablePadding>
+                                <ListItemButton>
+                                    {icons[index]} <Typography sx={{ ml: 1 }}>{links[index]}</Typography>
+                                </ListItemButton>
+                            </ListItem>
                         </Link>
                     ))}
                 </List>
                 <Divider />
+                <Typography variant='h6' style={{ textAlign: "center" }}>My account</Typography>
+                <Box>
+                    <Link href='/changePassword' style={{ textDecoration: 'none', color: 'black' }}>
+                        <ListItem key="change-password" disablePadding>
+                            <ListItemButton>
+                                <EnhancedEncryptionIcon/> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
+                            </ListItemButton>
+                        </ListItem>
+                    </Link>
+
+                    <ListItem key="logout" onClick={() => handleLogout()} disablePadding>
+                            <ListItemButton>
+                                <LogoutIcon/> <Typography sx={{ ml: 1 }}>Logout</Typography>
+                            </ListItemButton>
+                        </ListItem>
+                </Box>
             </Drawer>
             <Main open={open}>
                 <DrawerHeader />

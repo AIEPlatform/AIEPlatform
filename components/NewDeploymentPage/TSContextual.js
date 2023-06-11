@@ -54,7 +54,7 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
-        console.log(mooclet['parameters']['coef_mean'])
+        console.log(mooclet['parameters'])
         return (mooclet['parameters']['coef_mean'] || []).map((cell, index) => (
             <input
                 key={index}

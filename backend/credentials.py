@@ -47,6 +47,7 @@ Variable = db['variable']
 MultipleDatasets = db['multipleDatasets']
 MultipleDatasetPieces = db['multipleDatasetPieces']
 Lock = db['lock']
+User = db['user']
 
 TreatmentLog = db['treatmentLog']
 RewardLog = db['rewardLog']
@@ -62,6 +63,7 @@ Interaction.create_index([('moocletId', pymongo.ASCENDING), ('user', pymongo.ASC
 
 Variable.create_index("name", unique=True)
 Lock.create_index("moocletId", unique=True)
+User.create_index("email", unique=True)
 
 
 

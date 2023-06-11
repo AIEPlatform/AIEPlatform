@@ -4,6 +4,7 @@ import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
 function VersionEditor(props) {
     let inputFields = props.inputFields;
     let sInputFields = props.sInputFields;
+    let allowVersionNameChange = props.allowVersionNameChange;
 
     const handleFormChange = (index, event) => {
         let data = [...inputFields];
@@ -25,7 +26,7 @@ function VersionEditor(props) {
     const removeFields = (index) => {
         let data = [...inputFields];
         data.splice(index, 1)
-        sInputFields(data)
+        sInputFields(data);
     }
 
     return (

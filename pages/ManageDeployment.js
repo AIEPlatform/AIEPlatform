@@ -3,7 +3,7 @@ import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } f
 import Layout from '../components/layout';
 import Head from 'next/head';
 import Select from 'react-select';
-import NewStudy from '../components/ManageDeploymentPage/NewStudy'
+import StudyEditor from '../components/ManageDeploymentPage/StudyEditor';
 
 
 const newStudy = {
@@ -33,6 +33,10 @@ function ManageDeployment() {
             });
     }
 
+    const handleSelectStudy = (option) => {
+        sTheStudy(option);
+    }
+
     return (
         <Layout>
             <Head><title>Manage Deployment - DataArrow</title></Head>
@@ -55,13 +59,15 @@ function ManageDeployment() {
                         getOptionLabel = {(option) => option["name"]}
                         getOptionValue = {(option) => option["_id"]["$oid"]}
                         value={theStudy}
-                        onChange = {(option) => sTheStudy(option)}
+                        onChange = {(option) => handleSelectStudy(option)}
                     />
                 </Box>
 
             </Container>
-            {theStudy && theStudy['name'] == "Create New Study" && <NewStudy deploymentName={deploymentName}></NewStudy>}
-                {theStudy && theStudy['name'] !== "Create New Study" && "Edit existing studies is not supported yet."}
+            {/* {theStudy && theStudy['name'] == "Create New Study" && <NewStudy deploymentName={deploymentName}></NewStudy>}
+                {theStudy && theStudy['name'] !== "Create New Study" && "Edit existing studies is not supported yet."} */}
+
+            {theStudy && <StudyEditor deploymentName={deploymentName} theStudy={theStudy}></StudyEditor>}
         </Layout>
     );
 }

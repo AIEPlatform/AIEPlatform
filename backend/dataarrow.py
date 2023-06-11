@@ -24,6 +24,7 @@ def convert_front_list_mooclets_into_tree(mooclets):
 
     # convert it into a tree.
     #TODO: tell us at least one mooclet is needed.
+    mooclets.sort(key=lambda x: x['id'], reverse=False)
     nodes = {}
 
     # Step 2: Add each node to the dictionary
@@ -54,6 +55,9 @@ def convert_front_list_mooclets_into_tree(mooclets):
             mooclet.pop(key, None)
         if 'children' not in mooclet:
             mooclet['children'] = []
+        if 'dbId' in mooclet:
+            mooclet['_id'] = mooclet['dbId']
+            del mooclet['dbId']
         for child in mooclet['children']: 
             clean_mooclet_object_helper(child)
 
@@ -446,9 +450,11 @@ def create_deployment():
 
 # {"studyName":"sim","description":"test2 description","mooclets":[{"id":1,"parent":0,"droppable":true,"isOpen":true,"text":"mooclet1","name":"mooclet1","policy":"ThompsonSamplingContextual","parameters":{"batch_size":1,"variance_a":1,"variance_b":5,"uniform_threshold":1,"precision_draw":1,"updatedPerMinute":0,"include_intercept":true,"coef_cov":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"coef_mean":[0,0,0,0],"regressionFormulaItems":[[{"name":"test","index":0}],[{"name":"version1","content":"v1"}],[{"name":"test","index":0},{"name":"version1","content":"v1"}]]},"weight":100}],"variables":[{"name":"test","index":0}],"versions":[{"name":"version1","content":"v1"},{"name":"version2","content":"v2"}]}
 
-def convert_mooclet_tree_to_list(mooclet, myId, parentId, mooclet_list):
+def convert_mooclet_tree_to_list(mooclet, parentId, mooclet_list):
+    the_id = len(mooclet_list) + 1
     mooclet_list.append({
-        "id": myId,
+        "id": the_id,
+        "dbId": mooclet["_id"], # we need this to update mooclet.
         "parent": parentId,
         "droppable": True,
         "isOpen": True,
@@ -460,19 +466,17 @@ def convert_mooclet_tree_to_list(mooclet, myId, parentId, mooclet_list):
         "isConsistent": mooclet["isConsistent"] if "isConsistent" in mooclet else None,
         "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
     })
-    new_id = myId
     for child in mooclet["children"]:
-        new_id += 1
         child_mooclet = MOOClet.find_one({"_id": child}, {'createdAt': 0})
-        convert_mooclet_tree_to_list(child_mooclet, new_id, myId, mooclet_list)
+        convert_mooclet_tree_to_list(child_mooclet, the_id, mooclet_list)
 
 
 def build_json_for_study(studyId):
     the_study = Study.find_one({"_id": studyId})
     the_root_mooclet = MOOClet.find_one({"_id": the_study["rootMOOClet"]}, {'createdAt': 0})
     mooclet_list = []
-    convert_mooclet_tree_to_list(the_root_mooclet, 1, 0, mooclet_list)
-    return
+    convert_mooclet_tree_to_list(the_root_mooclet, 0, mooclet_list)
+    return mooclet_list
 
 # build_json_for_study(ObjectId("647a661c7c9b18cd1e4312d6"))
 
@@ -683,3 +687,139 @@ def basic_reward_summary_table_api():
                 "rows": [tuple(r) for r in result_df.to_numpy()]
             }
         }), 200
+    
+
+
+# TODO: Important: loading existing study.
+@dataarrow_apis.route("/apis/load_existing_study", methods = ["GET"])
+def load_existing_study():
+    # load from params.
+    deployment = request.args.get('deployment') # Name
+    study = request.args.get('study') # Name
+    the_deployment = Deployment.find_one({"name": deployment})
+    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+    studyName = the_study['name'] # Note that we don't allow study name to be changed.
+    variables = the_study['variables']
+    versions = the_study['versions']
+    mooclets = build_json_for_study(the_study['_id'])
+    return json_util.dumps(
+        {
+        "status_code": 200,
+        "studyName": studyName,
+        "variables": variables,
+        "versions": versions, 
+        "mooclets": mooclets
+        }
+    ), 200
+
+
+
+
+def isExistingMOOClet(mooclet):
+    return '_id' in mooclet
+
+def modify_mooclet(mooclet, study_id, session):
+    # Modify or Create
+    print(mooclet)
+    time = datetime.datetime.utcnow()
+    my_children = []
+    for child in mooclet['children']:
+        child_mooclet_id = modify_mooclet(child, study_id, session)
+        my_children.append(child_mooclet_id)
+
+    if isExistingMOOClet(mooclet):
+        # update
+        print("bad")
+        # print(mooclet)
+        print(MOOClet.find_one({'_id': ObjectId(mooclet['_id']['$oid'])}))
+        MOOClet.update_one({'_id': ObjectId(mooclet['_id']['$oid'])}, {
+            "$set": {
+                "name": mooclet['name'],
+                "policy": mooclet['policy'],
+                "parameters": mooclet['parameters'],
+                "studyId": study_id,
+                "isConsistent": False, 
+                "autoZeroPerMinute": False, 
+                "children": my_children, 
+                "weight": float(mooclet['weight']), 
+                "modifiedAt": time
+            }
+        }, session=session)
+        return ObjectId(mooclet['_id']['$oid'])
+    else:
+        new_mooclet = {
+            "name": mooclet['name'],
+            "policy": mooclet['policy'],
+            "parameters": mooclet['parameters'],
+            "studyId": study_id,
+            "isConsistent": False, 
+            "autoZeroPerMinute": False, 
+            "children": my_children, 
+            "weight": float(mooclet['weight']), 
+            "createdAt": time
+        }
+        response = MOOClet.insert_one(new_mooclet, session=session)
+        print(response.inserted_id)
+        return response.inserted_id
+
+@dataarrow_apis.route("/apis/modify_existing_study", methods = ["PUT"])
+def modify_existing_study():
+    # load from request body.
+    deployment = 'deployment' in request.json and request.json['deployment'] or None # Name
+    study = 'study' in request.json and request.json['study'] or None # Name
+    mooclets = request.json['mooclets']
+    versions = request.json['versions']
+    variables = request.json['variables']
+
+    if deployment is None or study is None or mooclets is None or versions is None or variables is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure the deployment, study, mooclets, versions, variables are provided."
+        }), 400
+    
+    the_deployment = Deployment.find_one({"name": deployment})
+    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+            Study.update_one({'_id': the_study['_id']}, {'$set': {
+                'versions': versions, 
+                'variables': variables
+                }}, session=session)
+            
+
+            designer_tree = convert_front_list_mooclets_into_tree(mooclets)
+
+            print(designer_tree)
+            modify_mooclet(designer_tree, the_study['_id'], session=session)
+
+            session.commit_transaction()
+        except Exception as e:
+            print(e)
+            session.abort_transaction()
+            print("Transaction rolled back!")
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Not successful, please try again later."
+            }), 500
+    return json_util.dumps(
+        {
+        "status_code": 200,
+        "message": "Study is modified.", 
+        "temp": designer_tree
+        }
+    ), 200
+
+
+
+# mooclets = [{"id":5,"parent":3,"droppable": True,"isOpen":True,"text":"assigner5","name":"assigner5","policy":"UniformRandom","parameters":{},"weight":100},{"id":4,"parent":2,"droppable":True,"isOpen":True,"text":"assigner4","name":"assigner4","policy":"UniformRandom","parameters":{},"weight":100},{"id":1,"dbId":{"$oid":"64851be85d7ca8192b62f4de"},"parent":0,"droppable":True,"isOpen":True,"text":"assigner1","name":"assigner1","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False},{"id":2,"dbId":{"$oid":"64851be75d7ca8192b62f4dc"},"parent":1,"droppable":True,"isOpen":True,"text":"assigner2","name":"assigner2","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False},{"id":3,"dbId":{"$oid":"64851be75d7ca8192b62f4dd"},"parent":1,"droppable":True,"isOpen":True,"text":"assigner3","name":"assigner3","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False}]
+
+test_result = build_json_for_study(ObjectId('64851c9ade65bd317a3715d1'))
+
+temp = []
+for mooclet in test_result:
+    temp.append({"id": mooclet['id'], "parent": mooclet['parent'], "name": mooclet['name']})
+
+
+print(temp)

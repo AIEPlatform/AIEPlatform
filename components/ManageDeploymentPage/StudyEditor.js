@@ -1,6 +1,6 @@
 import { React, useState, useRef, use, useEffect } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
-import VariableEditor from '../NewDeploymentPage/VariableEditor';
+import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import VersionEditor from '../ManageDeploymentPage/VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
+import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
 
 import {
     Tree,
@@ -18,40 +19,36 @@ import {
 } from "@minoru/react-dnd-treeview";
 import { DndProvider } from "react-dnd";
 
-let initialData = [
-    {
-        "id": 1,
-        "parent": 0,
-        "droppable": true,
-        "isOpen": true,
-        "text": "assigner1",
-        "name": "assigner1",
-        "policy": "UniformRandom",
-        "parameters": {},
-        "weight": 100
-    }
-]
+function StudyEditor(props) {
 
-function NewStudy(props) {
+    let theStudy = props.theStudy;
+
+    let designGraph = [
+        {
+            "id": 1,
+            "parent": 0,
+            "droppable": true,
+            "isOpen": true,
+            "text": "assigner1",
+            "name": "assigner1",
+            "policy": "UniformRandom",
+            "parameters": {},
+            "weight": 100
+        }
+    ]
+
+
+    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study.
     const deploymentName = props.deploymentName;
     const [studyName, sStudyName] = useState("");
-    const [variables, sVariables] = useState([
-    ])
-
-    const [versions, sVersions] = useState([
-    ])
-
-    const [mooclets, sMooclets] = useState(initialData);
+    const [variables, sVariables] = useState([])
+    const [versions, sVersions] = useState([])
+    const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
-
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
-
     const [idToEdit, sIdToEdit] = useState(null);
-
-
     const treeRef = useRef(null);
     const handleOpen = (nodeId) => treeRef.current.open(nodeId);
-
     const addMOOClet = () => {
         let newId = mooclets.length + 1;
         let newMOOClet = {
@@ -136,15 +133,66 @@ function NewStudy(props) {
             })
     };
 
+
+
+    useEffect(() => {
+        for(let i = 0; i < mooclets.length; i++) {
+            mooclets[i].parameters = assignerHandleVersionOrVariableDeletion(mooclets[i].policy, mooclets[i].parameters, versions, variables);
+        }
+        sMooclets(mooclets);
+        console.log(mooclets);
+    }, [variables, versions]) //TO Improve: how to do it only when variables or versions deletion?
+
     useEffect(() => {
         handleOpen(1);
         // TODO: Think about how to open all the mooclets from cookies.
-    });
+        if(theStudy['_id']['$oid'] == 1998) {
+            // TODO: Now we just make them start from empty. But in the future we should allow people to make progress on unfinished study set up!
+            sStatus(1);
+        }
+        else {
+            fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                sStudyName(data['studyName']);
+                sVariables(data['variables']);
+                sVersions(data['versions']);
+                sMooclets(data['mooclets']);
+                console.log(data['mooclets'])
+                sStatus(2);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+        }
+    }, [theStudy]);
+
+    const handleModifyStudy = () => {
+        fetch('/apis/modify_existing_study', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "deployment": deploymentName, // TODO: change to "deploymentId
+                "study": studyName,
+                "mooclets": mooclets,
+                "variables": variables,
+                "versions": versions
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                alert("Study created successfully!");
+            })
+    };
 
     return (
         <Container sx={{mt: 4}}>
             <Box>
-                <TextField sx={{ mb: 3 }} label="Study name" value={studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>
+                {status === 1 && <TextField sx={{ mb: 3 }} label="Study name" value={studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>}
                 <Accordion>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
@@ -167,7 +215,7 @@ function NewStudy(props) {
                         <Typography variant='h6'>Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <VersionEditor inputFields={versions} sInputFields={sVersions} />
+                        <VersionEditor allowVersionNameChange={status === 1} inputFields={versions} sInputFields={sVersions} />
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -195,7 +243,7 @@ function NewStudy(props) {
                                         )}
                                         <Typography sx={{m: 0.5}}variant='span' component='strong'>{node.name}</Typography>
                                         <Typography sx={{m: 0.5}} variant='span'>Weight:</Typography>
-                                        <Input className="assigner-weight-input" type="number" variant="standard" onChange={(event) => handleMOOCletWeightChange(event, node.id)} />
+                                        <Input className="assigner-weight-input" type="number" variant="standard" value = {node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)} />
                                         <Button onClick={() => {
                                             sIdToEdit(node.id);
                                             sMoocletModalOpen(true);
@@ -211,7 +259,8 @@ function NewStudy(props) {
                         <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new Assigner</Button>
                     </AccordionDetails>
                 </Accordion>
-                <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>
+                {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>}
+                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study.</Button>}
             </Box>
             <Modal
                 open={moocletModalOpen}
@@ -228,4 +277,4 @@ function NewStudy(props) {
 }
 
 
-export default NewStudy;
+export default StudyEditor;
