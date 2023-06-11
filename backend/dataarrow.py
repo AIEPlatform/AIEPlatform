@@ -810,16 +810,3 @@ def modify_existing_study():
         "temp": designer_tree
         }
     ), 200
-
-
-
-# mooclets = [{"id":5,"parent":3,"droppable": True,"isOpen":True,"text":"assigner5","name":"assigner5","policy":"UniformRandom","parameters":{},"weight":100},{"id":4,"parent":2,"droppable":True,"isOpen":True,"text":"assigner4","name":"assigner4","policy":"UniformRandom","parameters":{},"weight":100},{"id":1,"dbId":{"$oid":"64851be85d7ca8192b62f4de"},"parent":0,"droppable":True,"isOpen":True,"text":"assigner1","name":"assigner1","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False},{"id":2,"dbId":{"$oid":"64851be75d7ca8192b62f4dc"},"parent":1,"droppable":True,"isOpen":True,"text":"assigner2","name":"assigner2","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False},{"id":3,"dbId":{"$oid":"64851be75d7ca8192b62f4dd"},"parent":1,"droppable":True,"isOpen":True,"text":"assigner3","name":"assigner3","policy":"UniformRandom","parameters":{},"weight":100,"isConsistent":False,"autoZeroPerMinute":False}]
-
-test_result = build_json_for_study(ObjectId('64851c9ade65bd317a3715d1'))
-
-temp = []
-for mooclet in test_result:
-    temp.append({"id": mooclet['id'], "parent": mooclet['parent'], "name": mooclet['name']})
-
-
-print(temp)
