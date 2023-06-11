@@ -196,7 +196,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
     try:
         mooclet = create_mooclet_instance(the_mooclet)
         version_to_show = mooclet.choose_arm(user, where, other_information)
-        
+
+        print(version_to_show)
         if DEBUG:
             end_time = time.time()
             execution_time = end_time - start_time

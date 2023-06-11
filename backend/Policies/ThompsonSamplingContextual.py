@@ -11,6 +11,8 @@ import os
 import time
 import threading
 from impute import *
+import traceback
+import sys
 
 
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 5
@@ -245,7 +247,9 @@ class ThompsonSamplingContextual(Policy):
             print(f'{user} gets a treatment...')
             return lucky_version
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
+            # or
+            print(sys.exc_info()[2])
             return None
         
     def get_reward(self, user, value, where, other_information):

@@ -21,33 +21,32 @@ for user in range(1, num_users + 1):
 def one_user(user):
     while True:
         time.sleep(1) # every 2 seconds I pick a random user, assign arm or send reward.
-        # number = random.random()
-        # if number < 0.5: 
-        #     pass
-        # elif number >= 0.5 and number < 0.95:
-        #     if users_status[user] == "no_arm":
-        #         if random.random() < 0.9:
-        #             assign_treatment(deployment, study, user)
-        #             users_status[user] = "arm_assigned"
-        #         else:
-        #             value = random.choice([0, 1])
-        #             get_reward(deployment, study, user, value)
-        #             users_status[user] = "no_arm"
-        #     else:
-        #         if random.random() < 0.3:
-        #             assign_treatment(deployment, study, user)
-        #             users_status[user] = "arm_assigned"
-        #         else:
-        #             value = random.choice([0, 1])
-        #             get_reward(deployment, study, user, value)
-        #             users_status[user] = "no_arm"
-        # else:
-        #     # contextual
-        #     for variable in variables:
-        #         new_value = random.choice([0, 1])
-        #         print(give_variable_value(deployment, study, variable, user, new_value))
+        number = random.random()
+        if number < 0.5: 
+            pass
+        elif number >= 0.5 and number < 0.95:
+            if users_status[user] == "no_arm":
+                if random.random() < 0.9:
+                    assign_treatment(deployment, study, user)
+                    users_status[user] = "arm_assigned"
+                else:
+                    value = random.choice([0, 1])
+                    get_reward(deployment, study, user, value)
+                    users_status[user] = "no_arm"
+            else:
+                if random.random() < 0.3:
+                    assign_treatment(deployment, study, user)
+                    users_status[user] = "arm_assigned"
+                else:
+                    value = random.choice([0, 1])
+                    get_reward(deployment, study, user, value)
+                    users_status[user] = "no_arm"
+        else:
+            # contextual
+            for variable in variables:
+                new_value = random.choice([0, 1])
+                print(give_variable_value(deployment, study, variable, user, new_value))
 
-        # assign_treatment(deployment, study, user)
 
 
 
