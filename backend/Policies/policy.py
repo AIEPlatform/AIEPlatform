@@ -28,7 +28,6 @@ class Policy(ABC):
 		
 	def get_consistent_assignment(self, user, where):
 		if not self.isConsistent: return None
-
 		last_interaction = self.get_latest_interaction(user, where)
 		if last_interaction is None:
 			return None

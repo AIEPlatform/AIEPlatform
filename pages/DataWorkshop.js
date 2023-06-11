@@ -3,8 +3,6 @@ import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Ch
 import Layout from '../components/layout';
 import Head from 'next/head';
 import Select from 'react-select';
-import NewStudy from '../components/ManageDeploymentPage/NewStudy'
-
 function DataDownloader() {
     const [myDeployments, sMyDeployments] = useState([]);
     const [theStudies, sTheStudies] = useState([]);
