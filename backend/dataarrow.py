@@ -729,7 +729,7 @@ def load_existing_study():
     studyName = the_study['name'] # Note that we don't allow study name to be changed.
     variables = the_study['variables']
     versions = the_study['versions']
-    the_study['rewardInformation']
+    rewardInformation = the_study['rewardInformation'] if 'rewardInformation' in the_study else {"name": "reward", "min": 0, "max": 1}
     mooclets = build_json_for_study(the_study['_id'])
     return json_util.dumps(
         {
@@ -738,7 +738,7 @@ def load_existing_study():
         "variables": variables,
         "versions": versions, 
         "mooclets": mooclets,
-        "rewardInformation": the_study['rewardInformation']
+        "rewardInformation": rewardInformation
         }
     ), 200
 
