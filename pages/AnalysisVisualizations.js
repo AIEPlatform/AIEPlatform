@@ -3,7 +3,7 @@ import { Container, Typography, Box } from '@mui/material';
 import Select from 'react-select';
 import Layout from '../components/layout';
 import Head from 'next/head';
-import SimpleLineChart from "../components/AnalysisVisualizationsPage/SimpleLineChart";
+import AverageRewardByTime from "../components/AnalysisVisualizationsPage/AverageRewardByTime";
 import Table from "../components/AnalysisVisualizationsPage/Table";
 import { Grid } from '@mui/material';
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
@@ -60,7 +60,7 @@ export default function DataAnalysis(props) {
             }}
           />
         </Box>
-        <Typography variant="p" align="center" sx={{ mb: 3 }}>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</Typography>
+        <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
       </Container>
 
       <ResponsiveMasonry
@@ -68,7 +68,7 @@ export default function DataAnalysis(props) {
       >
         <Masonry>
           <div style={{ width: '100%', height: '300px' }}>
-            <SimpleLineChart style={{ position: "fixed", width: "100vw", height: "100vh" }} />
+            <AverageRewardByTime theDataset = {theDataset} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
             {/* Content for the first div */}
           </div>
 

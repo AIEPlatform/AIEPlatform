@@ -1,7 +1,7 @@
 from credentials import *
-from Analysis.basic_reward_summary_table import basic_reward_summary_table
+from Analysis.AverageRewardByTime import AverageRewardByTime
 def test():
-    df = getDataset("64834a1a92e5cb2515c525de")
-    print(basic_reward_summary_table(df, ['gender']))
+    df = getDataset("64887e32882568e41f7205bd")
+    print(AverageRewardByTime(df, ['gender']))
 
 test()

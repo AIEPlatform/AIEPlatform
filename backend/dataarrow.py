@@ -692,6 +692,30 @@ def basic_reward_summary_table_api():
     
 
 
+from Analysis.AverageRewardByTime import AverageRewardByTime
+
+@dataarrow_apis.route("/apis/analysis/AverageRewardByTime", methods = ["POST"])
+def AverageRewardByTime_api():
+    theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
+    
+ 
+    if theDatasetId is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure the_study_basic_info, selected_variables are provided."
+        }), 400
+    else:
+        df = getDataset(theDatasetId)
+        result_df, groups = AverageRewardByTime(df, [])
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "Table returned.",
+            "data": result_df, 
+            "groups": groups
+        }), 200
+    
+
+
 # TODO: Important: loading existing study.
 @dataarrow_apis.route("/apis/load_existing_study", methods = ["GET"])
 def load_existing_study():
