@@ -37,16 +37,10 @@ export default function AverageRewardByTime(props) {
           width={500}
           height={300}
           data={resultDf}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="x" />
-          <YAxis />
+          <YAxis label={{ value: "Reward", position: "insideLeft", angle: -90}}/>
           <Tooltip />
           <Legend />
           {
