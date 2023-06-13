@@ -108,6 +108,7 @@ def create_study():
     versions = request.json['versions']
     variables = request.json['variables']
     deploymentName = request.json['deploymentName']
+    rewardInformation = request.json['rewardInformation']
 
     the_deployment = Deployment.find_one({'name': deploymentName})
 
@@ -129,7 +130,8 @@ def create_study():
                 'name': study_name,
                 'deploymentId': the_deployment['_id'],
                 'versions': versions,
-                'variables': variables
+                'variables': variables, 
+                'rewardInformation': rewardInformation
             }
             # Induction to create mooclet
             response = Study.insert_one(the_study, session=session)
@@ -727,6 +729,7 @@ def load_existing_study():
     studyName = the_study['name'] # Note that we don't allow study name to be changed.
     variables = the_study['variables']
     versions = the_study['versions']
+    the_study['rewardInformation']
     mooclets = build_json_for_study(the_study['_id'])
     return json_util.dumps(
         {
@@ -734,7 +737,8 @@ def load_existing_study():
         "studyName": studyName,
         "variables": variables,
         "versions": versions, 
-        "mooclets": mooclets
+        "mooclets": mooclets,
+        "rewardInformation": the_study['rewardInformation']
         }
     ), 200
 

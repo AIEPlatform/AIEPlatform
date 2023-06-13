@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
+import RewardEditor from './RewardEditor';
 import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
 
 import {
@@ -49,6 +50,14 @@ function StudyEditor(props) {
     const [idToEdit, sIdToEdit] = useState(null);
     const treeRef = useRef(null);
     const handleOpen = (nodeId) => treeRef.current.open(nodeId);
+
+
+    const [rewardInformation, sRewardInformation] = useState({
+        "name": "reward", 
+        "min": 0, 
+        "max": 1
+    });
+
     const addMOOClet = () => {
         let newId = mooclets.length + 1;
         let newMOOClet = {
@@ -107,8 +116,6 @@ function StudyEditor(props) {
 
         sMooclets(Tree);
 
-        console.log(Tree)
-
     }
 
 
@@ -123,7 +130,8 @@ function StudyEditor(props) {
                 "studyName": studyName,
                 "mooclets": mooclets,
                 "variables": variables,
-                "versions": versions
+                "versions": versions, 
+                "rewardInformation": rewardInformation
             })
         })
             .then(response => response.json())
@@ -159,7 +167,7 @@ function StudyEditor(props) {
                 sVariables(data['variables']);
                 sVersions(data['versions']);
                 sMooclets(data['mooclets']);
-                console.log(data['mooclets'])
+                sRewardInformation(data['rewardInformation']);
                 sStatus(2);
             })
             .catch((error) => {
@@ -179,12 +187,12 @@ function StudyEditor(props) {
                 "study": studyName,
                 "mooclets": mooclets,
                 "variables": variables,
-                "versions": versions
+                "versions": versions, 
+                "rewardInformation": rewardInformation
             })
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Success:', data);
                 alert("Study created successfully!");
             })
     };
@@ -204,6 +212,20 @@ function StudyEditor(props) {
         <Container sx={{mt: 4}}>
             <Box>
                 {status === 1 && <TextField sx={{ mb: 3 }} label="Study name" value={studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>}
+
+
+                <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1a-content"
+                        id="reward-editor"
+                    >
+                        <Typography variant='h6'>Reward</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <RewardEditor rewardInformation={rewardInformation} sRewardInformation={sRewardInformation} />
+                    </AccordionDetails>
+                </Accordion>
                 <Accordion>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
