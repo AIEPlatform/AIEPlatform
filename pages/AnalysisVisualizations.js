@@ -37,6 +37,7 @@ export default function DataAnalysis(props) {
     <Layout>
       <Head><title>Data Analysis - DataArrow</title></Head>
       <Container maxWidth="md">
+      <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
         <Box sx={{ mb: 3 }}>
           <Typography variant="p">Deployment: </Typography>
           <Select
@@ -60,7 +61,6 @@ export default function DataAnalysis(props) {
             }}
           />
         </Box>
-        <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
       </Container>
 
       <ResponsiveMasonry
@@ -68,11 +68,13 @@ export default function DataAnalysis(props) {
       >
         <Masonry>
           <div style={{ width: '100%', height: '300px' }}>
+          <Typography variant="h6" component="h2" style={{textAlign: "center"}}>Average Reward by time</Typography>
             <AverageRewardByTime theDataset = {theDataset} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
             {/* Content for the first div */}
           </div>
 
           <div style={{ maxWidth: '100%', maxHeight: '500px' }}>
+          <Typography variant="h6" component="h2" style={{textAlign: "center"}}>Basic Reward Summary Table</Typography>
             <Table theDataset = {theDataset} />
             {/* Content for the first div */}
           </div>
