@@ -64,8 +64,6 @@ function ManageDeployment() {
                 </Box>
 
             </Container>
-            {/* {theStudy && theStudy['name'] == "Create New Study" && <NewStudy deploymentName={deploymentName}></NewStudy>}
-                {theStudy && theStudy['name'] !== "Create New Study" && "Edit existing studies is not supported yet."} */}
 
             {theStudy && <StudyEditor deploymentName={deploymentName} theStudy={theStudy}></StudyEditor>}
         </Layout>

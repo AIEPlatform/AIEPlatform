@@ -188,7 +188,18 @@ function StudyEditor(props) {
                 alert("Study created successfully!");
             })
     };
+    
+    const getWeight = (node) => {
+        // get all slibings.
+        let siblings = mooclets.filter(mooclet => mooclet.parent === node.parent);
+        // get total weights of siblings.
+        let totalWeight = 0;
+        for(let i = 0; i < siblings.length; i++) {
+            totalWeight += parseInt(siblings[i].weight);
+        }
 
+        return Math.round(node.weight/totalWeight * 10000 / 100) + "%";
+    }
     return (
         <Container sx={{mt: 4}}>
             <Box>
@@ -224,7 +235,7 @@ function StudyEditor(props) {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6'>Design Graph</Typography>
+                        <Typography variant='h6'>Designer Graph</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <DndProvider backend={MultiBackend} options={getBackendOptions()}>
@@ -244,6 +255,7 @@ function StudyEditor(props) {
                                         <Typography sx={{m: 0.5}}variant='span' component='strong'>{node.name}</Typography>
                                         <Typography sx={{m: 0.5}} variant='span'>Weight:</Typography>
                                         <Input className="assigner-weight-input" type="number" variant="standard" value = {node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)} />
+                                        <small>{getWeight(node)}</small>
                                         <Button onClick={() => {
                                             sIdToEdit(node.id);
                                             sMoocletModalOpen(true);
