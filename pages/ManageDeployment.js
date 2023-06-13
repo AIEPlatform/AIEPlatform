@@ -60,6 +60,10 @@ function ManageDeployment() {
                         getOptionValue = {(option) => option["_id"]["$oid"]}
                         value={theStudy}
                         onChange = {(option) => handleSelectStudy(option)}
+                        styles={{
+                            // Fixes the overlapping problem of the component
+                            menu: provided => ({ ...provided, zIndex: 9999 })
+                        }}
                     />
                 </Box>
 

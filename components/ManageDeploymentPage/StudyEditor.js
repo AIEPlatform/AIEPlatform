@@ -136,8 +136,12 @@ function StudyEditor(props) {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Success:', data);
-                alert("Study created successfully!");
+                if(data['status'] == 200) {
+                    alert("Study created successfully!");
+                }
+                else {
+                    alert("Study creation failed!");
+                }
             })
     };
 
