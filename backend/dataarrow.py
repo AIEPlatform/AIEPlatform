@@ -577,6 +577,7 @@ def create_dataset():
                 'study': study, 
                 'variables': variables,
                 'deploymentId': Deployment.find_one({"name": deployment})['_id'],
+                'createdAt': datetime.datetime.utcnow()
             }
             response = Dataset.insert_one(document)
 
@@ -638,7 +639,7 @@ def downloadArrowDataset(id):
         response = make_response(csv_string)
 
         # Set the headers to tell the browser to download the file as a CSV
-        response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
+        response.headers['Content-Disposition'] = f'attachment; filename={dataset["name"]}_{dataset["createdAt"]}.csv'
         response.headers['Content-type'] = 'text/csv'
         return response
     except:

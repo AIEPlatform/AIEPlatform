@@ -8,7 +8,7 @@ import json
 import numpy as np
 from psycopg2.extensions import AsIs
 from credentials import *
-from AnalysisScript.default_table import default_table
+from legacy.AnalysisScript.default_table import default_table
 import pickle
 
 mooclet_apis = Blueprint('mooclet_apis', __name__)
