@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Container, Paper, Typography, Box, TextField } from "@mui/material";
 import Select from 'react-select'
-import Layout from '../../components/layout';
+import Layout from '../components/layout';
 import Head from 'next/head';
 
 function DatasetDownloader(props) {
@@ -57,7 +57,7 @@ function DatasetDownloader(props) {
         <Layout>
             <Head><title>Dataset Downloader - DataArrow</title></Head>
             <Container>
-
+            <p>If you don't see any mooclet, please visit this to sign up first: https://mooclet-dashboard.chenpan.ca/apis/signUpMOOCletToken/Token%(replace this with actually token)</p>
             <TextField
                     required
                     id="email-input"

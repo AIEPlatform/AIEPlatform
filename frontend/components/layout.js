@@ -103,9 +103,11 @@ export default function Layout({ children }) {
     }
 
 
-    const links = ['My Deployment', 'New Deployment', 'Data Workshop', 'Analysis & Visualizations'];
-    const linkURLs = ['/', '/NewDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
-    const icons = [<AutoFixHighIcon />, <AddIcon />, <DatasetIcon />, <InsightsIcon />]
+    const links = ['DatasetDownloader', 'DatasetDownloader (Multiple)'];
+    const linkURLs = ['/', '/MultipleDatasetDownloader'];
+    const icons = [<DatasetIcon />, <DatasetIcon />]
+
+    sUserContext("chenpan");
 
     useEffect(() => {
         fetch('/apis/checkLoginedOrNot')
