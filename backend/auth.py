@@ -2,19 +2,12 @@ from flask import Flask, session
 from flask import Blueprint, session
 from flask import request
 from bson import json_util
-from bson.objectid import ObjectId
-import random
 from helpers import *
-
 from credentials import *
-
 from flask_bcrypt import Bcrypt
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super secret key'
 bcrypt = Bcrypt(app)
-
 auth_apis = Blueprint('auth_apis', __name__)
-
 
 # Authe logis are definied in this py file.
 @auth_apis.route("/apis/auth/login", methods=["POST"])
@@ -67,3 +60,11 @@ def signup():
     password = bcrypt.generate_password_hash(password)
     User.insert_one({"firstName": firstName, "lastName": lastName, "email": email, "password": password})
     return json_util.dumps({"status": 200, "message": "Signed up successfully."})
+
+
+# Get the current user.
+@auth_apis.route("/apis/auth/currentUser", methods=["GET"])
+def current_user():
+    if 'user' not in session:
+        return json_util.dumps({"status": 400, "message": "Not logged in.", "user": None})
+    return json_util.dumps({"status": 200, "message": "Logged in.", "user": session['user']})

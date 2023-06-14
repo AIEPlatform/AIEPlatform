@@ -16,7 +16,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import Link from 'next/link';
-import Button from '@mui/material/Button';
 
 import AddIcon from '@mui/icons-material/Add';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
@@ -24,6 +23,10 @@ import DatasetIcon from '@mui/icons-material/Dataset';
 import InsightsIcon from '@mui/icons-material/Insights';
 import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption';
 import LogoutIcon from '@mui/icons-material/Logout';
+
+import { UserContext } from "../contexts/UserContextWrapper";
+import { useContext } from "react";
+
 
 
 const drawerWidth = 250;
@@ -77,6 +80,8 @@ export default function Layout({ children }) {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
     const [loggedin, sLoggedIn] = React.useState(false);
+    const { userContext, sUserContext } = useContext(UserContext);
+
     const handleDrawerOpen = () => {
         setOpen(true);
     };
@@ -89,16 +94,18 @@ export default function Layout({ children }) {
         fetch('/apis/auth/logout')
             .then(res => res.json())
             .then(data => {
-                if (data['status_code'] === 200) {
+                if (data['status'] === 200) {
                     sLoggedIn(false);
+                    sUserContext(null);
+                    console.log(userContext)
                 }
             })
     }
 
 
-    const links = ['New Deployment', 'Manage Deployment', 'Data Workshop', 'Analysis & Visualizations'];
-    const linkURLs = ['/NewDeployment', '/ManageDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
-    const icons = [<AddIcon />, <AutoFixHighIcon />, <DatasetIcon />, <InsightsIcon />]
+    const links = ['My Deployment', 'New Deployment', 'Data Workshop', 'Analysis & Visualizations'];
+    const linkURLs = ['/', '/NewDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
+    const icons = [<AutoFixHighIcon />, <AddIcon />, <DatasetIcon />, <InsightsIcon />]
 
     useEffect(() => {
         fetch('/apis/checkLoginedOrNot')
@@ -109,13 +116,12 @@ export default function Layout({ children }) {
                 }
             })
     }, []);
-
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
             <AppBar position="fixed" open={open}>
                 <Toolbar>
-                    <IconButton
+                {userContext !== undefined && userContext !== null && <IconButton
                         color="inherit"
                         aria-label="open drawer"
                         onClick={handleDrawerOpen}
@@ -123,12 +129,13 @@ export default function Layout({ children }) {
                         sx={{ mr: 2, ...(open && { display: 'none' }) }}
                     >
                         <MenuIcon />
-                    </IconButton>
+                    </IconButton>}
                     <Typography variant="h6" noWrap component="div">
                         Dashboard
                     </Typography>
                 </Toolbar>
             </AppBar>
+            {userContext !== undefined && userContext !== null && 
             <Drawer
                 sx={{
                     width: drawerWidth,
@@ -166,18 +173,18 @@ export default function Layout({ children }) {
                     <Link href='/changePassword' style={{ textDecoration: 'none', color: 'black' }}>
                         <ListItem key="change-password" disablePadding>
                             <ListItemButton>
-                                <EnhancedEncryptionIcon/> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
+                                <EnhancedEncryptionIcon /> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
                             </ListItemButton>
                         </ListItem>
                     </Link>
 
                     <ListItem key="logout" onClick={() => handleLogout()} disablePadding>
-                            <ListItemButton>
-                                <LogoutIcon/> <Typography sx={{ ml: 1 }}>Logout</Typography>
-                            </ListItemButton>
-                        </ListItem>
+                        <ListItemButton>
+                            <LogoutIcon /> <Typography sx={{ ml: 1 }}>Logout</Typography>
+                        </ListItemButton>
+                    </ListItem>
                 </Box>
-            </Drawer>
+            </Drawer>}
             <Main open={open}>
                 <DrawerHeader />
                 {<main>{children}</main>}
