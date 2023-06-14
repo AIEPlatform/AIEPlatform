@@ -11,6 +11,7 @@ Environment:
   npm run dev
   ```
   Now, you should be able to access the frontend at localhost: http://localhost:3000
+  If you have pm2 installed, you can run the frontend in backend by `pm2 start "npm run start" --name mooclet_dashboard` for production, but make sure you run `npm run build` first.
 
   ## Install Backend (Dev)
 Go into the backend folder by running: `cd backend`
