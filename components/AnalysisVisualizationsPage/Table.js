@@ -124,7 +124,6 @@ export default function BasicTable(props) {
 
   return (
     <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6" component="h2">Basic Reward Summary Table</Typography>
       <Select
         isMulti
         options={theDataset ? theDataset['variables'].map((variable, index) => ({
