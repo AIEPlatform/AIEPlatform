@@ -1,7 +1,7 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 
 # misc
 .DS_Store
@@ -15,7 +15,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Next.js
-/.next
+.next
 .env
 package-lock.json
 __pycache__
@@ -25,3 +25,5 @@ sensitive.cp
 *.csv
 *.xlsx
 nohup.out
+*.env
+test.py

@@ -6,6 +6,7 @@ Environment:
 
   ## Install Frontend (Dev)
   ```
+  cd frontend
   npm install
   npm run dev
   ```
