@@ -1,5 +1,5 @@
 deployment = 'deployment for table dev'
-study = '4v4var'
+study = '2v2var'
 variables = ['HappyOrNot', 'wantToTravel', 'haveLunch', 'TakeShower']
 num_users = 100
 import time
@@ -50,11 +50,11 @@ def one_user(user):
 
 
 
-# Interaction.delete_many({})
+Interaction.delete_many({})
 Lock.delete_many({})
-# RewardLog.delete_many({})
-# TreatmentLog.delete_many({})
-# VariableValue.delete_many({})
+RewardLog.delete_many({})
+TreatmentLog.delete_many({})
+VariableValue.delete_many({})
 for user in users:
     t = threading.Thread(target=one_user, args=(user,))
     t.start()

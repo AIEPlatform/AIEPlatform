@@ -13,6 +13,10 @@ import threading
 from impute import *
 import traceback
 import sys
+from Models.VariableValueModel import VariableValueModel
+from Models.InteractionModel import InteractionModel
+from Models.MOOCletModel import MOOCletModel
+from Models.LockModel import LockModel
 
 
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 5
@@ -103,46 +107,17 @@ class ThompsonSamplingContextual(Policy):
                 # Store contextual variables
                 
                 contextual_vars = parameters['contextual_variables']
-                
                 # Get the contextual variables for the learner (most recent ones), or auto init ones.
 
-                column_name = 'variableName'
-                array_list = contextual_vars  # Example array list
-
-                # Aggregation pipeline to filter and keep the last occurrence
-                pipeline = [
-                    {
-                        '$match': {
-                            column_name: {'$in': array_list}, 
-                            'user': user
-                        }
-                    },
-                    {
-                        '$sort': {
-                            'timestamp': 1       # Sort descending by _id (to get the last occurrence)
-                        }
-                    },
-                    {
-                        '$group': {
-                            '_id': '$' + column_name,
-                            'lastDocument': {'$last': '$$ROOT'}
-                        }
-                    },
-                    {
-                        '$replaceRoot': {'newRoot': '$lastDocument'}
-                    }
-                ]
-
-                # Execute the aggregation pipeline
-                result = list(VariableValue.aggregate(pipeline))
-
+                result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
+                
                 # Iterate over the array list
-                for value in array_list:
+                for value in contextual_vars:
                     has_document = False
 
                     # Check if a document exists for the current value
                     for document in result:
-                        if document[column_name] == value:
+                        if document['variableName'] == value:
                             has_document = True
                             break
 
@@ -158,9 +133,9 @@ class ThompsonSamplingContextual(Policy):
                             'where': 'auto init', 
                             'timestamp': current_time
                         }
-                        VariableValue.insert_one(document_to_insert)
+                        VariableValueModel.insert_variable_value(document_to_insert)
                     
-                contextual_values = list(VariableValue.aggregate(pipeline))
+                contextual_values = VariableValueModel.get_latest_variable_values(contextual_vars, user)
 
                 contextual_vars_dict = {}
                 contextual_vars_id_dict = {}
@@ -170,7 +145,7 @@ class ThompsonSamplingContextual(Policy):
                     contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                     contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
                 
-                current_enrolled = len(list(Interaction.find({"moocletId": self._id}))) #TODO: is it number of learners or number of observations????
+                current_enrolled = InteractionModel.get_num_participants_for_assigner(moocletId = self._id) #TODO: is it number of learners or number of observations????
 
                 if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                     lucky_version = random.choice(self.study['versions'])
@@ -187,7 +162,7 @@ class ThompsonSamplingContextual(Policy):
                         "contextualIds": contextual_vars_id_dict, 
                         'isUniform': True
                     }
-                    Interaction.insert_one(new_interaction)
+                    InteractionModel.insert_one(new_interaction)
                     return lucky_version
                 
                 mean = parameters['coef_mean']
@@ -243,7 +218,7 @@ class ThompsonSamplingContextual(Policy):
                 "contextualIds": contextual_vars_id_dict
             }
 
-            Interaction.insert_one(new_interaction)
+            InteractionModel.insert_one(new_interaction)
             print(f'{user} gets a treatment...')
             return lucky_version
         except Exception as e:
@@ -253,14 +228,14 @@ class ThompsonSamplingContextual(Policy):
             return None
         
     def get_reward(self, user, value, where, other_information):
+
         current_time = datetime.datetime.now()
         latest_interaction = self.get_latest_interaction(user, where)
         if latest_interaction is None:
             return 400
         else:
             print(f'{user} sends reward...')
-            Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
-
+            InteractionModel.append_reward(latest_interaction['_id'], value)
             # Note that TS Contextual won't update inmediately.
             # We should do a check if to see if should update the parameters or not.
             if True:
@@ -270,9 +245,7 @@ class ThompsonSamplingContextual(Policy):
     def should_update_model(self, current_time):
         # TODO: consider if we should have a time filter.
         # TODO: consider if we can make sure that everything after this interaction are not used??
-        earliest_unused = Interaction.find_one(
-                        {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
-                         ) # TODO: Shall we exclute those from uniform (I don't think so?)
+        earliest_unused = InteractionModel.find_earliest_unused(self._id)
         if earliest_unused is None:
             return False
         if (current_time - earliest_unused['rewardTimestamp']).total_seconds() / 60 > float(self.parameters['updatedPerMinute']):
@@ -291,13 +264,11 @@ class ThompsonSamplingContextual(Policy):
                 current_params = self.parameters
                 coef_mean, coef_cov, variance_a, variance_b, include_intercept = current_params['coef_mean'], current_params['coef_cov'], float(current_params['variance_a']), float(current_params['variance_b']), float(current_params['include_intercept'])
 
-                interactions_for_posterior = list(Interaction.find(
-                    {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
-                    )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
+                # use_unused_interactions
+                InteractionModel.use_unused_interactions(self._id, session=session)
+
+                interactions_for_posterior = InteractionModel.use_unused_interactions(self._id, session=session)
                 
-                Interaction.update_many(
-                    {"moocletId": self._id, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
-                    )
                 numpy_rewards = np.array([interaction['outcome'] for interaction in interactions_for_posterior])
                 
                 regression_formula = current_params['regression_formula']
@@ -351,22 +322,22 @@ class ThompsonSamplingContextual(Policy):
                 posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
 
                 # Update parameters in DB.
-                MOOClet.update_one({"_id": self._id}, {"$set": {
+                MOOCletModel.update_policy_parameters(self._id, {
                     "parameters.coef_mean": posterior_vals['coef_mean'].tolist(),
                     "parameters.coef_cov": posterior_vals['coef_cov'].tolist(),
                     "parameters.variance_a": posterior_vals['variance_a'],
                     "parameters.variance_b": posterior_vals['variance_b'],
-                }}, session=session)
+                }, session)
     
                 # Release lock.
                 session.commit_transaction()
                 print(f'model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
-                Lock.delete_one({"_id": new_lock_id})
+                LockModel.delete({"_id": new_lock_id})
                 return
             except Exception as e:
                 print(e)
                 print(f'model update failed, rollback...')
-                Lock.delete_one({"_id": new_lock_id})
+                LockModel.delete({"_id": new_lock_id})
                 session.abort_transaction()
                 return
 
@@ -434,12 +405,12 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
 def check_lock(mooceltId):
     # Check if lock exists
     try:
-        lock_exists = Lock.find_one({"mooceltId": mooceltId})
+        lock_exists = LockModel.get_one({"mooceltId": mooceltId})
         if lock_exists:
             return None
         else:
             # Create lock
-            response = Lock.insert_one({"mooceltId": mooceltId})
+            response = LockModel.create({"mooceltId": mooceltId})
             return response.inserted_id
     except Exception as e:
         print(e)

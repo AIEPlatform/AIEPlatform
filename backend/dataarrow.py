@@ -3,13 +3,21 @@ from flask import Blueprint, session
 from flask import request
 from bson import json_util
 from bson.objectid import ObjectId
-import random
 from helpers import *
 from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 import datetime
 import time
 import threading
+from Models.VariableValueModel import VariableValueModel
+from Models.InteractionModel import InteractionModel
+from Models.MOOCletModel import MOOCletModel
+from Models.StudyModel import StudyModel
+from Models.DeploymentModel import DeploymentModel
+from Models.DatasetModel import DatasetModel
+from Models.VariableModel import VariableModel
+
+
 dataarrow_apis = Blueprint('dataarrow_apis', __name__)
 		
 def create_mooclet_instance(the_mooclet):
@@ -78,7 +86,7 @@ def create_mooclet(mooclet, study_id, session):
         child_mooclet_id = create_mooclet(child, study_id, session)
         my_children.append(child_mooclet_id)
 
-    doc = MOOClet.find_one({'name': mooclet['name'], 'studyId': study_id})
+    doc = MOOCletModel.find_mooclet({'name': mooclet['name'], 'studyId': study_id})
     if doc is not None: return doc['_id'] #TODO: check if it's correct.
 
     new_mooclet = {
@@ -93,7 +101,7 @@ def create_mooclet(mooclet, study_id, session):
         "createdAt": time
     }
 
-    response = MOOClet.insert_one(new_mooclet, session=session)
+    response = MOOCletModel.create(new_mooclet, session=session)
     return response.inserted_id
 
 @dataarrow_apis.route("/apis/study", methods=["POST"])
@@ -110,13 +118,13 @@ def create_study():
     deploymentName = request.json['deploymentName']
     rewardInformation = request.json['rewardInformation']
 
-    the_deployment = Deployment.find_one({'name': deploymentName})
+    the_deployment = DeploymentModel.get_one({'name': deploymentName})
 
     # TODO: Check if the deployment exists or not.
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
-    doc = Study.find_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name})
+    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name})
     if doc is not None: 
         return json_util.dumps({
             "status_code": 400, 
@@ -134,7 +142,7 @@ def create_study():
                 'rewardInformation': rewardInformation
             }
             # Induction to create mooclet
-            response = Study.insert_one(the_study, session=session)
+            response = StudyModel.create(the_study, session=session)
             study_id = response.inserted_id
             root_mooclet = create_mooclet(mooclet_trees, study_id, session=session)
             Study.update_one({'_id': study_id}, {'$set': {'rootMOOClet': root_mooclet}}, session=session)
@@ -156,11 +164,11 @@ def create_study():
 
 def inductive_get_mooclet(mooclet, user):
     if len(mooclet['children']) > 0:
-        children = MOOClet.find({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
+        children = MOOCletModel.find_mooclet({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
 
         # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
         next_mooclet_id = random_by_weight(list(children))['_id']
-        next_mooclet = MOOClet.find_one({'_id': next_mooclet_id})
+        next_mooclet = MOOCletModel.find_mooclet({'_id': next_mooclet_id})
         return inductive_get_mooclet(next_mooclet, user)
     else:
         # this is a leaf node. return it!
@@ -169,28 +177,22 @@ def inductive_get_mooclet(mooclet, user):
 def get_mooclet_for_user(deployment_name, study_name, user):
     # Note that, a deployment + study_name + user uniquely identify a mooclet.
     # OR, this function will decide one and return.
-    deployment = Deployment.find_one({'name': deployment_name})
-    study = Study.find_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
+    deployment = DeploymentModel.get_one({'name': deployment_name})
+    study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
     # TODO: Check if re-assignment is needed. For example, the mooclet is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
 
-    mooclets = list(MOOClet.find(
-        {
-            'studyId': study['_id'],
-        }, {'_id': 1}
-    ))
 
     # Find the latest interaction.
-    the_interaction = Interaction.find_one({
-        'user': user,
-        'moocletId': {'$in': [mooclet['_id'] for mooclet in mooclets]}
-    })
+    the_interaction = InteractionModel.find_last_interaction(study, user)
 
     if the_interaction is not None:
-        the_mooclet = MOOClet.find_one({'_id': the_interaction['moocletId']})
+        the_mooclet = MOOCletModel.find_mooclet({'_id': the_interaction['moocletId']})
         return (the_mooclet)
     else:
-        root_mooclet = MOOClet.find_one({"_id": study['rootMOOClet']})
+        root_mooclet = MOOCletModel.find_mooclet({"_id": study['rootMOOClet']})
         return inductive_get_mooclet(root_mooclet, user)
+
+import traceback
 
 def assign_treatment(deployment_name, study_name, user, where = None, other_information = None):
     start_time = time.time()
@@ -217,7 +219,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             the_log = {
                 "policy": the_mooclet['policy'],
                 "error": True,
-                "error_message": str(e), 
+                "error_message": str(e),
+                "traceback": traceback.format_exc(),
                 "threads": threading.active_count(), 
                 "timestamp": datetime.datetime.now()
             }
@@ -337,8 +340,8 @@ def give_reward():
 
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
 
-    the_deployment = Deployment.find_one({"name": deployment})
-    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$elemMatch": {"name": variableName}}})
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$elemMatch": {"name": variableName}}})
 
     if the_study is None:
         return 400
@@ -351,7 +354,7 @@ def give_variable_value(deployment, study, variableName, user, value, where = No
         "other_information": other_information,
         "timestamp": current_time
     }
-    VariableValue.insert_one(the_variable)
+    VariableValueModel.insert_variable_value(the_variable)
     return 200
 
 @dataarrow_apis.route("/apis/give_variable", methods=["POST"])
@@ -372,7 +375,7 @@ def give_variable():
                 "message": "Please make sure variableName, user, value are provided."
             }), 400
         else:
-            doc = Variable.find_one({"name": variableName})
+            doc = VariableModel.get_one({"name": variableName})
             if doc is None:
                 return json_util.dumps({
                     "status_code": 400,
@@ -399,7 +402,7 @@ def give_variable():
 @dataarrow_apis.route("/apis/my_deployments", methods=["GET"])
 def my_deployments():
     user = "chenpan"
-    my_deployments = Deployment.find({"collaborators": {"$in": [user]}})
+    my_deployments = DeploymentModel.get_many({"collaborators": {"$in": [user]}})
     return json_util.dumps({
         "status_code": 200,
         "message": "These are my deployments.",
@@ -432,14 +435,14 @@ def create_deployment():
             "message": "Please make sure deployment_name, deployment_studies are provided."
         }), 400
     else:
-        the_Deployment = Deployment.find_one({"name": name})
+        the_Deployment = DeploymentModel.get_one({"name": name})
         if the_Deployment is not None:
             return json_util.dumps({
                 "status_code": 400,
                 "message": "Deployment name is already used."
             }), 400
         else:
-            Deployment.insert_one({
+            DeploymentModel.create({
                 "name": name,
                 "description": description,
                 "collaborators": collaborators,
@@ -470,13 +473,13 @@ def convert_mooclet_tree_to_list(mooclet, parentId, mooclet_list):
         "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
     })
     for child in mooclet["children"]:
-        child_mooclet = MOOClet.find_one({"_id": child}, {'createdAt': 0})
+        child_mooclet = MOOCletModel.find_mooclet({"_id": child})
         convert_mooclet_tree_to_list(child_mooclet, the_id, mooclet_list)
 
 
 def build_json_for_study(studyId):
-    the_study = Study.find_one({"_id": studyId})
-    the_root_mooclet = MOOClet.find_one({"_id": the_study["rootMOOClet"]}, {'createdAt': 0})
+    the_study = StudyModel.get_one({"_id": studyId})
+    the_root_mooclet = MOOCletModel.find_mooclet({"_id": the_study["rootMOOClet"]})
     mooclet_list = []
     convert_mooclet_tree_to_list(the_root_mooclet, 0, mooclet_list)
     return mooclet_list
@@ -489,40 +492,18 @@ import pandas as pd
 from flatten_json import flatten
 
 def create_df_from_mongo(study_name, deployment_name):
-    the_deployment = Deployment.find_one({"name": deployment_name})
-    the_study = Study.find_one({"name": study_name, "deploymentId": the_deployment['_id']})
-    the_mooclets = list(MOOClet.find({"studyId": the_study['_id']}, {"_id": 1}))
+    the_deployment = DeploymentModel.get_one({"name": deployment_name})
+    the_study = StudyModel.get_one({"name": study_name, "deploymentId": the_deployment['_id']})
 
-    the_mooclets = [r['_id'] for r in the_mooclets]
-
-    result = Interaction.aggregate([
-        {
-            '$match': {
-                'moocletId': {"$in": the_mooclets}  # Specify the filter condition for collection1
-            }
-        },
-        {
-            '$lookup': {
-                'from': 'mooclet',
-                'localField': 'moocletId',  # The field in collection1 to match
-                'foreignField': '_id',  # The field in collection2 to match
-                'as': 'joined_data',  # The name of the field in the output documents
-            }
-        }, 
-        {
-            '$unwind': '$joined_data'  # Unwind the 'joined_data' array
-        }, 
-        {
-            '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', "assigner": '$jojined_data.name', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
-        }
-    ])
+    result = InteractionModel.get_interactions(the_study)
 
     list_cur = list(result)
     df = pd.DataFrame(list_cur)
 
-    df_normalized = pd.json_normalize(df['contextuals'].apply(flatten, args = (".",)))
-    # Concatenate the flattened DataFrame with the original DataFrame
-    df = pd.concat([df.drop('contextuals', axis=1), df_normalized], axis=1)
+    if 'contextuals' in df.columns:
+        df_normalized = pd.json_normalize(df['contextuals'].apply(flatten, args = (".",)))
+        # Concatenate the flattened DataFrame with the original DataFrame
+        df = pd.concat([df.drop('contextuals', axis=1), df_normalized], axis=1)
 
     df = df.rename(columns={
         "treatment$timestamp": "treatment.timestamp", 
@@ -561,8 +542,8 @@ def create_dataset():
         try:
             df = create_df_from_mongo(study, deployment)
 
-            the_deployment = Deployment.find_one({"name": deployment})
-            the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+            the_deployment = DeploymentModel.get_one({"name": deployment})
+            the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
 
             possible_variables = [v['name'] for v in the_study['variables']]
 
@@ -578,10 +559,10 @@ def create_dataset():
                 'name': dataset_name,
                 'study': study, 
                 'variables': variables,
-                'deploymentId': Deployment.find_one({"name": deployment})['_id'],
+                'deploymentId': DeploymentModel.get_one({"name": deployment})['_id'],
                 'createdAt': datetime.datetime.utcnow()
             }
-            response = Dataset.insert_one(document)
+            response = DatasetModel.create(document)
 
             subject = "Your MOOClets datasets are ready for download."
             body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
@@ -632,7 +613,7 @@ def downloadArrowDataset(id):
         }), 403 
     
     try:
-        dataset = Dataset.find_one({"_id": ObjectId(id)})
+        dataset = DatasetModel.get_one({"_id": ObjectId(id)})
 
         df = pickle.loads(dataset['dataset'])
         csv_string = df.to_csv(index=False)
@@ -656,8 +637,8 @@ def downloadArrowDataset(id):
 def get_deployment_datasets():
     # load from params.
     deployment = request.args.get('deployment')
-    the_deployment = Deployment.find_one({"name": deployment})
-    the_datasets = Dataset.find({"deploymentId": the_deployment['_id']}, {'dataset': 0})
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    the_datasets = DatasetModel.get_many({"deploymentId": the_deployment['_id']}, {'dataset': 0})
 
     return json_util.dumps(
         {
@@ -724,8 +705,8 @@ def load_existing_study():
     # load from params.
     deployment = request.args.get('deployment') # Name
     study = request.args.get('study') # Name
-    the_deployment = Deployment.find_one({"name": deployment})
-    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
     studyName = the_study['name'] # Note that we don't allow study name to be changed.
     variables = the_study['variables']
     versions = the_study['versions']
@@ -759,10 +740,7 @@ def modify_mooclet(mooclet, study_id, session):
 
     if isExistingMOOClet(mooclet):
         # update
-        print("bad")
-        # print(mooclet)
-        print(MOOClet.find_one({'_id': ObjectId(mooclet['_id']['$oid'])}))
-        MOOClet.update_one({'_id': ObjectId(mooclet['_id']['$oid'])}, {
+        MOOCletModel.update({'_id': ObjectId(mooclet['_id']['$oid'])}, {
             "$set": {
                 "name": mooclet['name'],
                 "policy": mooclet['policy'],
@@ -788,8 +766,7 @@ def modify_mooclet(mooclet, study_id, session):
             "weight": float(mooclet['weight']), 
             "createdAt": time
         }
-        response = MOOClet.insert_one(new_mooclet, session=session)
-        print(response.inserted_id)
+        response = MOOCletModel.create(new_mooclet, session=session)
         return response.inserted_id
 
 @dataarrow_apis.route("/apis/modify_existing_study", methods = ["PUT"])
@@ -807,8 +784,8 @@ def modify_existing_study():
             "message": "Please make sure the deployment, study, mooclets, versions, variables are provided."
         }), 400
     
-    the_deployment = Deployment.find_one({"name": deployment})
-    the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
 
     with client.start_session() as session:
         try:
@@ -850,11 +827,56 @@ def get_variables():
         }), 403
     try:
         username = get_username()
-        variables = Variable.find({"owner": username})
+        variables = VariableModel.get_many({"owner": username})
         return json_util.dumps({
             "status_code": 200, 
             "data": variables
         }), 200
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    
+
+@dataarrow_apis.route("/apis/variable", methods=["POST"])
+def create_variable():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    try:
+        username = get_username()
+
+        data = request.get_json()
+        new_variable_name = data['newVariableName']
+        new_variable_min = data['newVariableMin']
+        new_variable_max = data['newVariableMax']
+        new_variable_type = data['newVariableType']
+
+        # check if the variable name exists
+        doc = VariableModel.get_one({"name": new_variable_name})
+        if doc is not None:
+            return json_util.dumps({
+                "status_code": 400, 
+                "message": "The variable name exists."
+            }), 400
+        VariableModel.create({
+            "name": new_variable_name,
+            "min": new_variable_min,
+            "max": new_variable_max,
+            "type": new_variable_type,
+            "owner": username, 
+            "collaborators": [], 
+            "created_at": datetime.datetime.now()
+        })
+
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "The variable is created successfully."
+        }), 200
+
     except Exception as e:
         print(e)
         return json_util.dumps({
