@@ -1,8 +1,7 @@
 from flask import Flask, session
 from flask_session import Session
-from flask_pymongo import PyMongo
 
-from mooclet import mooclet_apis
+from legacy.mooclet import mooclet_apis
 from mooclet_datadownloader import mooclet_datadownloader_api
 from dataarrow import dataarrow_apis
 from auth import auth_apis
@@ -11,6 +10,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 from credentials import *
+
 MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 app = Flask(__name__)
 
