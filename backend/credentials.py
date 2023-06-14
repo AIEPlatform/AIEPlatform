@@ -64,3 +64,13 @@ def check_if_loggedin():
         return True
     else:
         return False
+    
+
+
+def get_username():
+    if 'username' in session:
+        return session['username']
+    elif DEBUG:
+        return "chenpan"
+    else:
+        return None

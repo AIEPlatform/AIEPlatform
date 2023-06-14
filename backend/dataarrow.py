@@ -840,3 +840,24 @@ def modify_existing_study():
         "temp": designer_tree
         }
     ), 200
+
+
+@dataarrow_apis.route("/apis/variables", methods=["GET"])
+def get_variables():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    try:
+        username = get_username()
+        variables = Variable.find({"owner": username})
+        return json_util.dumps({
+            "status_code": 200, 
+            "data": variables
+        }), 200
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
