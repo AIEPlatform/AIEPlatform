@@ -1,7 +1,6 @@
 from flask import Flask, session
 from flask_session import Session
 
-from legacy.mooclet import mooclet_apis
 from mooclet_datadownloader import mooclet_datadownloader_api
 from dataarrow import dataarrow_apis
 from auth import auth_apis
@@ -20,7 +19,6 @@ Session(app)
 
 # Currently still just use MOOClet APIs.
 
-app.register_blueprint(mooclet_apis)
 app.register_blueprint(mooclet_datadownloader_api)
 app.register_blueprint(dataarrow_apis)
 app.register_blueprint(auth_apis)

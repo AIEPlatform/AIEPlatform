@@ -413,3 +413,62 @@ def download_multiple_datasets_get(id):
     # Reset the buffer's file pointer to the beginning
     zip_buffer.seek(0)
     return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
+
+
+
+@mooclet_datadownloader_api.route("/apis/get_mooclets", methods=["GET"])
+def get_mooclets():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    headers = {
+        'Authorization': MOOCLET_TOKEN, 
+        'Content-Type': 'application/json'
+    }
+    # TODO: how many mooclet it returns?
+    print("hello world")
+    response = requests.get(
+        f'{MOOCLET_ENGINE_URL}/mooclet', headers=headers)
+
+    everything = []
+    page=1
+    while 'results' in response.json():
+        everything += response.json()['results']
+        page+=1
+        response = requests.get(
+        f'{MOOCLET_ENGINE_URL}/mooclet?page={page}', headers=headers)
+    mooclets = everything
+
+
+    return json_util.dumps({
+        "status_code": 200, 
+        "message": "Get a list of MOOClets!", 
+        "data": mooclets
+    }), 200
+
+
+
+@mooclet_datadownloader_api.route("/apis/get_mooclet_information/<mooclet_id>", methods=["GET"])
+def get_mooclet_information(mooclet_id):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    cursor = conn.cursor()
+    cursor.execute("select distinct(name) from (select * from engine_value where mooclet_id = %s) t1 JOIN engine_variable on (t1.variable_id = engine_variable.id);", [mooclet_id])
+    variables = cursor.fetchall()
+
+    cursor.execute("select distinct(name) from engine_version where mooclet_id = %s", [mooclet_id])
+    versions = cursor.fetchall()
+
+    cursor.close()
+    # TODO: get other information, such as policy.
+    return json_util.dumps({
+        "status_code": 200, 
+        "message": "Get mooclet information!", 
+        "data": {
+            "variables": variables,
+            "versions": versions
+        }
+    }), 200
