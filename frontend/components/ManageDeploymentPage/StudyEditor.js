@@ -12,6 +12,7 @@ import Modal from '@mui/material/Modal';
 import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
 import RewardEditor from './RewardEditor';
 import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
+import APICard from './APICard';
 
 import {
     Tree,
@@ -297,6 +298,22 @@ function StudyEditor(props) {
                         <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new Assigner</Button>
                     </AccordionDetails>
                 </Accordion>
+
+
+
+                {studyName !== "" && <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="study-api-doc"
+                        id="study-api-doc"
+                    >
+                        <Typography variant='h6'>APIs for {studyName} in {deploymentName}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <APICard studyName={studyName} deploymentName={deploymentName}></APICard>
+                    </AccordionDetails>
+                </Accordion>}
+
                 {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>}
                 {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study.</Button>}
             </Box>

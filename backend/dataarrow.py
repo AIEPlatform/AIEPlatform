@@ -121,6 +121,11 @@ def create_study():
     the_deployment = DeploymentModel.get_one({'name': deploymentName})
 
     # TODO: Check if the deployment exists or not.
+    if the_deployment is None:
+        return json_util.dumps({
+            "status_code": 400, 
+            "message": "Deployment does not exist or you don't have access."
+        }), 400
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
@@ -164,8 +169,7 @@ def create_study():
 
 def inductive_get_mooclet(mooclet, user):
     if len(mooclet['children']) > 0:
-        children = MOOCletModel.find_mooclet({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
-
+        children = MOOCletModel.find_mooclets({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
         # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
         next_mooclet_id = random_by_weight(list(children))['_id']
         next_mooclet = MOOCletModel.find_mooclet({'_id': next_mooclet_id})
@@ -177,7 +181,7 @@ def inductive_get_mooclet(mooclet, user):
 def get_mooclet_for_user(deployment_name, study_name, user):
     # Note that, a deployment + study_name + user uniquely identify a mooclet.
     # OR, this function will decide one and return.
-    deployment = DeploymentModel.get_one({'name': deployment_name})
+    deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
     # TODO: Check if re-assignment is needed. For example, the mooclet is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
 
@@ -289,7 +293,7 @@ def get_treatment():
 
 
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
         return json_util.dumps({
             "status_code": 500,
             "message": "Server is down please try again later."
@@ -340,7 +344,7 @@ def give_reward():
 
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
 
-    the_deployment = DeploymentModel.get_one({"name": deployment})
+    the_deployment = DeploymentModel.get_one({"name": deployment}, public = True)
     the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$elemMatch": {"name": variableName}}})
 
     if the_study is None:
@@ -375,7 +379,7 @@ def give_variable():
                 "message": "Please make sure variableName, user, value are provided."
             }), 400
         else:
-            doc = VariableModel.get_one({"name": variableName})
+            doc = VariableModel.get_one({"name": variableName}, public = True)
             if doc is None:
                 return json_util.dumps({
                     "status_code": 400,
@@ -435,7 +439,7 @@ def create_deployment():
             "message": "Please make sure deployment_name, deployment_studies are provided."
         }), 400
     else:
-        the_Deployment = DeploymentModel.get_one({"name": name})
+        the_Deployment = DeploymentModel.get_one({"name": name}, public = True)
         if the_Deployment is not None:
             return json_util.dumps({
                 "status_code": 400,
@@ -855,7 +859,7 @@ def create_variable():
         new_variable_type = data['newVariableType']
 
         # check if the variable name exists
-        doc = VariableModel.get_one({"name": new_variable_name})
+        doc = VariableModel.get_one({"name": new_variable_name}, public = True)
         if doc is not None:
             return json_util.dumps({
                 "status_code": 400, 

@@ -26,6 +26,10 @@ class MOOCletModel:
     def find_mooclet(filter, projection = {}, session = None):
         return MOOClet.find_one(filter, projection, session=session)
     
+    # find mooclets by filter
+    def find_mooclets(filter, projection = {}, session = None):
+        return MOOClet.find(filter, projection, session=session)
+    
 
     # Insert a mooclet object
     def create(mooclet, session = None):

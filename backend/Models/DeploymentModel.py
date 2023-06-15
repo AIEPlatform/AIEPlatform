@@ -5,16 +5,18 @@ import datetime
 class DeploymentModel:
     # get a Deployment
     @staticmethod
-    def get_one(filter, projection = {}, dbSession = None):
-        email = get_username()
-        filter['owner'] = email
+    def get_one(filter, projection = {}, public = False, dbSession = None):
+        if not public:
+            email = get_username()
+            filter['owner'] = email
         return Deployment.find_one(filter, projection, session=dbSession)
 
     # get many
     @staticmethod
-    def get_many(filter, projection = {}, dbSession = None):
-        email = get_username()
-        filter['owner'] = email
+    def get_many(filter, projection = {}, public = False, dbSession = None):
+        if not public:
+            email = get_username()
+            filter['owner'] = email
         return Deployment.find(filter, projection, session=dbSession)
 
     # create
