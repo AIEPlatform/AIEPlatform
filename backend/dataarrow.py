@@ -636,6 +636,26 @@ def downloadArrowDataset(id):
         }), 500
     
 
+@dataarrow_apis.route("/apis/analysis/deleteArrowDataset/<id>", methods=["DELETE"])
+def delete_arrow_dataset(id):
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status": 403,
+        }), 403 
+    
+    try:
+        dataset = DatasetModel.delete(ObjectId(id))
+        return json_util.dumps({
+            "status": 200,
+            "message": "Dataset is deleted."
+        }), 200
+    except:
+        return json_util.dumps({
+            "status": 500, 
+            "message": "deleting error"
+        }), 500
+    
+
 
 @dataarrow_apis.route("/apis/analysis/get_deployment_datasets", methods=["GET"])
 def get_deployment_datasets():

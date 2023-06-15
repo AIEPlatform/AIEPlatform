@@ -1,6 +1,6 @@
-deployment = 'deployment for table dev'
-study = '2v2var'
-variables = ['HappyOrNot', 'wantToTravel', 'haveLunch', 'TakeShower']
+deployment = 'Sim'
+study = 'sim1'
+variables = ['isHappyOrNot', 'wantToTravelOrNot']
 num_users = 100
 import time
 import random

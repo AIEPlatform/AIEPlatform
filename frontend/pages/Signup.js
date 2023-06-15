@@ -120,7 +120,9 @@ export default function SignUp() {
                   id="password"
                   autoComplete="new-password"
                 />
+                <mark>** Your plain-text password is sent over HTTPS, and encrypted in the database by <code>flask_bcrypt</code>. But since this is still at an early stage of prototype, a <strong>different</strong> password from your other websites is strongly recommended.</mark>
               </Grid>
+              
             </Grid>
             <Button
               type="submit"

@@ -25,7 +25,7 @@ function CommonMOOCletAttribute(props) {
                     mooclet['reassignBeforeReward'] = e.target.checked;
                     sMooclets(tree)
                 }} />}
-                label="Allow re-asign treatment before a reward is received."
+                label="Allow to re-assign treatment before a reward is received."
             />
         </Box>
     )

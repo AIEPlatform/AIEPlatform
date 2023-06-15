@@ -170,7 +170,7 @@ export default function Layout({ children }) {
                 <Divider />
                 <Typography variant='h6' style={{ textAlign: "center" }}>My account</Typography>
                 <Box>
-                    <Link href='/changePassword' style={{ textDecoration: 'none', color: 'black' }}>
+                    <Link href='/ChangePassword' style={{ textDecoration: 'none', color: 'black' }}>
                         <ListItem key="change-password" disablePadding>
                             <ListItemButton>
                                 <EnhancedEncryptionIcon /> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
