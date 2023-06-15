@@ -50,12 +50,13 @@ def signup():
     firstName = request.json['firstName'] if 'firstName' in request.json else None
     lastName = request.json['lastName'] if 'lastName' in request.json else None
     if email is None or password is None or firstName is None or lastName is None:
-        return json_util.dumps({"status": 400, "message": "Email, password, firstName, or lastName not provided"})
+        return json_util.dumps({"status": 400, "message": "Email, password, firstName, or lastName not provided"}), 400
     
     # check if email already exists.
     the_user = User.find_one({"email": email})
+    print(the_user)
     if the_user is not None:
-        return json_util.dumps({"status": 400, "message": "Email already exists."})
+        return json_util.dumps({"status": 400, "message": "Email already exists."}), 400
     
     password = bcrypt.generate_password_hash(password)
     User.insert_one({"firstName": firstName, "lastName": lastName, "email": email, "password": password})

@@ -52,15 +52,18 @@ export default function SignUp() {
     .then(response => response.json())
     .then(data => {
         console.log(data);
-        if (data["status"] == "success") {
+        if (data["status"] == 200) {
             window.location.href = "/Login";
+        }
+        else {
+            alert(data["message"]);
         }
     }
     );
   };
 
   return (
-    <Layout>
+    <>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box
@@ -141,6 +144,6 @@ export default function SignUp() {
         </Box>
         <Copyright sx={{ mt: 5 }} />
       </Container>
-    </Layout>
+    </>
   );
 }

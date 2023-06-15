@@ -826,8 +826,7 @@ def get_variables():
             "status_code": 403,
         }), 403
     try:
-        username = get_username()
-        variables = VariableModel.get_many({"owner": username})
+        variables = VariableModel.get_many({})
         return json_util.dumps({
             "status_code": 200, 
             "data": variables

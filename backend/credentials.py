@@ -68,8 +68,8 @@ def check_if_loggedin():
 
 
 def get_username():
-    if 'username' in session:
-        return session['username']
+    if 'user' in session:
+        return session['user']['email']
     elif DEBUG:
         return "chenpan"
     else:
