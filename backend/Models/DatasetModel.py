@@ -36,7 +36,6 @@ class DatasetModel:
     # delete by id
     @staticmethod
     def delete(datasetId, session = None):
-        print("dfghdfhdfhfdh")
         try:
             email = get_username()
             response = Dataset.delete_one({"_id": datasetId, "owner": email}, session=session)
