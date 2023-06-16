@@ -4,7 +4,7 @@ Environment:
 1. Node: 18.16.0
 2. Python: 3.9
 
-  ## Install Frontend (Dev)
+  ## Install Frontend (Dev)0
   ```
   cd frontend
   npm install
