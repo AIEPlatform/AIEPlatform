@@ -1,7 +1,8 @@
 import { React, useState, useRef, use, useEffect } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
-import VersionEditor from '../ManageDeploymentPage/VersionEditor';
+import VersionFactorsEditor from './VersionFactorsEditor';
+import VersionEditor from './VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -43,8 +44,9 @@ function StudyEditor(props) {
     const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study.
     const deploymentName = props.deploymentName;
     const [studyName, sStudyName] = useState("");
-    const [variables, sVariables] = useState([])
-    const [versions, sVersions] = useState([])
+    const [variables, sVariables] = useState([]);
+    const [versions, sVersions] = useState([]);
+    const [factors, sFactors] = useState([])
     const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
@@ -132,6 +134,7 @@ function StudyEditor(props) {
                 "mooclets": mooclets,
                 "variables": variables,
                 "versions": versions, 
+                "factors": factors,
                 "rewardInformation": rewardInformation
             })
         })
@@ -149,11 +152,10 @@ function StudyEditor(props) {
 
 
     useEffect(() => {
-        for(let i = 0; i < mooclets.length; i++) {
-            mooclets[i].parameters = assignerHandleVersionOrVariableDeletion(mooclets[i].policy, mooclets[i].parameters, versions, variables);
+        for(const element of mooclets) {
+            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, versions, variables);
         }
         sMooclets(mooclets);
-        console.log(mooclets);
     }, [variables, versions]) //TO Improve: how to do it only when variables or versions deletion?
 
     useEffect(() => {
@@ -207,8 +209,8 @@ function StudyEditor(props) {
         let siblings = mooclets.filter(mooclet => mooclet.parent === node.parent);
         // get total weights of siblings.
         let totalWeight = 0;
-        for(let i = 0; i < siblings.length; i++) {
-            totalWeight += parseInt(siblings[i].weight);
+        for(const element of siblings) {
+            totalWeight += parseInt(element.weight);
         }
 
         return Math.round(node.weight/totalWeight * 10000 / 100) + "%";
@@ -250,10 +252,13 @@ function StudyEditor(props) {
                         aria-controls="panel1a-content"
                         id="panel1a-header"
                     >
-                        <Typography variant='h6'>Versions</Typography>
+                        <Typography variant='h6'>Factors & Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <VersionEditor allowVersionNameChange={status === 1} inputFields={versions} sInputFields={sVersions} />
+                        <VersionFactorsEditor allowVersionNameChange={status === 1} factors={factors} sFactors={sFactors} versions={versions} sVersions={sVersions}/>
+
+
+                        <VersionEditor allowVersionNameChange={status === 1} factors = {factors} versions={versions} sVersions={sVersions} />
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -324,7 +329,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} versions={versions}></MOOCletEditor>
+                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} factors={factors}></MOOCletEditor>
                 </Box>
             </Modal>
         </Container>

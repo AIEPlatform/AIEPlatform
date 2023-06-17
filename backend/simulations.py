@@ -1,5 +1,5 @@
 deployment = 'Sim'
-study = 'sim1'
+study = 'version_json_testing'
 variables = ['isHappyOrNot', 'wantToTravelOrNot']
 num_users = 100
 import time

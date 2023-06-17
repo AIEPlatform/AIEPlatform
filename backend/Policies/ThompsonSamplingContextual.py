@@ -19,7 +19,7 @@ from Models.MOOCletModel import MOOCletModel
 from Models.LockModel import LockModel
 
 
-USER_CAN_WAIT_FOR_MODEL_UPDATE = 5
+USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
 class ThompsonSamplingContextual(Policy):
@@ -38,7 +38,7 @@ class ThompsonSamplingContextual(Policy):
         items = []
         possible_variables = []
         for regression_formula_item in self.parameters['regressionFormulaItems']:
-            temp = [d['name'] for d in regression_formula_item]
+            temp = regression_formula_item
             possible_variables.extend(regression_formula_item)
             items.append('*'.join(temp))
         regression_formula += ('+'.join(items))
@@ -46,9 +46,8 @@ class ThompsonSamplingContextual(Policy):
 
         # TODO: Improve the frequency.
         # get contextual variable lists.
-        possible_variables = possible_variables
 
-        contextuals_variables = [possible_variable['name'] for possible_variable in possible_variables if possible_variable in self.study['variables']]
+        contextuals_variables = [possible_variable for possible_variable in possible_variables if possible_variable in self.study['variables']]
         self.parameters['contextual_variables'] = list(set(contextuals_variables))
 
 
@@ -97,7 +96,6 @@ class ThompsonSamplingContextual(Policy):
             # because it's TS Contextual, 
             if lucky_version is None:
                 all_versions = self.study['versions']
-                all_versions = {d['name']: d['content'] for d in all_versions}
                 parameters = self.parameters
                 # Store regression equation string
                 regression_formula = parameters['regression_formula']
@@ -179,21 +177,20 @@ class ThompsonSamplingContextual(Policy):
                 best_action = None
 
 
+                
                 for version in all_versions:
                     independent_vars = {}
                     for contextual_var in contextual_vars_dict:
                         independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
-                    for version2 in all_versions:
-                        if version2 == version:
-                            independent_vars[version2] = 1
-                        else:
-                            independent_vars[version2] = 0
+                    independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
                     outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
                     if best_action is None or outcome > best_outcome:
                         best_outcome = outcome
                         best_action = version
 
-                lucky_version = next(version for version in self.study['versions'] if version['name'] == best_action)
+                # lucky_version = next(version for version in self.study['versions'] if version['name'] == best_action)
+
+                lucky_version = best_action
 
             # Interaction
             # – learner
@@ -229,7 +226,6 @@ class ThompsonSamplingContextual(Policy):
         
     def get_reward(self, user, value, where, other_information):
 
-        current_time = datetime.datetime.now()
         latest_interaction = self.get_latest_interaction(user, where)
         if latest_interaction is None:
             return 400
@@ -265,7 +261,6 @@ class ThompsonSamplingContextual(Policy):
                 coef_mean, coef_cov, variance_a, variance_b, include_intercept = current_params['coef_mean'], current_params['coef_cov'], float(current_params['variance_a']), float(current_params['variance_b']), float(current_params['include_intercept'])
 
                 # use_unused_interactions
-                InteractionModel.use_unused_interactions(self._id, session=session)
 
                 interactions_for_posterior = InteractionModel.use_unused_interactions(self._id, session=session)
                 
@@ -273,7 +268,6 @@ class ThompsonSamplingContextual(Policy):
                 
                 regression_formula = current_params['regression_formula']
                 all_versions = self.study['versions']
-                all_versions = {d['name']: d['content'] for d in all_versions}
 
                 formula = regression_formula.strip()
 
@@ -293,11 +287,19 @@ class ThompsonSamplingContextual(Policy):
                         contextual_vars_dict[key] = sub_dict["value"]
                         
                     independent_vars = contextual_vars_dict
-                    for version in all_versions:
-                        if version == interaction['treatment']['name']:
-                            independent_vars[version] = 1
-                        else:
-                            independent_vars[version] = 0
+                    # for version in all_versions:
+                    #     if version == interaction['treatment']['name']:
+                    #         independent_vars[version] = 1
+                    #     else:
+                    #         independent_vars[version] = 0
+
+
+                    versionName = interaction['treatment']['name']
+                    # TODO: I don't want to use the versionJSON saved in the interaction, because the versionJSON might have changed. (and we shouldn't saved the version json in the interaction, we need to remove it for the future!)
+                    version = next(version for version in all_versions if version['name'] == versionName)
+
+                    independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
+
                     for j in range(len(vars_list)):
                         var = vars_list[j]
                         ## Determine value in variable list
@@ -350,8 +352,6 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     # :param include_intercept: whether intercept is included
     # :param formula: regression formula
     # :return: outcome given formula, coefficients and variables values
-    formula = formula
-
     # Split RHS of equation into variable list (context, action, interactions)
     vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
 

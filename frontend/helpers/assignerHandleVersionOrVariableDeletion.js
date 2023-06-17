@@ -7,7 +7,7 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, versions, v
     }
     else if (policy === "WeightedRandom") {
         for (const key in parameters) {
-            if (!versions.some(obj => obj.name === key)) {
+            if (!versions.some(obj => obj === key)) {
               delete parameters[key];
             }
           }
@@ -26,7 +26,7 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, versions, v
     
         for(let i = 0; i < parameters['regressionFormulaItems'].length; i++) {
             parameters['regressionFormulaItems'][i] = parameters['regressionFormulaItems'][i].filter(item => {
-                return allVariables.some(obj => obj.name === item.name);
+                return allVariables.some(obj => obj === item);
               });
 
             

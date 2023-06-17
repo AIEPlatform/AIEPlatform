@@ -115,6 +115,7 @@ def create_study():
     mooclets = request.json['mooclets']
     versions = request.json['versions']
     variables = request.json['variables']
+    factors = request.json['factors']
     deploymentName = request.json['deploymentName']
     rewardInformation = request.json['rewardInformation']
 
@@ -144,6 +145,7 @@ def create_study():
                 'deploymentId': the_deployment['_id'],
                 'versions': versions,
                 'variables': variables, 
+                'factors': factors,
                 'rewardInformation': rewardInformation
             }
             # Induction to create mooclet
@@ -549,7 +551,7 @@ def create_dataset():
             the_deployment = DeploymentModel.get_one({"name": deployment})
             the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
 
-            possible_variables = [v['name'] for v in the_study['variables']]
+            possible_variables = the_study['variables']
 
 
             variables = [v for v in list(df.columns) if v in possible_variables]

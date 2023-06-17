@@ -30,6 +30,7 @@ function MOOCletEditor(props) {
     let sMooclets = props.sMooclets;
     let [chosenPolicy, sChosenPolicy] = useState(null);
     let versions = props.versions;
+    let factors = props.factors;
     let variables = props.variables;
 
     let mooclet = mooclets.find(mooclet => mooclet.id === myId);
@@ -89,7 +90,7 @@ function MOOCletEditor(props) {
                 {mooclet.policy === 'UniformRandom' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
                 {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
                 {/* {mooclet.policy === 'ts_configurable' && <TSConfigurable versions={versions} policyIndex={policyIndex} policies={policies} sPolicies={sPolicies} variables={variables}></TSConfigurable>} */}
-                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
+                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
             </Box>
         </Paper>
     );
