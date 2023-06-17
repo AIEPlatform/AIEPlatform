@@ -12,9 +12,16 @@
 # Return is a dataframe that's like:
 # time, mean, errorBarEnd1, errorBarEnd2
 # ! per_day need to be defined as day - 'd', Month - 'm', Year - 'y', Week - 'w'
+import pandas as pd
+import numpy as np
+import sys
+from credentials import *
+import itertools
+from scipy import stats
+
 
 def average_reward_for_one_version(df, selectedVersion, selectedVariable, selectedPolicy, per_day="d"):
-    # Filter dataframe
+    # Filter dataframe``
     filtered_df = df[(df['treatment'] == selectedVersion) &  
                      (df['policy'] == selectedPolicy)]
     # Select columns
