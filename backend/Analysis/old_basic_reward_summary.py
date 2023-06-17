@@ -95,3 +95,5 @@ def basic_reward_summary_table(df, selectedVariables):
                 result_df.loc[index, 'p_value'] = p_value
                 result_df.loc[index, 'statistics'] = statistics
     return result_df
+
+
