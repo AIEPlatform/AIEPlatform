@@ -89,6 +89,8 @@ function TSContextual(props) {
 
     let regressionFormulaVariables = variables.concat(factors);
 
+    console.log(tree)
+
     let handleWeightChange = (event, name) => {
         mooclet['parameters'][name] = Number(event.target.value);
         sMooclets(tree)

@@ -462,6 +462,7 @@ def create_deployment():
 
 # {"studyName":"sim","description":"test2 description","mooclets":[{"id":1,"parent":0,"droppable":true,"isOpen":true,"text":"mooclet1","name":"mooclet1","policy":"ThompsonSamplingContextual","parameters":{"batch_size":1,"variance_a":1,"variance_b":5,"uniform_threshold":1,"precision_draw":1,"updatedPerMinute":0,"include_intercept":true,"coef_cov":[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],"coef_mean":[0,0,0,0],"regressionFormulaItems":[[{"name":"test","index":0}],[{"name":"version1","content":"v1"}],[{"name":"test","index":0},{"name":"version1","content":"v1"}]]},"weight":100}],"variables":[{"name":"test","index":0}],"versions":[{"name":"version1","content":"v1"},{"name":"version2","content":"v2"}]}
 
+import json
 def convert_mooclet_tree_to_list(mooclet, parentId, mooclet_list):
     the_id = len(mooclet_list) + 1
     mooclet_list.append({
@@ -740,6 +741,7 @@ def load_existing_study():
     rewardInformation = the_study['rewardInformation'] if 'rewardInformation' in the_study else {"name": "reward", "min": 0, "max": 1}
     mooclets = build_json_for_study(the_study['_id'])
 
+    print(mooclets[0]['parameters']['regressionFormulaItems'])
     return json_util.dumps(
         {
         "status_code": 200,

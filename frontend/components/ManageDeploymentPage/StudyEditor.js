@@ -41,13 +41,12 @@ function StudyEditor(props) {
     ]
 
 
-    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study.
+    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
     const deploymentName = props.deploymentName;
     const [studyName, sStudyName] = useState("");
     const [variables, sVariables] = useState([]);
     const [versions, sVersions] = useState([]);
     const [factors, sFactors] = useState([]);
-    const [existingFactors, sExistingFactors] = useState([]);
     const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
@@ -154,10 +153,10 @@ function StudyEditor(props) {
 
     useEffect(() => {
         for(const element of mooclets) {
-            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, versions, variables);
+            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables);
         }
         sMooclets(mooclets);
-    }, [variables, versions]) //TO Improve: how to do it only when variables or versions deletion?
+    }, [variables, versions, factors]) //TO Improve: how to do it only when variables or versions deletion?
 
     useEffect(() => {
         handleOpen(1);
@@ -170,19 +169,14 @@ function StudyEditor(props) {
             fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
+                sStatus(4);
+                console.log(data['mooclets'][0]['parameters']);
+                sMooclets(data['mooclets']);
+                console.log(data['mooclets'][0]['parameters']);
 
-                let mooclets = JSON.parse(JSON.stringify(data['mooclets']));
-                let o = mooclets[0]['parameters']['regressionFormulaItems']
-                let oM = [];
-                for(const element of o) {
-                    oM.push(element)
-                }
-                console.log(o)
-                console.log(oM)
                 sStudyName(data['studyName']);
                 sVariables(data['variables']);
                 sVersions(data['versions']);
-                sMooclets(mooclets);
                 sFactors(data['factors']);
                 sRewardInformation(data['rewardInformation']);
                 sStatus(2);
