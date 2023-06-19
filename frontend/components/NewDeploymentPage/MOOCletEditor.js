@@ -34,6 +34,9 @@ function MOOCletEditor(props) {
     let variables = props.variables;
 
     let mooclet = mooclets.find(mooclet => mooclet.id === myId);
+
+
+    console.log(mooclet);
     const handleMOOCletNameChange = (event) => {
         let data = [...mooclets];
         mooclet = data.find(mooclet => mooclet.id === myId);

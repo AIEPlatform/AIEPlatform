@@ -46,7 +46,8 @@ function StudyEditor(props) {
     const [studyName, sStudyName] = useState("");
     const [variables, sVariables] = useState([]);
     const [versions, sVersions] = useState([]);
-    const [factors, sFactors] = useState([])
+    const [factors, sFactors] = useState([]);
+    const [existingFactors, sExistingFactors] = useState([]);
     const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
@@ -169,11 +170,20 @@ function StudyEditor(props) {
             fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
-                console.log('Success:', data);
+
+                let mooclets = JSON.parse(JSON.stringify(data['mooclets']));
+                let o = mooclets[0]['parameters']['regressionFormulaItems']
+                let oM = [];
+                for(const element of o) {
+                    oM.push(element)
+                }
+                console.log(o)
+                console.log(oM)
                 sStudyName(data['studyName']);
                 sVariables(data['variables']);
                 sVersions(data['versions']);
-                sMooclets(data['mooclets']);
+                sMooclets(mooclets);
+                sFactors(data['factors']);
                 sRewardInformation(data['rewardInformation']);
                 sStatus(2);
             })
@@ -194,6 +204,7 @@ function StudyEditor(props) {
                 "study": studyName,
                 "mooclets": mooclets,
                 "variables": variables,
+                "factors": factors,
                 "versions": versions, 
                 "rewardInformation": rewardInformation
             })

@@ -26,7 +26,7 @@ export default function APICard(props) {
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST
                         </Typography>
-                        <Typography variant="body2">
+                        <Box>
                             <mark>Request Body</mark>
                             <pre>{JSON.stringify({
                                 "deployment": props.deploymentName,
@@ -37,7 +37,7 @@ export default function APICard(props) {
                             <mark>Sample Response</mark>
                             <pre>{JSON.stringify({ "treatment": { "name": "version2", "content": "2" } }, null, 2)}</pre>
                             <mark>treatment is an object that represents the name and content of the assigned treatment</mark>
-                        </Typography>
+                        </Box>
             </Box>
 
             <Box key="give_reward" margin = "10px 0" style={{position: "relative"}}>
@@ -50,7 +50,7 @@ export default function APICard(props) {
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST
                         </Typography>
-                        <Typography variant="body2">
+                        <Box>
                             <mark>Request Body</mark>
                             <pre>{JSON.stringify({
                                 "deployment": props.deploymentName,
@@ -61,7 +61,7 @@ export default function APICard(props) {
                             }, null, 2)}</pre>
                             <mark>Sample Response</mark>
                             <pre>{JSON.stringify({ "status_code": 200 }, null, 2)}</pre>
-                        </Typography>
+                        </Box>
             </Box>
 
             <Box key="give_variable" margin = "10px 0" style={{position: "relative"}}>
@@ -74,7 +74,7 @@ export default function APICard(props) {
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST
                         </Typography>
-                        <Typography variant="body2">
+                        <Box>
                             <mark>Request Body</mark>
                             <pre>{JSON.stringify({
                                 "deployment": props.deploymentName,
@@ -85,7 +85,7 @@ export default function APICard(props) {
                             }, null, 2)}</pre>
                             <mark>Sample Response</mark>
                             <pre>{JSON.stringify({ "status_code": 200 }, null, 2)}</pre>
-                        </Typography>
+                        </Box>
             </Box>
         </Paper>
 
