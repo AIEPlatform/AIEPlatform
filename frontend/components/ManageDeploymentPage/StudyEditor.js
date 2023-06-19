@@ -10,7 +10,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
-import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
+import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
 import RewardEditor from './RewardEditor';
 import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
 import APICard from './APICard';
