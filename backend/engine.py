@@ -23,7 +23,7 @@ app.register_blueprint(auth_apis)
 
 @app.route("/apis/checkLoginedOrNot", methods=["GET"])
 def checkLoginedOrNot():
-    if 'access' in session and session['access'] is True or DEBUG:
+    if 'access' in session and session['access'] is True or DEV_MODE:
         return json_util.dumps({
             "status_code": 200
         }), 200

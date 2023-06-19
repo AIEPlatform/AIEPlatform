@@ -60,6 +60,38 @@ export default function DataAnalysis(props) {
     }
   }
 
+  const [csvFile, setCsvFile] = useState(null);
+
+  const handleCsvUpload = (event) => {
+      const file = event.target.files[0];
+      setCsvFile(file);
+  };
+
+
+  const handleFileUpload = () => {
+    const formData = new FormData();
+    formData.append('csvFile', csvFile);
+    formData.append('datasetId', theDataset['_id']['$oid']);
+
+    fetch('/apis/upload_local_modification', {
+        method: 'PUT',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data['status'] === 200) {
+              window.location.reload();
+            }
+            else {
+                alert("Error: " + data["message"]);
+            }
+          }
+        )
+        .catch(error => {
+            console.error('Error uploading file:', error);
+        });
+};
+
   if (userContext !== undefined && userContext !== null) {
     return (
       <Layout>
@@ -93,6 +125,19 @@ export default function DataAnalysis(props) {
           {theDataset && <Box sx={{ m: 3, ml: 0 }}>
           <Button sx={{m: 2, ml: 0}} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
           <Button sx = {{m: 2, ml:0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
+
+          {theDataset && <Box>
+                    <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
+                    <label htmlFor="csv-upload">Upload CSV file:</label>
+                    <input
+                        id="csv-upload"
+                        type="file"
+                        accept=".csv"
+                        onChange={handleCsvUpload}
+                    />
+                    {csvFile && <p>File selected: {csvFile.name}</p>}
+                    {csvFile && <button onClick={handleFileUpload}>Upload</button>}
+                </Box>}
           </Box>}
 
         </Container>

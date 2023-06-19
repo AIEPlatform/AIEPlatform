@@ -1,11 +1,10 @@
 import { React, useState } from 'react';
-import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
+import { Typography, Paper, TextField, Button, Box } from '@mui/material';
 
 function VersionEditor(props) {
     let versions = props.versions;
     let sVersions = props.sVersions;
     let factors = props.factors;
-    let allowVersionNameChange = props.allowVersionNameChange;
 
     const handleFormChange = (index, event) => {
         let data = [...versions];

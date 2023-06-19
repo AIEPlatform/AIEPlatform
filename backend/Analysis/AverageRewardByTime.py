@@ -4,6 +4,7 @@ import json
 def AverageRewardByTime(df, selectedVariables):
     result_df = None
     # convert to date yyyy-mm-dd
+    print(df['outcome.timestamp'] )
     df['outcome.timestamp'] = df['outcome.timestamp'].apply(lambda x: x.date())
     # drop rows that have no outcome.timestamp
     df = df.dropna(subset=['outcome.timestamp'])

@@ -6,10 +6,6 @@ function VersionEditor(props) {
     let sFactors = props.sFactors;
     let versions = props.versions;
     let sVersions = props.sVersions;
-    let existingFactors = props.existingFactors;
-    
-    // deep copy the factors array
-    let factorsCopy = JSON.parse(JSON.stringify(factors));
 
     const handleVersionNameChange = (index, event) => {
         let data = [...factors];
@@ -60,7 +56,7 @@ function VersionEditor(props) {
 
         <Button onClick = {(e) => addFields()} variant="contained" color="primary" sx = {{m: 1}}>Add a factor</Button>
 
-        <mark>Renaming an existing factor is equal to removing this factor and create another!</mark>
+        <mark>Renaming an existing factor is equivalent to removing this factor and creating another!</mark>
         </Paper>
     )
 }

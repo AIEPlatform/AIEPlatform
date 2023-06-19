@@ -1,7 +1,7 @@
-import { React, useState, useRef, use, useEffect } from 'react';
-import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
+import { React, useState, useRef, useEffect } from 'react';
+import { Typography, TextField, Box, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
-import VersionFactorsEditor from './VersionFactorsEditor';
+import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -155,7 +155,8 @@ function StudyEditor(props) {
         for(const element of mooclets) {
             element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables);
         }
-        sMooclets(mooclets);
+        let temp = [...mooclets];
+        sMooclets(temp);
     }, [variables, versions, factors]) //TO Improve: how to do it only when variables or versions deletion?
 
     useEffect(() => {
@@ -205,7 +206,10 @@ function StudyEditor(props) {
         })
             .then(response => response.json())
             .then(data => {
-                alert("Study created successfully!");
+                alert("Study modified successfully!");
+            })
+            .catch((error) => {
+                alert("Study modification failed!")
             })
     };
     
@@ -260,7 +264,7 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Factors & Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <VersionFactorsEditor allowVersionNameChange={status === 1} factors={factors} sFactors={sFactors} versions={versions} sVersions={sVersions}/>
+                        <FactorsEditor allowVersionNameChange={status === 1} factors={factors} sFactors={sFactors} versions={versions} sVersions={sVersions}/>
 
 
                         <VersionEditor allowVersionNameChange={status === 1} factors = {factors} versions={versions} sVersions={sVersions} />

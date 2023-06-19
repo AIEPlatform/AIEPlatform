@@ -16,6 +16,8 @@ from Models.StudyModel import StudyModel
 from Models.DeploymentModel import DeploymentModel
 from Models.DatasetModel import DatasetModel
 from Models.VariableModel import VariableModel
+from errors import *
+import traceback
 
 
 dataarrow_apis = Blueprint('dataarrow_apis', __name__)
@@ -159,12 +161,12 @@ def create_study():
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
-                "status_code": 500,
+                "status": 500,
                 "message": "Not successful, please try again later."
             }), 500
 
     return json_util.dumps({
-        "status_code": 200, 
+        "status": 200, 
         "message": "success"
     }), 200
 
@@ -198,8 +200,6 @@ def get_mooclet_for_user(deployment_name, study_name, user):
         root_mooclet = MOOCletModel.find_mooclet({"_id": study['rootMOOClet']})
         return inductive_get_mooclet(root_mooclet, user)
 
-import traceback
-
 def assign_treatment(deployment_name, study_name, user, where = None, other_information = None):
     start_time = time.time()
     the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
@@ -208,7 +208,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
         version_to_show = mooclet.choose_arm(user, where, other_information)
 
         print(version_to_show)
-        if DEBUG:
+        if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
 
@@ -221,7 +221,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             TreatmentLog.insert_one(the_log)
         return version_to_show
     except Exception as e:
-        if DEBUG:
+        if DEV_MODE:
             the_log = {
                 "policy": the_mooclet['policy'],
                 "error": True,
@@ -241,7 +241,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
         mooclet = create_mooclet_instance(the_mooclet)
         response = mooclet.get_reward(user, value, where, other_information)
 
-        if DEBUG:
+        if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
 
@@ -254,7 +254,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
             RewardLog.insert_one(the_log)
         return response
     except Exception as e:
-        if DEBUG:
+        if DEV_MODE:
             the_log = {
                 "policy": the_mooclet['policy'],
                 "error": True, 
@@ -533,6 +533,7 @@ def create_df_from_mongo(study_name, deployment_name):
 import pickle
 import smtplib
 from email.mime.text import MIMEText
+import re
 
 @dataarrow_apis.route("/apis/create_dataset", methods = ["POST"])
 def create_dataset():
@@ -540,14 +541,27 @@ def create_dataset():
     study = request.json['study'] if 'study' in request.json else None
     email = request.json['email'] if 'email' in request.json else None
     dataset_name = request.json['datasetName'] if 'datasetName' in request.json else None
-    if deployment is None or study is None or email is None or dataset_name is None:
+    if deployment is None or study is None or dataset_name is None:
         return json_util.dumps({
             "status_code": 400,
-            "message": "Please make sure deployment, study, email are provided."
+            "message": "Please make sure deployment, study are provided."
         }), 400
     else:
+
+        def is_valid_email(email):
+            # Regular expression pattern for validating email addresses
+            pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+
+            # Use the pattern to match the email address
+            if re.match(pattern, email):
+                return True
+            else:
+                return False
         try:
             df = create_df_from_mongo(study, deployment)
+
+            if len(df) == 0:
+                return status_code("DOWNLOADED_DATASET_EMPTY")
 
             the_deployment = DeploymentModel.get_one({"name": deployment})
             the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
@@ -571,43 +585,57 @@ def create_dataset():
             }
             response = DatasetModel.create(document)
 
-            subject = "Your MOOClets datasets are ready for download."
-            body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
-            sender = EMAIL_USERNAME
-            recipients = [request.get_json()['email']]
-            password = EMAIL_PASSWORD
-            msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['From'] = sender
-            msg['To'] = ', '.join(recipients)
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-                smtp_server.login(sender, password)
-                smtp_server.sendmail(sender, recipients, msg.as_string())
+            if EMAIL_NOTIFICATION and is_valid_email(email):
+                subject = "Your MOOClets datasets are ready for download."
+                body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
+                sender = EMAIL_USERNAME
+                recipients = [request.get_json()['email']]
+                password = EMAIL_PASSWORD
+                msg = MIMEText(body)
+                msg['Subject'] = subject
+                msg['From'] = sender
+                msg['To'] = ', '.join(recipients)
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+                    smtp_server.login(sender, password)
+                    smtp_server.sendmail(sender, recipients, msg.as_string())
 
-            return json_util.dumps({
-                "status_code": 200,
-                "message": "Dataset is created."
-            }), 200
+            return status_code("DOWNLOAD_DATASET_SUCCESSFUL")
         except Exception as e:
-            print(e)
-            subject = "Sorry, downloading mooclet datasets failed. please try again."
-            body = f'Sorry, downloading mooclet datasets failed. please try again.'
-            sender = EMAIL_USERNAME
-            recipients = [request.get_json()['email']]
-            password = EMAIL_PASSWORD
-            msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['From'] = sender
-            msg['To'] = ', '.join(recipients)
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-                smtp_server.login(sender, password)
-                smtp_server.sendmail(sender, recipients, msg.as_string())
-            return json_util.dumps({
-                "status_code": 500, 
-                "message": "Sorry, downloading mooclet datasets failed. please try again."
-            }), 500
+            if EMAIL_NOTIFICATION and is_valid_email(email):
+                subject = "Sorry, downloading mooclet datasets failed. please try again."
+                body = subject
+                sender = EMAIL_USERNAME
+                recipients = [request.get_json()['email']]
+                password = EMAIL_PASSWORD
+                msg = MIMEText(body)
+                msg['Subject'] = subject
+                msg['From'] = sender
+                msg['To'] = ', '.join(recipients)
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+                    smtp_server.login(sender, password)
+                    smtp_server.sendmail(sender, recipients, msg.as_string())
+
+            return status_code("DOWNLOAD_DATASET_FAILURE")
         
 
+
+@dataarrow_apis.route("/apis/upload_local_modification", methods = ["PUT"])
+def upload_local_modification():
+
+    csv_file = request.files['csvFile']
+    df = pd.read_csv(csv_file)
+
+    print(df['outcome.timestamp'])
+
+    datasetId = request.form['datasetId'] if 'datasetId' in request.form else None
+
+    response = DatasetModel.update_one(datasetId, df)
+
+    if response == 200:
+        return status_code("UPLOAD_LOCAL_MODIFICATION_SUCCESSFUL")
+    else:
+        # TODO
+        return status_code("DEFAULT_SERVER_ERROR")
 
 from bson.objectid import ObjectId
 from flask import send_file, make_response

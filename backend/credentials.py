@@ -5,7 +5,8 @@ from flask import session
 import pymongo
 
 MONGO_DB_CONNECTION_STRING = os.getenv('MONGO_DB_CONNECTION_STRING')
-DEBUG = os.getenv('DEV_MODE') == 'True'
+DEV_MODE = os.getenv('DEV_MODE') == 'True'
+EMAIL_NOTIFICATION = os.getenv('EMAIL_NOTIFICATION') == 'True'
 
 EMAIL_USERNAME=os.getenv('EMAIL_USERNAME')
 EMAIL_PASSWORD=os.getenv('EMAIL_PASSWORD')
@@ -13,6 +14,9 @@ ROOT_URL=os.getenv('ROOT_URL')
 
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
+
+from bson.objectid import ObjectId
+import pickle
 
 
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
@@ -44,33 +48,21 @@ Variable.create_index("name", unique=True)
 Lock.create_index("moocletId", unique=True)
 User.create_index("email", unique=True)
 
-
-
-
-from bson.objectid import ObjectId
-import pickle
-
 def getDataset(datasetId):
     theDataset = Dataset.find_one({"_id": ObjectId(datasetId)}) # Only 
     df = pickle.loads(theDataset['dataset'])
     return df
 
-
-
-
-
 def check_if_loggedin():
-    if 'access' in session and session['access'] is True or DEBUG:
+    if 'access' in session and session['access'] is True or DEV_MODE:
         return True
     else:
         return False
     
-
-
 def get_username():
     if 'user' in session:
         return session['user']['email']
-    elif DEBUG:
+    elif DEV_MODE:
         return "chenpan"
     else:
         return None

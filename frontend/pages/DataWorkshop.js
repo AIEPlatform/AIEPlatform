@@ -15,6 +15,9 @@ function DataWorkshop() {
     const [datasetName, sDatasetName] = useState("");
 
     const { userContext, sUserContext } = useContext(UserContext);
+
+    const [message, sMessage] = useState("");
+    
     useEffect(() => {
         if (userContext !== undefined && userContext === null) {
             window.location.href = "/Login";
@@ -39,7 +42,7 @@ function DataWorkshop() {
     }
 
     const handleDownloadData = () => {
-        alert("Thanks! Your dataset download request has been queued, you will receive an email when it succeeds or fails. Stay tuned!")
+        sMessage("Thanks! Your dataset download request has been queued, you will receive an email when it succeeds or fails. Stay tuned!")
         fetch(`/apis/create_dataset`, {
             method: 'POST',
             headers: {
@@ -54,9 +57,12 @@ function DataWorkshop() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log(data);
-            }
-            );
+                sMessage(data["message"])
+            })
+            .catch((error) => {
+                sMessage("something is wrong, please try again later.")
+            })
+            
     };
     if (userContext !== undefined && userContext !== null) {
         return (
@@ -95,6 +101,7 @@ function DataWorkshop() {
                         <Box><TextField value={datasetName} onChange={(e) => sDatasetName(e.target.value)}></TextField></Box>
                     </Box>
                     {theStudy && <Box><Button onClick={handleDownloadData}>Make a dataset snapshot to work on.</Button></Box>}
+                    <mark sx={{ mb: 3 }}>{message}</mark>
                 </Container>
             </Layout>
         );
