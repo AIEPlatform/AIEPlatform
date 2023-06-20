@@ -4,13 +4,6 @@
 # group by the formatted rewardTimestamp, calculate the mean of the outcome, stderros, 25, 75 cis... (you can choose how we interpret the error bars)
 # Return is a dataframe that's like:
 # time, mean, errorBarEnd1, errorBarEnd2
-
-# Function description
-# First, need to filter df by selectedVersion, selectedVariable, selectedPolicy.
-# Secondly, format the rewardTimestamp to a certain format by per ("day", "week", "month", "year"). (this can be done later)
-# group by the formatted rewardTimestamp, calculate the mean of the outcome, stderros, 25, 75 cis... (you can choose how we interpret the error bars)
-# Return is a dataframe that's like:
-# time, mean, errorBarEnd1, errorBarEnd2
 # ! per_day need to be defined as day - 'd', Month - 'm', Year - 'y', Week - 'w'
 import pandas as pd
 import numpy as np

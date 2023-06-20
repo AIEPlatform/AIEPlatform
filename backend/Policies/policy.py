@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 from credentials import *
+from Models.InteractionModel import InteractionModel
+
+from Models.StudyModel import StudyModel
 class Policy(ABC):
 	def __init__(self, **mooclet_obj_from_db):
 		for key, value in mooclet_obj_from_db.items():
 			setattr(self, key, value)
 
-		study = Study.find_one(
+		study = StudyModel.get_one(
 			{
 				"_id": self.studyId
 			}
@@ -20,7 +23,7 @@ class Policy(ABC):
 		pass
 
 	def get_latest_interaction(self, user, where):
-		last_interaction = Interaction.find_one({"user": user, "moocletId": self._id, "where": where}, sort=[("timestamp", -1)])
+		last_interaction = InteractionModel.get_latest_interaction_for_where(self._id, user, where)
 		if last_interaction is None or last_interaction['outcome'] is not None:
 			return None
 		else:

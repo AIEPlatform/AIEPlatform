@@ -3,16 +3,13 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Layout from '../components/layout';
+import Head from 'next/head';
 
 function Copyright(props) {
   return (
@@ -52,17 +49,20 @@ export default function SignUp() {
     .then(response => response.json())
     .then(data => {
         console.log(data);
-        if (data["status"] == "success") {
+        if (data["status"] == 200) {
             window.location.href = "/Login";
+        }
+        else {
+            alert(data["message"]);
         }
     }
     );
   };
 
   return (
-    <Layout>
+    <>
+      <Head><title>Sign up - DataArrow</title></Head>
       <Container component="main" maxWidth="xs">
-        <CssBaseline />
         <Box
           sx={{
             marginTop: 8,
@@ -120,7 +120,9 @@ export default function SignUp() {
                   id="password"
                   autoComplete="new-password"
                 />
+                <mark>** Your plain-text password is sent over HTTPS, and encrypted in the database by <code>flask_bcrypt</code>. But since this is still at an early stage of prototype, a <strong>different</strong> password from your other websites is strongly recommended.</mark>
               </Grid>
+              
             </Grid>
             <Button
               type="submit"
@@ -141,6 +143,6 @@ export default function SignUp() {
         </Box>
         <Copyright sx={{ mt: 5 }} />
       </Container>
-    </Layout>
+    </>
   );
 }

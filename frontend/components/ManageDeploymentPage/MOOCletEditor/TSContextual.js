@@ -24,7 +24,7 @@ const CoefCovInput = (props) => {
                         key={colIndex}
                         value={cell}
                         type={"number"}
-                        style={{ width: '3em', height: '3em' }}
+                        style={{ width: '4em', height: '4em' }}
                         onChange={e => handleInputChange(e, rowIndex, colIndex)}
                     />
                 ))}
@@ -60,7 +60,7 @@ const CoefMeanInput = (props) => {
                 key={index}
                 value={cell}
                 type={"number"}
-                style={{ width: '3em', height: '3em' }}
+                style={{ width: '4em', height: '4em' }}
                 onChange={e => handleInputChange(e, index)}
             />
         ))
@@ -78,7 +78,7 @@ const CoefMeanInput = (props) => {
 
 
 function TSContextual(props) {
-    let versions = props.versions;
+    let factors = props.factors;
     let variables = props.variables;
     let mooclets = props.mooclets;
     let sMooclets = props.sMooclets;
@@ -87,7 +87,9 @@ function TSContextual(props) {
     let tree = [...mooclets];
     let mooclet = tree.find(mooclet => mooclet.id === myId);
 
-    let regressionFormulaVariables = variables.concat(versions);
+    let regressionFormulaVariables = variables.concat(factors);
+
+    console.log(tree)
 
     let handleWeightChange = (event, name) => {
         mooclet['parameters'][name] = Number(event.target.value);
@@ -194,7 +196,7 @@ function TSContextual(props) {
     }
 
     const handleRegressionFormulaItemPickup = (option, index) => {
-        mooclet['parameters']["regressionFormulaItems"][index] = option;
+        mooclet['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value)
         sMooclets(tree)
     };
 
@@ -282,19 +284,20 @@ function TSContextual(props) {
                             <Select
                                 isMulti
                                 name="contextuals"
-                                options={regressionFormulaVariables}
-                                getOptionValue={(option) => option.name}
-                                getOptionLabel={(option) => option.name}
+                                options={regressionFormulaVariables.map((option) => ({
+                                    value: option,
+                                    label: option
+                                  }))}
                                 className="basic-multi-select"
                                 classNamePrefix="select"
-                                value={regressionFormulaItem}
+                                value={regressionFormulaItem.map(v => ({ label: v, value: v }))}
                                 onChange={(option) => {
                                     handleRegressionFormulaItemPickup(option, index);
                                 }}
                                 styles={{
                                     // Fixes the overlapping problem of the component
                                     menu: provided => ({ ...provided, zIndex: 9999 })
-                                }} F
+                                }}
                             />
                             <Button onClick={() => {
                                 removeFields(index);

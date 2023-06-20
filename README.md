@@ -4,7 +4,7 @@ Environment:
 1. Node: 18.16.0
 2. Python: 3.9
 
-  ## Install Frontend (Dev)
+  ## Install Frontend (Dev)0
   ```
   cd frontend
   npm install
@@ -22,13 +22,10 @@ cp .env-sample .env
 Fill in/Modify the following information:
 ```
 MONGO_DB_CONNECTION_STRING=
-PSQL_HOST=
-PSQL_PASSWORD=
-PSQL_DATABASE=moocletengine
-PSQL_USER=moocletengine
-PSQL_PORT=5432
-MOOCLET_TOKEN=
-MOOCLET_ENGINE_URL=
+DEV_MODE=
+EMAIL_USERNAME=
+EMAIL_PASSWORD=
+ROOT_URL=
 ```
 
 The Backend is in Python. So there are some Python libraries need to be installed (as specified in requirements.txt):

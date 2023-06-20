@@ -30,11 +30,12 @@ function VariableEditor(props) {
     let [selectedVariableMissingStrategyOption, sSelectedVariableMissingStrategyOption] = useState(missingDataOptions[0]);
 
     let [selectedVariableTypeOption, sSelectedVariableTypeOption] = useState(variableTypes[0]);
-    const handleSelectChange = (option) => {
+    const handleSelectChange = (options) => {
 
-        sSelectedVariables(option.map((variable) => {
-            return { name: variable['label'], index: variable['value'], id:  option['id']}
-        }))
+        // only keep the name of the variables in options, and make a list.
+        const selectedVariables = options.map(obj => obj.name);
+        sSelectedVariables(selectedVariables);
+        console.log(selectedVariables);
     }
 
     useEffect(() => {
@@ -95,14 +96,15 @@ function VariableEditor(props) {
         }}>
             <Select
                 isMulti
-                name="colors"
+                name="variables"
                 instanceId="variable-select"
-                options={existingVariables.map((variable, index) => {
-                    return { value: index, label: variable['name'] }
-                })}
+                options={existingVariables}
+                getOptionValue={(option) => option['name']}
+                getOptionLabel={(option) => option['name']}
+
                 className="basic-multi-select"
                 classNamePrefix="select"
-                value={selectedVariables.map((variable) => { return { value: variable['index'], label: variable['name'] } })}
+                value={selectedVariables.map(v => ({ name: v, value: v }))}
                 onChange={(option) => handleSelectChange(option)}
                 styles={{
                     // Fixes the overlapping problem of the component

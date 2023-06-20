@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -25,7 +24,6 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import { UserContext } from "../contexts/UserContextWrapper";
-import { useContext } from "react";
 
 
 
@@ -78,8 +76,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 export default function Layout({ children }) {
     const theme = useTheme();
-    const [open, setOpen] = React.useState(false);
-    const [loggedin, sLoggedIn] = React.useState(false);
+    const [open, setOpen] = useState(false);
     const { userContext, sUserContext } = useContext(UserContext);
 
     const handleDrawerOpen = () => {
@@ -95,7 +92,6 @@ export default function Layout({ children }) {
             .then(res => res.json())
             .then(data => {
                 if (data['status'] === 200) {
-                    sLoggedIn(false);
                     sUserContext(null);
                     console.log(userContext)
                 }
@@ -107,21 +103,12 @@ export default function Layout({ children }) {
     const linkURLs = ['/', '/NewDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
     const icons = [<AutoFixHighIcon />, <AddIcon />, <DatasetIcon />, <InsightsIcon />]
 
-    useEffect(() => {
-        fetch('/apis/checkLoginedOrNot')
-            .then(res => res.json())
-            .then(data => {
-                if (data['status_code'] === 200) {
-                    sLoggedIn(true);
-                }
-            })
-    }, []);
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
             <AppBar position="fixed" open={open}>
                 <Toolbar>
-                {userContext !== undefined && userContext !== null && <IconButton
+                    {userContext !== undefined && userContext !== null && <IconButton
                         color="inherit"
                         aria-label="open drawer"
                         onClick={handleDrawerOpen}
@@ -135,56 +122,56 @@ export default function Layout({ children }) {
                     </Typography>
                 </Toolbar>
             </AppBar>
-            {userContext !== undefined && userContext !== null && 
-            <Drawer
-                sx={{
-                    width: drawerWidth,
-                    flexShrink: 0,
-                    '& .MuiDrawer-paper': {
+            {userContext !== undefined && userContext !== null &&
+                <Drawer
+                    sx={{
                         width: drawerWidth,
-                        boxSizing: 'border-box',
-                    },
-                }}
-                variant="persistent"
-                anchor="left"
-                open={open}
-            >
-                <DrawerHeader>
-                    <IconButton onClick={handleDrawerClose}>
-                        {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-                    </IconButton>
-                </DrawerHeader>
-                <Typography variant='h6' style={{ textAlign: "center" }}>My experiments</Typography>
-                <Divider />
-                <List>
-                    {links.map((text, index) => (
-                        <Link key={index} href={linkURLs[index]} style={{ textDecoration: 'none', color: 'black' }}>
-                            <ListItem key={index} disablePadding>
+                        flexShrink: 0,
+                        '& .MuiDrawer-paper': {
+                            width: drawerWidth,
+                            boxSizing: 'border-box',
+                        },
+                    }}
+                    variant="persistent"
+                    anchor="left"
+                    open={open}
+                >
+                    <DrawerHeader>
+                        <IconButton onClick={handleDrawerClose}>
+                            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                        </IconButton>
+                    </DrawerHeader>
+                    <Typography variant='h6' style={{ textAlign: "center" }}>My experiments</Typography>
+                    <Divider />
+                    <List>
+                        {links.map((text, index) => (
+                            <Link key={index} href={linkURLs[index]} style={{ textDecoration: 'none', color: 'black' }}>
+                                <ListItem key={index} disablePadding>
+                                    <ListItemButton>
+                                        {icons[index]} <Typography sx={{ ml: 1 }}>{links[index]}</Typography>
+                                    </ListItemButton>
+                                </ListItem>
+                            </Link>
+                        ))}
+                    </List>
+                    <Divider />
+                    <Typography variant='h6' style={{ textAlign: "center" }}>My account</Typography>
+                    <Box>
+                        <Link href='/ChangePassword' style={{ textDecoration: 'none', color: 'black' }}>
+                            <ListItem key="change-password" disablePadding>
                                 <ListItemButton>
-                                    {icons[index]} <Typography sx={{ ml: 1 }}>{links[index]}</Typography>
+                                    <EnhancedEncryptionIcon /> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
                                 </ListItemButton>
                             </ListItem>
                         </Link>
-                    ))}
-                </List>
-                <Divider />
-                <Typography variant='h6' style={{ textAlign: "center" }}>My account</Typography>
-                <Box>
-                    <Link href='/changePassword' style={{ textDecoration: 'none', color: 'black' }}>
-                        <ListItem key="change-password" disablePadding>
+
+                        <ListItem key="logout" onClick={() => handleLogout()} disablePadding>
                             <ListItemButton>
-                                <EnhancedEncryptionIcon /> <Typography sx={{ ml: 1 }}>Change My Password</Typography>
+                                <LogoutIcon /> <Typography sx={{ ml: 1 }}>Logout</Typography>
                             </ListItemButton>
                         </ListItem>
-                    </Link>
-
-                    <ListItem key="logout" onClick={() => handleLogout()} disablePadding>
-                        <ListItemButton>
-                            <LogoutIcon /> <Typography sx={{ ml: 1 }}>Logout</Typography>
-                        </ListItemButton>
-                    </ListItem>
-                </Box>
-            </Drawer>}
+                    </Box>
+                </Drawer>}
             <Main open={open}>
                 <DrawerHeader />
                 {<main>{children}</main>}

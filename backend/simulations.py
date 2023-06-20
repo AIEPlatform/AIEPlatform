@@ -1,6 +1,6 @@
-deployment = 'deployment for table dev'
-study = '4v4var'
-variables = ['HappyOrNot', 'wantToTravel', 'haveLunch', 'TakeShower']
+deployment = 'Sim'
+study = 'version_json_testing'
+variables = ['isHappyOrNot', 'wantToTravelOrNot']
 num_users = 100
 import time
 import random
@@ -50,11 +50,11 @@ def one_user(user):
 
 
 
-# Interaction.delete_many({})
+Interaction.delete_many({})
 Lock.delete_many({})
-# RewardLog.delete_many({})
-# TreatmentLog.delete_many({})
-# VariableValue.delete_many({})
+RewardLog.delete_many({})
+TreatmentLog.delete_many({})
+VariableValue.delete_many({})
 for user in users:
     t = threading.Thread(target=one_user, args=(user,))
     t.start()

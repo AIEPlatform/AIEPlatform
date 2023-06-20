@@ -1,8 +1,9 @@
 from credentials import *
 from Analysis.AverageRewardByTime import AverageRewardByTime
 import datetime
+from Models.VariableValueModel import VariableValueModel
 def test():
-    the_interactions = list(Interaction.find({"moocletId": ObjectId("648877fbb11c95ea10e140cd")}))
+    the_interactions = list(Interaction.find({"moocletId": ObjectId("648b1379fd591446c7c1f0b3")}))
     # change the rewardTimestamp this way:
     # first 20% of the interactions, change the rewardTimestamp to four days ago.
     # second 20% of the interactions, change the rewardTimestamp to three days ago.
@@ -35,4 +36,6 @@ def test():
 
         Interaction.update_one({"_id": the_interactions[i]['_id']}, {"$set": {"rewardTimestamp": time}})
         # interaction.save()
+    # print(VariableValueModel.getLatestVariableValues(['wantToTravel'], 'sim_user_1'))
+
 test()

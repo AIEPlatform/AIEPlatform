@@ -1,7 +1,8 @@
-import { React, useState, useRef, use, useEffect } from 'react';
-import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, Input } from '@mui/material';
+import { React, useState, useRef, useEffect } from 'react';
+import { Typography, TextField, Box, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
-import VersionEditor from '../ManageDeploymentPage/VersionEditor';
+import FactorsEditor from './FactorsEditor';
+import VersionEditor from './VersionEditor';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -9,9 +10,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
-import MOOCletEditor from '../NewDeploymentPage/MOOCletEditor';
+import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
 import RewardEditor from './RewardEditor';
 import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
+import APICard from './APICard';
 
 import {
     Tree,
@@ -39,11 +41,12 @@ function StudyEditor(props) {
     ]
 
 
-    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study.
+    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
     const deploymentName = props.deploymentName;
     const [studyName, sStudyName] = useState("");
-    const [variables, sVariables] = useState([])
-    const [versions, sVersions] = useState([])
+    const [variables, sVariables] = useState([]);
+    const [versions, sVersions] = useState([]);
+    const [factors, sFactors] = useState([]);
     const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
@@ -131,6 +134,7 @@ function StudyEditor(props) {
                 "mooclets": mooclets,
                 "variables": variables,
                 "versions": versions, 
+                "factors": factors,
                 "rewardInformation": rewardInformation
             })
         })
@@ -148,12 +152,12 @@ function StudyEditor(props) {
 
 
     useEffect(() => {
-        for(let i = 0; i < mooclets.length; i++) {
-            mooclets[i].parameters = assignerHandleVersionOrVariableDeletion(mooclets[i].policy, mooclets[i].parameters, versions, variables);
+        for(const element of mooclets) {
+            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables);
         }
-        sMooclets(mooclets);
-        console.log(mooclets);
-    }, [variables, versions]) //TO Improve: how to do it only when variables or versions deletion?
+        let temp = [...mooclets];
+        sMooclets(temp);
+    }, [variables, versions, factors]) //TO Improve: how to do it only when variables or versions deletion?
 
     useEffect(() => {
         handleOpen(1);
@@ -166,11 +170,15 @@ function StudyEditor(props) {
             fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
-                console.log('Success:', data);
+                sStatus(4);
+                console.log(data['mooclets'][0]['parameters']);
+                sMooclets(data['mooclets']);
+                console.log(data['mooclets'][0]['parameters']);
+
                 sStudyName(data['studyName']);
                 sVariables(data['variables']);
                 sVersions(data['versions']);
-                sMooclets(data['mooclets']);
+                sFactors(data['factors']);
                 sRewardInformation(data['rewardInformation']);
                 sStatus(2);
             })
@@ -191,13 +199,17 @@ function StudyEditor(props) {
                 "study": studyName,
                 "mooclets": mooclets,
                 "variables": variables,
+                "factors": factors,
                 "versions": versions, 
                 "rewardInformation": rewardInformation
             })
         })
             .then(response => response.json())
             .then(data => {
-                alert("Study created successfully!");
+                alert("Study modified successfully!");
+            })
+            .catch((error) => {
+                alert("Study modification failed!")
             })
     };
     
@@ -206,8 +218,8 @@ function StudyEditor(props) {
         let siblings = mooclets.filter(mooclet => mooclet.parent === node.parent);
         // get total weights of siblings.
         let totalWeight = 0;
-        for(let i = 0; i < siblings.length; i++) {
-            totalWeight += parseInt(siblings[i].weight);
+        for(const element of siblings) {
+            totalWeight += parseInt(element.weight);
         }
 
         return Math.round(node.weight/totalWeight * 10000 / 100) + "%";
@@ -249,10 +261,13 @@ function StudyEditor(props) {
                         aria-controls="panel1a-content"
                         id="panel1a-header"
                     >
-                        <Typography variant='h6'>Versions</Typography>
+                        <Typography variant='h6'>Factors & Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <VersionEditor allowVersionNameChange={status === 1} inputFields={versions} sInputFields={sVersions} />
+                        <FactorsEditor allowVersionNameChange={status === 1} factors={factors} sFactors={sFactors} versions={versions} sVersions={sVersions}/>
+
+
+                        <VersionEditor allowVersionNameChange={status === 1} factors = {factors} versions={versions} sVersions={sVersions} />
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -297,6 +312,22 @@ function StudyEditor(props) {
                         <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new Assigner</Button>
                     </AccordionDetails>
                 </Accordion>
+
+
+
+                {studyName !== "" && <Accordion>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="study-api-doc"
+                        id="study-api-doc"
+                    >
+                        <Typography variant='h6'>APIs for {studyName} in {deploymentName}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <APICard studyName={studyName} deploymentName={deploymentName}></APICard>
+                    </AccordionDetails>
+                </Accordion>}
+
                 {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>}
                 {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study.</Button>}
             </Box>
@@ -307,7 +338,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} versions={versions}></MOOCletEditor>
+                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} factors={factors}></MOOCletEditor>
                 </Box>
             </Modal>
         </Container>

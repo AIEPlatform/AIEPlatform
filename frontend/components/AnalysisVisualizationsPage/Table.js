@@ -135,7 +135,7 @@ export default function BasicTable(props) {
           getTable(options.map(option => option['label']));
         }}
       />
-      <TableContainer component={Paper} style={{ flex: '1', overflowY: 'auto' }}>
+      <TableContainer component={Paper} style={{ marginTop: "2em", flex: '1', overflowY: 'auto' }}>
         <Table aria-label="simple table">
           <TableHead>
             <TableRow>

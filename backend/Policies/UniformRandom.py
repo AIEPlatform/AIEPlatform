@@ -2,6 +2,7 @@ import random
 import datetime
 from credentials import *
 from Policies.policy import Policy
+from Models.InteractionModel import InteractionModel
 class UniformRandom(Policy):
 	def choose_arm(self, user, where, other_information):
 		# TODO: Check if consistent assignment!
@@ -19,7 +20,7 @@ class UniformRandom(Policy):
 				"otherInformation": other_information
 			}
 
-			Interaction.insert_one(new_interaction)
+			InteractionModel.insert_one(new_interaction)
 			return lucky_version
 		except Exception as e:
 			print(e)
@@ -31,5 +32,5 @@ class UniformRandom(Policy):
 		if latest_interaction is None:
 			return 400
 		else:
-			Interaction.update_one({'_id': latest_interaction['_id']}, {'$set': {'outcome': value, 'rewardTimestamp': current_time}})
+			InteractionModel.append_reward(latest_interaction['_id'], value)
 			return 200
