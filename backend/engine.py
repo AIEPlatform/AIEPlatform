@@ -1,15 +1,15 @@
 from flask import Flask, session
 from flask_session import Session
 
-from flask_pymongo import PyMongo
-from mooclet import mooclet_apis
-from mooclet_datadownloader import mooclet_datadownloader_api
+from dataarrow import dataarrow_apis
+from auth import auth_apis
 from bson import json_util
 from dotenv import load_dotenv
 import os
 load_dotenv()
-MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
+from credentials import *
 
+MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 app = Flask(__name__)
 
 app.config["SESSION_PERMANENT"] = False
@@ -18,24 +18,12 @@ Session(app)
 
 # Currently still just use MOOClet APIs.
 
-app.register_blueprint(mooclet_apis)
-app.register_blueprint(mooclet_datadownloader_api)
-
-@app.route("/apis/signUpMOOCletToken/<accessToken>", methods=["GET"])
-def signUpMOOCletToken(accessToken):
-    if accessToken == MOOCLET_TOKEN:
-        session['access'] = True
-    else:
-        session['access'] = False
-    return json_util.dumps({
-        "status_code": 200, 
-        "message": "Try again in the dashboard."
-    }), 200
-
+app.register_blueprint(dataarrow_apis)
+app.register_blueprint(auth_apis)
 
 @app.route("/apis/checkLoginedOrNot", methods=["GET"])
 def checkLoginedOrNot():
-    if 'access' in session and session['access'] is True:
+    if 'access' in session and session['access'] is True or DEV_MODE:
         return json_util.dumps({
             "status_code": 200
         }), 200

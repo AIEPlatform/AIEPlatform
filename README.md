@@ -4,12 +4,14 @@ Environment:
 1. Node: 18.16.0
 2. Python: 3.9
 
-  ## Install Frontend (Dev)
+  ## Install Frontend (Dev)0
   ```
+  cd frontend
   npm install
   npm run dev
   ```
   Now, you should be able to access the frontend at localhost: http://localhost:3000
+  If you have pm2 installed, you can run the frontend in backend by `pm2 start "npm run start" --name mooclet_dashboard` for production, but make sure you run `npm run build` first.
 
   ## Install Backend (Dev)
 Go into the backend folder by running: `cd backend`
@@ -20,13 +22,10 @@ cp .env-sample .env
 Fill in/Modify the following information:
 ```
 MONGO_DB_CONNECTION_STRING=
-PSQL_HOST=
-PSQL_PASSWORD=
-PSQL_DATABASE=moocletengine
-PSQL_USER=moocletengine
-PSQL_PORT=5432
-MOOCLET_TOKEN=
-MOOCLET_ENGINE_URL=
+DEV_MODE=
+EMAIL_USERNAME=
+EMAIL_PASSWORD=
+ROOT_URL=
 ```
 
 The Backend is in Python. So there are some Python libraries need to be installed (as specified in requirements.txt):
