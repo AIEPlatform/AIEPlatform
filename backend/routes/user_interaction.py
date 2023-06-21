@@ -21,10 +21,10 @@ from bson.objectid import ObjectId
 
 user_interaction_apis = Blueprint('user_interaction_apis', __name__)
 
-def create_mooclet_instance(the_mooclet):
+def create_mooclet_instance(user, the_mooclet):
     cls = globals().get(the_mooclet['policy'])
     if cls:
-        return cls(**the_mooclet)
+        return cls(user, **the_mooclet)
     else:
         raise ValueError(f"Invalid policy name")
     
@@ -61,7 +61,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
     start_time = time.time()
     the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
     try:
-        mooclet = create_mooclet_instance(the_mooclet)
+        mooclet = create_mooclet_instance(user, the_mooclet)
         version_to_show = mooclet.choose_arm(user, where, other_information)
         if DEV_MODE:
             end_time = time.time()
@@ -93,7 +93,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
     try:
         start_time = time.time()
         the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
-        mooclet = create_mooclet_instance(the_mooclet)
+        mooclet = create_mooclet_instance(user, the_mooclet)
         response = mooclet.get_reward(user, value, where, other_information)
 
         if DEV_MODE:

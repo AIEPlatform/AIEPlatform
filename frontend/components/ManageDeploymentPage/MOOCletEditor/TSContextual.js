@@ -89,7 +89,8 @@ function TSContextual(props) {
 
     let regressionFormulaVariables = variables.concat(factors);
 
-    console.log(tree)
+    // check if individual-level or not.
+    const [individualLevel, sIndividualLevel] = useState(false);
 
     let handleWeightChange = (event, name) => {
         mooclet['parameters'][name] = Number(event.target.value);
@@ -274,6 +275,28 @@ function TSContextual(props) {
                     myId={myId}
                     sMooclets={sMooclets}
                 />
+
+                <FormControlLabel
+                    control={<Checkbox checked={mooclet['parameters']['individualLevel'] || false} onChange={(e) => {
+                        if(!mooclet['parameters']['individualLevelThreshold']) mooclet['parameters']['individualLevelThreshold'] = 0;
+                        mooclet['parameters']['individualLevel'] = e.target.checked;
+                        mooclet['parameters']['individualParameters'] = {};
+                        sMooclets(tree);
+                    }} />}
+                    label="Enable individual-level regression after receiving a certain number of feedbacks"
+                />
+                {mooclet['parameters']['individualLevel'] && <Box> 
+                    <p><mark>The individual level regressions will be turned on after receiving the following number of user feedbacks.</mark></p>
+                    <TextField
+                    sx={{ m: 1 }}
+                    value={mooclet['parameters']['individualLevelThreshold']}
+                    onChange={(e) => {
+                        mooclet['parameters']['individualLevelThreshold'] = parseFloat(e.target.value);
+                        sMooclets(tree);
+                    }}
+                    label={`Individual-level regression threshold`}
+                    type="number"
+                /></Box>}
             </Box>
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>

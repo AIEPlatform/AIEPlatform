@@ -209,6 +209,85 @@ def two_var_strong_predictor(num_users = 100):
                         users_status[user] = "no_arm"
 
 
+
+    for i in range(0, len(users)):
+        user = users[i]
+        t = threading.Thread(target=one_user, args=(user, i))
+        t.start()
+
+
+
+def individual_level_test(num_users = 100):
+    # The goal is to verify that Thompson sampling is better than uniform sampling, in terms of finding significant results, and average rewards (0 or 1 in this simple simulation case).
+    # first, we define a N * 2 user matrix. The first column is the probablity that user will give reward 1 if they receive version 1, and the second column is the probablity that user will give reward 1 if they receive version 2.
+    def generate_user_matrix(num_users):
+        user_matrix = np.random.rand(num_users, 2)
+        return user_matrix
+    user_matrix = generate_user_matrix(num_users)
+    # next, we need to have a dict that records the last version the user has received.
+    users_status = {}
+    # next, define all usernames
+    users = []
+    for user in range(1, num_users + 1):
+        users.append(f'sim_user_{user}')
+        name = f'sim_user_{user}'
+        users_status[name] = "no_arm"
+
+    # simulate user behaviour.
+
+    def one_user(user, i):
+        predictor = None
+        for variable in variables:
+            predictor = random.choice([0, 1])
+            give_variable_value(deployment, study, variable, user, predictor)
+        while True:
+            time.sleep(1) # every 2 seconds I pick a random user, assign arm or send reward.
+            number = random.random()
+            if number < 0.5: 
+                pass
+            else:
+                if users_status[user] == "no_arm":
+                    if random.random() < 0.9:
+                        version_to_show = assign_treatment(deployment, study, user)['name']
+                        users_status[user] = version_to_show
+                    else:
+                        value = None
+                        reward_prob = user_matrix[i][0] if users_status[user] == "version1" else user_matrix[i][1]
+
+                        if users_status[user] == "version1" and predictor == 1:
+                            reward_prob += 0.1
+                        elif users_status[user] == "version2" and predictor == 1:
+                            reward_prob -= 0.1
+                        if random.random() < reward_prob:
+                            value = 1
+                        else:
+                            value = 0
+                        get_reward(deployment, study, user, value)
+                else:
+                    if random.random() < 0.3:
+                        version_to_show = assign_treatment(deployment, study, user)['name']
+                        users_status[user] = version_to_show
+                    else:
+                        value = None
+                        reward_prob = user_matrix[i][0] if users_status[user] == "version1" else user_matrix[i][1]
+                        if users_status[user] == "version1" and predictor == 1:
+                            reward_prob += 0.02
+                        elif users_status[user] == "version2" and predictor == 1:
+                            reward_prob -= 0.02
+
+                        if users_status[user] == "version1" and predictor == 0:
+                            reward_prob -= 0.02
+                        elif users_status[user] == "version2" and predictor == 0:
+                            reward_prob += 0.02
+
+                        if random.random() < reward_prob:
+                            value = 1
+                        else:
+                            value = 0
+                        get_reward(deployment, study, user, value)
+                        users_status[user] = "no_arm"
+
+
     Interaction.delete_many({})
     Lock.delete_many({})
     RewardLog.delete_many({})
@@ -220,8 +299,16 @@ def two_var_strong_predictor(num_users = 100):
         t.start()
 
 
-deployment = 'Sim'
-study = '2_var_strong_predictor'
-variables = ['male']
 
+Interaction.delete_many({})
+Lock.delete_many({})
+RewardLog.delete_many({})
+TreatmentLog.delete_many({})
+VariableValue.delete_many({})
+MOOCletIndividualLevelInformation.delete_many({})
+deployment = 'Sim'
+study = '中文测试'
+variables = ['male']
 two_var_strong_predictor(num_users = 100)
+
+#Lock.insert_one({"moocletId": "sim_user_9@64924c34fda141ab1c31f38e"})

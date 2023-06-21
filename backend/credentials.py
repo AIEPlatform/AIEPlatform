@@ -48,6 +48,9 @@ Variable.create_index("name", unique=True)
 Lock.create_index("moocletId", unique=True)
 User.create_index("email", unique=True)
 
+
+MOOCletIndividualLevelInformation = db['MOOCletIndividualLevelInformation']
+
 def getDataset(datasetId):
     theDataset = Dataset.find_one({"_id": ObjectId(datasetId)}) # Only 
     df = pickle.loads(theDataset['dataset'])

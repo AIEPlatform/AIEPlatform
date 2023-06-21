@@ -3,13 +3,13 @@ import datetime
 class MOOCletModel:
     # Update policy parameters
     @staticmethod
-    def update_policy_parameters(moocletId, toUpdate, session):
+    def update_policy_parameters(moocletId, toUpdate, session = None):
         try:
             MOOClet.update_one({"_id": moocletId}, {"$set": toUpdate}, session=session)
             return 200
-        except:
+        except Exception as e:
+            print(e)
             return 500
-        
 
     # find mooclets of a specific study
     @staticmethod

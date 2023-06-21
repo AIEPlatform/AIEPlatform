@@ -71,10 +71,9 @@ function VariableEditor(props) {
                     sExistingVariables(
                         [ // with a new array
                             ...existingVariables, // that contains all the old items
-                            { name: newVariable } // and one new item at the end
+                            newVariable // and one new item at the end
                         ]
                     );
-                    newVariable = {name: newVariable, index: existingVariables.length}
                     sSelectedVariables(
                         [
                             ...selectedVariables,

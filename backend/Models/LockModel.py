@@ -1,6 +1,6 @@
 from credentials import *
 import datetime
-
+import traceback
 
 class LockModel:
     # get a lock
@@ -16,10 +16,17 @@ class LockModel:
     # create
     @staticmethod
     def create(lock, session = None):
+        locks = list(Lock.find({}))
         try:
             response = Lock.insert_one(lock, session=session)
             return response
-        except:
+        except Exception as e:
+            print("Lock Inserting Error Report Start")
+            print(lock)
+            print(locks)
+            print(e)
+            print(traceback.format_exc())
+            print("Lock Inserting Error Report End")
             return None
         
     # delete

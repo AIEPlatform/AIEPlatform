@@ -4,7 +4,7 @@ from Models.InteractionModel import InteractionModel
 
 from Models.StudyModel import StudyModel
 class Policy(ABC):
-	def __init__(self, **mooclet_obj_from_db):
+	def __init__(self, user, **mooclet_obj_from_db):
 		for key, value in mooclet_obj_from_db.items():
 			setattr(self, key, value)
 
@@ -14,6 +14,7 @@ class Policy(ABC):
 			}
 		)
 		self.study = study
+		self.user = user
 
 	@abstractmethod
 	def choose_arm(self, user, where, other_information):

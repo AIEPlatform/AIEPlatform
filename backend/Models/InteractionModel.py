@@ -66,6 +66,7 @@ class InteractionModel:
 
 
     # Get number of participants for an assigner.
+    # TODO: should it be unique?
     @staticmethod
     def get_num_participants_for_assigner(moocletId):
         try:
@@ -73,6 +74,12 @@ class InteractionModel:
         except:
             return 0
         
+    @staticmethod
+    def get_num_participants_for_assigner_individual(moocletId, user):
+        try:
+            return len(list(Interaction.find({"moocletId": moocletId, "user": user})))
+        except:
+            return 0
 
     # Insert a new model
     @staticmethod
@@ -93,22 +100,43 @@ class InteractionModel:
 
     # Find all unused interactions for a given mooclet
     @staticmethod
-    def find_earliest_unused(moocletId):
-        earliest_unused = Interaction.find_one(
-                        {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}
-                         ) # TODO: Shall we exclute those from uniform (I don't think so?)
+    def find_earliest_unused(moocletId, user = None, session = None):
+        earliest_unused = None
+        if user is None:
+            earliest_unused = Interaction.find_one(
+                            {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}
+                            ) # TODO: Shall we exclute those from uniform (I don't think so?)
+        else:
+            earliest_unused = Interaction.find_one(
+                            {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}
+                            ) # TODO: Shall we exclute those from uniform (I don't think so?)
         return earliest_unused
     
 
     # use_unused_interactions
     @staticmethod
-    def use_unused_interactions(moocletId, session = None):
-        interactions_for_posterior = list(Interaction.find(
-            {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
-            )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
+    def use_unused_interactions(moocletId, user = None, session = None):
+        if user is None:
+            interactions_for_posterior = list(Interaction.find(
+                {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
+                )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
+            
+            Interaction.update_many(
+                {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
+                )
+            return interactions_for_posterior
+        else:
+            interactions_for_posterior = list(Interaction.find(
+                {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
+                )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
+            
+            Interaction.update_many(
+                {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
+                )
         
-        Interaction.update_many(
-            {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
-            )
-        
-        return interactions_for_posterior
+            return interactions_for_posterior
+    
+    # get mooclet number of feedback
+    @staticmethod
+    def get_mooclet_num_feedback(moocletId, session = None):
+        return Interaction.count_documents({"moocletId": moocletId, "outcome": {"$ne": None}}, session=session)
