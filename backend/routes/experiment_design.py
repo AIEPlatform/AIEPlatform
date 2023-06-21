@@ -168,19 +168,6 @@ def create_study():
     }), 200
 
 
-def inductive_get_mooclet(mooclet, user):
-    if len(mooclet['children']) > 0:
-        children = MOOCletModel.find_mooclets({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
-        # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
-        next_mooclet_id = random_by_weight(list(children))['_id']
-        next_mooclet = MOOCletModel.find_mooclet({'_id': next_mooclet_id})
-        return inductive_get_mooclet(next_mooclet, user)
-    else:
-        # this is a leaf node. return it!
-        return mooclet
-
-
-
 @experiment_design_apis.route("/apis/my_deployments", methods=["GET"])
 def my_deployments():
     user = "chenpan"
@@ -274,6 +261,10 @@ def create_df_from_mongo(study_name, deployment_name):
     df = pd.DataFrame(list_cur)
 
     if 'contextuals' in df.columns:
+        # fill nan with {}
+        # TODO: Uniform may not have contextual.
+
+        df['contextuals'] = df['contextuals'].apply(lambda x: {} if pd.isna(x) else x)
         df_normalized = pd.json_normalize(df['contextuals'].apply(flatten, args = (".",)))
         # Concatenate the flattened DataFrame with the original DataFrame
         df = pd.concat([df.drop('contextuals', axis=1), df_normalized], axis=1)
@@ -282,6 +273,9 @@ def create_df_from_mongo(study_name, deployment_name):
         "treatment$timestamp": "treatment.timestamp", 
         "outcome$timestamp": "outcome.timestamp"
         })
+    
+
+    df = df.sort_values(by=['treatment.timestamp', 'outcome.timestamp'])
     
 
     column_names_without_dot_values = [c.replace(".value", "") for c in df.columns]
@@ -340,6 +334,7 @@ def create_dataset():
                 'name': dataset_name,
                 'study': study, 
                 'variables': variables,
+                'assigners': list(df['assigner'].unique()),
                 'deploymentId': DeploymentModel.get_one({"name": deployment})['_id'],
                 'createdAt': datetime.datetime.utcnow()
             }
@@ -361,6 +356,10 @@ def create_dataset():
 
             return status_code("DOWNLOAD_DATASET_SUCCESSFUL")
         except Exception as e:
+            # traceback
+            import traceback
+            print(traceback.format_exc())
+            print(e)
             if EMAIL_NOTIFICATION and is_valid_email(email):
                 subject = "Sorry, downloading mooclet datasets failed. please try again."
                 body = subject
@@ -393,8 +392,6 @@ def load_existing_study():
     factors = the_study['factors']
     rewardInformation = the_study['rewardInformation'] if 'rewardInformation' in the_study else {"name": "reward", "min": 0, "max": 1}
     mooclets = build_json_for_study(the_study['_id'])
-
-    print(mooclets[0]['parameters']['regressionFormulaItems'])
     return json_util.dumps(
         {
         "status_code": 200,

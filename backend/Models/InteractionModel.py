@@ -19,33 +19,37 @@ class InteractionModel:
     # Get all the interactions for a given study (for datadownloader).
     @staticmethod
     def get_interactions(study, session = None):
-        the_mooclets = list(MOOClet.find({"studyId": study['_id']}, {"_id": 1}))
+        try:
+            the_mooclets = list(MOOClet.find({"studyId": study['_id']}, {"_id": 1}))
 
-        the_mooclets = [r['_id'] for r in the_mooclets]
+            the_mooclets = [r['_id'] for r in the_mooclets]
 
-        result = Interaction.aggregate([
-            {
-                '$match': {
-                    'moocletId': {"$in": the_mooclets}  # Specify the filter condition for collection1
+            result = Interaction.aggregate([
+                {
+                    '$match': {
+                        'moocletId': {"$in": the_mooclets}  # Specify the filter condition for collection1
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'mooclet',
+                        'localField': 'moocletId',  # The field in collection1 to match
+                        'foreignField': '_id',  # The field in collection2 to match
+                        'as': 'joined_data',  # The name of the field in the output documents
+                    }
+                }, 
+                {
+                    '$unwind': '$joined_data'  # Unwind the 'joined_data' array
+                }, 
+                {
+                    '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', "assigner": '$joined_data.name', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
                 }
-            },
-            {
-                '$lookup': {
-                    'from': 'mooclet',
-                    'localField': 'moocletId',  # The field in collection1 to match
-                    'foreignField': '_id',  # The field in collection2 to match
-                    'as': 'joined_data',  # The name of the field in the output documents
-                }
-            }, 
-            {
-                '$unwind': '$joined_data'  # Unwind the 'joined_data' array
-            }, 
-            {
-                '$project': {"_id": 1, "user": 1, "policy": '$joined_data.policy', "assigner": '$jojined_data.name', 'treatment': '$treatment.name', 'treatment$timestamp': '$timestamp', 'outcome': 1, 'where': 1, 'outcome$timestamp': '$rewardTimestamp', 'is_uniform': '$isUniform', 'contextuals': 1 }  # Project only the 'policy' field
-            }
-        ])
+            ])
 
-        return result
+            return result
+        except Exception as e:
+            print(e)
+            return None
     
     # Get the latest interaction for a given user at a study at a specific location.
     # TODO: We need to think about what happens if a user has been assigned to more than one MOOClet. This's not supposed to happen, but what if a user was assigned to a mooclet, and the mooclet was deleted, and we have to assign them a different mooclet?

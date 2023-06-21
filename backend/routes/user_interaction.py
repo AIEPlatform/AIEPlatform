@@ -27,6 +27,17 @@ def create_mooclet_instance(the_mooclet):
         return cls(**the_mooclet)
     else:
         raise ValueError(f"Invalid policy name")
+    
+def inductive_get_mooclet(mooclet, user):
+    if len(mooclet['children']) > 0:
+        children = MOOCletModel.find_mooclets({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
+        # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
+        next_mooclet_id = random_by_weight(list(children))['_id']
+        next_mooclet = MOOCletModel.find_mooclet({'_id': next_mooclet_id})
+        return inductive_get_mooclet(next_mooclet, user)
+    else:
+        # this is a leaf node. return it!
+        return mooclet
 
 def get_mooclet_for_user(deployment_name, study_name, user):
     # Note that, a deployment + study_name + user uniquely identify a mooclet.
@@ -52,8 +63,6 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
     try:
         mooclet = create_mooclet_instance(the_mooclet)
         version_to_show = mooclet.choose_arm(user, where, other_information)
-
-        print(version_to_show)
         if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
@@ -193,7 +202,8 @@ def give_reward():
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
 
     the_deployment = DeploymentModel.get_one({"name": deployment}, public = True)
-    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$elemMatch": {"name": variableName}}})
+    print(the_deployment)
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}})
 
     if the_study is None:
         return 400

@@ -111,16 +111,18 @@ def get_deployment_datasets():
 def basic_reward_summary_table_api():
     theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
     
-    selected_variables = request.json['selectedVariables'] if 'selectedVariables' in request.json else None
+    selected_variables = request.json['selectedVariables'] if 'selectedVariables' in request.json else []
+
+    selected_assigners = request.json['selectedAssigners'] if 'selectedAssigners' in request.json else []
  
-    if theDatasetId is None or selected_variables is None:
+    if theDatasetId is None:
         return json_util.dumps({
             "status_code": 400,
             "message": "Please make sure the_study_basic_info, selected_variables are provided."
         }), 400
     else:
         df = getDataset(theDatasetId)
-        result_df = basic_reward_summary_table(df, selected_variables)
+        result_df = basic_reward_summary_table(df, selected_variables, selected_assigners)
         return json_util.dumps({
             "status_code": 200,
             "message": "Table returned.",

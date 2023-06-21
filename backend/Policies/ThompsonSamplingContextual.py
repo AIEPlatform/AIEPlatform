@@ -104,7 +104,7 @@ class ThompsonSamplingContextual(Policy):
                 include_intercept = parameters['include_intercept']
                 # Store contextual variables
                 
-                contextual_vars = parameters['contextual_variables']
+                contextual_vars = self.study['variables']
                 # Get the contextual variables for the learner (most recent ones), or auto init ones.
 
                 result = VariableValueModel.get_latest_variable_values(contextual_vars, user)

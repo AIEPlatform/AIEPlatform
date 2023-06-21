@@ -65,27 +65,17 @@ function ChooseContextual(props) {
   )
 }
 
-// function createData(name, calories, fat, carbs, protein) {
-//   return { name, calories, fat, carbs, protein };
-// }
-
-// const rows = [
-//   createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-//   createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-//   createData('Eclair', 262, 16.0, 24, 6.0),
-//   createData('Cupcake', 305, 3.7, 67, 4.3),
-//   createData('Gingerbread', 356, 16.0, 49, 3.9),
-// ];
 
 export default function BasicTable(props) {
 
   const theDataset = props.theDataset;
   const [selectedVariables, sSelectedVariables] = useState([]);
+  const [selectedAssigners, sSelectedAssigners] = useState([]);
 
   const [columns, sColumns] = useState([]);
   const [rows, sRows] = useState([]);
 
-  const getTable = (selectedVariables) => {
+  const getTable = () => {
     fetch('/apis/analysis/basic_reward_summary_table', {
       method: 'POST',
       headers: {
@@ -93,7 +83,8 @@ export default function BasicTable(props) {
       },
       body: JSON.stringify({
         theDatasetId: theDataset['_id']['$oid'],
-        selectedVariables: selectedVariables
+        selectedVariables: selectedVariables, 
+        selectedAssigners: selectedAssigners
       })
     })
       .then(res => res.json())
@@ -113,7 +104,7 @@ export default function BasicTable(props) {
     else {
       getTable([]);
     }
-  }, [theDataset]);
+  }, [theDataset, selectedVariables, selectedAssigners]);
 
 
   const shouldMergeCells = (rowIndex, columnIndex) => {
@@ -124,6 +115,17 @@ export default function BasicTable(props) {
 
   return (
     <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
+
+      <Select
+        isMulti
+        options={theDataset ? theDataset['assigners'].map((assigner, index) => ({
+          value: index,
+          label: assigner
+        })) : []}
+        onChange={(options) => {
+          sSelectedAssigners(options.map(option => option['label']));
+        }}
+      />
       <Select
         isMulti
         options={theDataset ? theDataset['variables'].map((variable, index) => ({
@@ -132,7 +134,6 @@ export default function BasicTable(props) {
         })) : []}
         onChange={(options) => {
           sSelectedVariables(options.map(option => option['label']));
-          getTable(options.map(option => option['label']));
         }}
       />
       <TableContainer component={Paper} style={{ marginTop: "2em", flex: '1', overflowY: 'auto' }}>
