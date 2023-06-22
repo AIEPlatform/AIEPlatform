@@ -29,10 +29,14 @@ export default function AverageRewardByTime(props) {
         sGroups(data['groups']);
       })
       .catch(err => console.log(err))
-  }, [theDataset])
+  }, [theDataset,props.datasetTime])
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <>
+    <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
+    <Typography variant='h6'>Average Reward as a function of time</Typography>
+    </Container>
+    <ResponsiveContainer>
         <LineChart
           width={500}
           height={300}
@@ -50,5 +54,6 @@ export default function AverageRewardByTime(props) {
           }
         </LineChart>
     </ResponsiveContainer>
+    </>
   );
 }

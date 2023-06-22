@@ -44,7 +44,6 @@ def filter_dataframe(df, filter_dict):
 
 # Final function
 def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
-    
     result_df = None
     if len(selectedAssigners) > 0:
         df = df[df['assigner'].isin(selectedAssigners)]

@@ -1,5 +1,5 @@
 import { React, useContext, useState, useEffect } from 'react';
-import { Container, Typography, Box, Button } from '@mui/material';
+import { Container, Typography, Box, Button, Paper } from '@mui/material';
 import Select from 'react-select';
 import Layout from '../components/layout';
 import Head from 'next/head';
@@ -8,6 +8,7 @@ import Table from "../components/AnalysisVisualizationsPage/Table";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
+import UpgradeIcon from '@mui/icons-material/Upgrade';
 
 import { UserContext } from "../contexts/UserContextWrapper";
 
@@ -25,6 +26,7 @@ export default function DataAnalysis(props) {
   const [myDeployments, sMyDeployments] = useState([]);
   const [theDatasets, sTheDatasets] = useState([]);
   const [theDataset, sTheDataset] = useState(null);
+  const [datasetTime, sDatasetTime] = useState(0);
 
   useEffect(() => {
     fetch('/apis/my_deployments')
@@ -52,6 +54,23 @@ export default function DataAnalysis(props) {
           if (data["status"] === 200) {
             alert("Dataset deleted.");
             window.location.reload();
+          }
+          else {
+            alert("Error: " + data["message"]);
+          }
+        });
+    }
+  }
+
+  const handleDatasetUpdate = () => {
+    if (theDataset) {
+      fetch(`/apis/analysis/updateArrowDataset/${theDataset['_id']['$oid']}`, {method: "PUT"})
+        .then(response => response.json())
+        .then(data => {
+          if (data["status"] === 200) {
+            // alert("Dataset Updated.");
+            // Replace the dataset with the new returned one.
+            sDatasetTime(datasetTime+ 1)
           }
           else {
             alert("Error: " + data["message"]);
@@ -126,6 +145,8 @@ export default function DataAnalysis(props) {
           <Button sx={{m: 2, ml: 0}} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
           <Button sx = {{m: 2, ml:0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
 
+          <Button sx = {{m: 2, ml:0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
+
           {theDataset && <Box>
                     <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
                     <label htmlFor="csv-upload">Upload CSV file:</label>
@@ -146,17 +167,28 @@ export default function DataAnalysis(props) {
           columnsCountBreakPoints={{ 350: 1, 750: 2 }}
         >
           <Masonry>
-            <div style={{ width: '100%', height: '300px' }}>
-              <AverageRewardByTime theDataset={theDataset} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
+            <Paper style={{ width: '100%', height: '300px' }}>
+              <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
               {/* Content for the first div */}
-            </div>
+            </Paper>
 
-            <div style={{ maxWidth: '100%', maxHeight: '500px' }}>
-              <Table theDataset={theDataset} />
+            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+              <Table theDataset={theDataset} datasetTime={datasetTime} />
               {/* Content for the first div */}
-            </div>
+            </Paper>
+
+            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+              <Table theDataset={theDataset} datasetTime={datasetTime} />
+              {/* Content for the first div */}
+            </Paper>
+
+            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+              <Table theDataset={theDataset} datasetTime={datasetTime} />
+              {/* Content for the first div */}
+            </Paper>
           </Masonry>
         </ResponsiveMasonry>
+        
       </Layout>
     );
   }
