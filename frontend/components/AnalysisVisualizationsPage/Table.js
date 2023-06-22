@@ -11,60 +11,6 @@ import Select from 'react-select';
 import { useEffect, useState } from 'react';
 import { Typography } from '@mui/material';
 
-function ChooseDataset(props) {
-  let datasets = props.datasets;
-  let sSelectedDataset = props.sSelectedDataset;
-  let sContextuals = props.sContextuals;
-  let sSelectedContextual = props.sSelectedContextual;
-  let handleChooseDataset = (option) => {
-    sSelectedDataset(datasets[option['value']]);
-    sSelectedContextual(null);
-    fetch(`/apis/analysis_default_table/get_contextual_variables?datasetDescription=${datasets[option['value']]['datasetDescription']}`).then(res => res.json()).then(data => {
-      if (data['status_code'] === 200)
-        sContextuals(['no contextual', ...data['data']]);
-    })
-  }
-  const options = datasets.map((dataset, index) => ({
-    value: index,
-    label: `${dataset.datasetDescription} - ${dataset.mooclet} - 20230518`
-  }));
-  return (
-    <Select options={options} value={props.selectedDataset ? options[datasets.indexOf(props.selectedDataset)] : null}
-      onChange={(option) => {
-        handleChooseDataset(option)
-      }}
-    />
-  )
-}
-
-
-function ChooseContextual(props) {
-  let contextuals = props.contextuals;
-  let sSelectedContextual = props.sSelectedContextual;
-  let selectedDataset = props.selectedDataset;
-  let sRows = props.sRows;
-  let sColumns = props.sColumns;
-  let handleChooseDataset = (option) => {
-    sSelectedContextual(contextuals[option['value']]);
-    console.log(props.selectedDataset)
-    fetch(`/apis/analysis_default_table?datasetDescription=${props.selectedDataset['datasetDescription']}&contextualVariable=${contextuals[option['value']]}`).then(res => res.json()).then(data => {
-      sRows(data['rows'])
-      sColumns(data['columns'])
-    })
-  }
-  const options = contextuals.map((contextual, index) => ({
-    value: index,
-    label: contextual
-  }));
-  return (
-    <Select options={options} value={props.selectedContextual ? options[contextuals.indexOf(props.selectedContextual)] : null}
-      onChange={(option) => {
-        handleChooseDataset(option)
-      }}
-    />
-  )
-}
-
 
 export default function BasicTable(props) {
 
@@ -115,7 +61,7 @@ export default function BasicTable(props) {
 
   return (
     <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
-
+      <Typography variant="p">Choose a policy</Typography>
       <Select
         isMulti
         options={theDataset ? theDataset['assigners'].map((assigner, index) => ({
@@ -126,6 +72,7 @@ export default function BasicTable(props) {
           sSelectedAssigners(options.map(option => option['label']));
         }}
       />
+      <Typography variant="p">Choose a variable</Typography>
       <Select
         isMulti
         options={theDataset ? theDataset['variables'].map((variable, index) => ({
