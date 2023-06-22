@@ -24,10 +24,16 @@ def get_stats(df, group_by):
 
     df = df.groupby(group_by) \
        .agg(count=('outcome', 'size'), 
-            mean=('outcome', 'mean'), 
+            mean=('outcome', lambda x: round(x.mean(), 3)), 
             count_of_non_response=('outcome', lambda x: x.isnull().sum()),
-            percent_of_non_response=('outcome', lambda x: round((x.isnull().mean() * 100), 2))) \
+            percent_of_non_response=('outcome', lambda x: round((x.isnull().mean() * 100), 3))) \
        .reset_index()
+    df = df.rename(columns={
+        "count": "Count",
+        "mean": "Mean",
+        "count_of_non_response": "Count of non-response",
+        "percent_of_non_response": "% of non-response"
+    })   
     return df
 
 
@@ -61,7 +67,7 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
             grouped_dfs.append(grouped)
 
         result_df = pd.concat(grouped_dfs, axis=0, ignore_index=True)
-    desired_columns = [col for col in result_df.columns if col not in ['count', 'mean','count_of_non_response','percent_of_non_response']] + ['count', 'mean','count_of_non_response','percent_of_non_response']
+    desired_columns = [col for col in result_df.columns if col not in ['Count', 'Mean','Count of non-response',"% of non-response"]] + ['Count', 'Mean','Count of non-response',"% of non-response"]
     
     # Reorder the columns
     result_df = result_df[desired_columns]
@@ -90,14 +96,14 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
         
         for index, row in result_df.iterrows():
             if all(row[key] == value for key, value in filter_condition.items()):
-                result_df.loc[index, 'p_value'] = p_value
-                result_df.loc[index, 'f_value'] = f_value
+                result_df.loc[index, 'p value'] = round(p_value,3)
+                result_df.loc[index, 'f value'] = round(f_value,3)
 
     # ! calculate p value for the whole dataset.
     outcomes = [df[df['treatment'] == version]['outcome'].dropna() for version in unique_versions]
     f_value, p_value = stats.f_oneway(*outcomes)
     for index, row in result_df.iterrows():
         if all(row[key] == "" for key in selectedVariables):
-            result_df.loc[index, 'p_value'] = p_value
-            result_df.loc[index, 'f_value'] = f_value
+            result_df.loc[index, 'p value'] = round(p_value,3)
+            result_df.loc[index, 'f value'] = round(f_value,3)
     return result_df
