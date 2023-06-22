@@ -139,7 +139,6 @@ def two_version_ts(num_users = 100):
 
 def two_var_strong_predictor(num_users = 100):
     # The goal is to verify that Thompson sampling is better than uniform sampling, in terms of finding significant results, and average rewards (0 or 1 in this simple simulation case).
-    num_users = 100
     # first, we define a N * 2 user matrix. The first column is the probablity that user will give reward 1 if they receive version 1, and the second column is the probablity that user will give reward 1 if they receive version 2.
     def generate_user_matrix(num_users):
         user_matrix = np.random.rand(num_users, 2)
@@ -192,14 +191,22 @@ def two_var_strong_predictor(num_users = 100):
                         value = None
                         reward_prob = user_matrix[i][0] if users_status[user] == "version1" else user_matrix[i][1]
                         if users_status[user] == "version1" and predictor == 1:
-                            reward_prob += 0.02
+                            print("111")
+                            reward_prob += 0.40
+                            reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 1:
-                            reward_prob -= 0.02
+                            print("222")
+                            reward_prob -= 0.40
+                            reward_prob = np.max([reward_prob, 0])
 
                         if users_status[user] == "version1" and predictor == 0:
-                            reward_prob -= 0.02
+                            print("333")
+                            reward_prob -= 0.20
+                            reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 0:
-                            reward_prob += 0.02
+                            print("444")
+                            reward_prob += 0.20
+                            reward_prob = np.max([reward_prob, 0])
 
                         if random.random() < reward_prob:
                             value = 1
@@ -241,6 +248,8 @@ def individual_level_test(num_users = 100):
             predictor = random.choice([0, 1])
             give_variable_value(deployment, study, variable, user, predictor)
         while True:
+            print(")________")
+            print(users_status)
             time.sleep(1) # every 2 seconds I pick a random user, assign arm or send reward.
             number = random.random()
             if number < 0.5: 
@@ -264,21 +273,29 @@ def individual_level_test(num_users = 100):
                             value = 0
                         get_reward(deployment, study, user, value)
                 else:
-                    if random.random() < 0.3:
+                    if random.random() < 0.05:
                         version_to_show = assign_treatment(deployment, study, user)['name']
                         users_status[user] = version_to_show
                     else:
                         value = None
                         reward_prob = user_matrix[i][0] if users_status[user] == "version1" else user_matrix[i][1]
                         if users_status[user] == "version1" and predictor == 1:
-                            reward_prob += 0.02
+                            print("111")
+                            reward_prob += 0.40
+                            reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 1:
-                            reward_prob -= 0.02
+                            print("222")
+                            reward_prob -= 0.40
+                            reward_prob = np.max([reward_prob, 0])
 
                         if users_status[user] == "version1" and predictor == 0:
-                            reward_prob -= 0.02
+                            print("333")
+                            reward_prob -= 0.20
+                            reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 0:
-                            reward_prob += 0.02
+                            print("444")
+                            reward_prob += 0.20
+                            reward_prob = np.max([reward_prob, 0])
 
                         if random.random() < reward_prob:
                             value = 1
@@ -307,8 +324,8 @@ TreatmentLog.delete_many({})
 VariableValue.delete_many({})
 MOOCletIndividualLevelInformation.delete_many({})
 deployment = 'Sim'
-study = '中文测试'
+study = 'tsc3'
 variables = ['male']
-two_var_strong_predictor(num_users = 100)
+two_var_strong_predictor(num_users = 500)
 
 #Lock.insert_one({"moocletId": "sim_user_9@64924c34fda141ab1c31f38e"})

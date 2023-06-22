@@ -153,7 +153,7 @@ function StudyEditor(props) {
 
     useEffect(() => {
         for(const element of mooclets) {
-            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables);
+            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables, versions);
         }
         let temp = [...mooclets];
         sMooclets(temp);
@@ -338,7 +338,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} factors={factors}></MOOCletEditor>
+                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} factors={factors} versions={versions}></MOOCletEditor>
                 </Box>
             </Modal>
         </Container>

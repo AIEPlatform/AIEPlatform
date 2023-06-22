@@ -3,6 +3,7 @@ import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } f
 import Select from 'react-select';
 import WeightedRandom from './WeightedRandom';
 import TSContextual from './TSContextual';
+import TSConfigurable from './TSConfigurable'
 
 const availablePolicies = [
     {
@@ -34,9 +35,6 @@ function MOOCletEditor(props) {
     let variables = props.variables;
 
     let mooclet = mooclets.find(mooclet => mooclet.id === myId);
-
-
-    console.log(mooclet);
     const handleMOOCletNameChange = (event) => {
         let data = [...mooclets];
         mooclet = data.find(mooclet => mooclet.id === myId);
@@ -92,7 +90,7 @@ function MOOCletEditor(props) {
                 <Typography variant="h6">Policy Parameters</Typography>
                 {mooclet.policy === 'UniformRandom' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
                 {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
-                {/* {mooclet.policy === 'ts_configurable' && <TSConfigurable versions={versions} policyIndex={policyIndex} policies={policies} sPolicies={sPolicies} variables={variables}></TSConfigurable>} */}
+                {mooclet.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSConfigurable>}
                 {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
             </Box>
         </Paper>

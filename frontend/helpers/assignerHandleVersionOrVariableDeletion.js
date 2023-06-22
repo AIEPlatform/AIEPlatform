@@ -1,7 +1,9 @@
 // To Policy Author, please note that you need to remove the version and variable from the assigner's policy, if your policy makes use of the version or variable that you are deleting.
 
+import TSConfigurable from "../components/ManageDeploymentPage/MOOCletEditor/TSConfigurable";
 
-function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, variables) {
+
+function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, variables, versions) {
     if(policy === "UniformRandom") {
         return parameters;
     }
@@ -33,9 +35,6 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         }
         
         let deepCopy = JSON.parse(JSON.stringify(parameters));
-        console.log(allVariables)
-
-        console.log(deepCopy['regressionFormulaItems'])
         for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
             if(deepCopy.regressionFormulaItems[i].length === 0) {
                 parameters['regressionFormulaItems'].splice(i, 1);
@@ -49,6 +48,29 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         }
 
             
+        return parameters;
+    }
+
+
+    else if (policy === "TSConfigurable") {
+        if(!parameters['current_posteriors']) {
+            parameters['current_posteriors'] = {};
+        }
+        
+        for(let version of versions) {
+            console.log(version['name'])
+            if(!parameters['current_posteriors'][version['name']]) {
+                parameters['current_posteriors'][version['name']] = {"successes": 0, "failures": 0}
+            }
+        }
+
+        for (const key in parameters['current_posteriors']) {
+            if (!versions.some(obj => obj['name'] === key)) {
+              delete parameters['current_posteriors'][key];
+            }
+          }
+
+        console.log(parameters)
         return parameters;
     }
 }

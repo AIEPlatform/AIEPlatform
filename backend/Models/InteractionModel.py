@@ -140,3 +140,63 @@ class InteractionModel:
     @staticmethod
     def get_mooclet_num_feedback(moocletId, session = None):
         return Interaction.count_documents({"moocletId": moocletId, "outcome": {"$ne": None}}, session=session)
+    
+
+
+
+
+
+
+
+    # return a list of all NON-NAN outcome for the given version from the given mooclet.
+    @staticmethod
+    def get_mooclet_outcome_by_version(moocletId, version, session = None):
+        try:
+            # the_mooclets = list(MOOClet.find({"studyId": study['_id']}, {"_id": 1}))
+
+            # the_mooclets = [r['_id'] for r in the_mooclets]
+
+            result = Interaction.aggregate([
+                {
+                    '$match': {
+                        'moocletId': moocletId,  # Specify the filter condition for collection1
+                        'outcome': {'$ne': None},
+                        'treatment': version
+                    }
+                },
+                {
+                    '$project': {"outcome": 1}  # Project only the 'policy' field
+                }
+            ])
+            #TODO: INCREASE THE EFFICIENCY
+            result = [r['outcome'] for r in result]
+            return result
+        except Exception as e:
+            print(e)
+            return None
+        
+    # return a list of all NON-NAN outcome for the given version from the given mooclet.
+    @staticmethod
+    def get_study_outcome_by_version(studyId, version, session = None):
+        try:
+            the_mooclets = list(MOOClet.find({"studyId": studyId}, {"_id": 1}))
+
+            the_mooclets = [r['_id'] for r in the_mooclets]
+
+            result = Interaction.aggregate([
+                {
+                    '$match': {
+                        'moocletId': {"$in": the_mooclets},  # Specify the filter condition for collection1
+                        'outcome': {'$ne': None},
+                        'treatment': version
+                    }
+                },
+                {
+                    '$project': {"outcome": 1}  # Project only the 'policy' field
+                }
+            ])
+            result = [r['outcome'] for r in result]
+            return result
+        except Exception as e:
+            print(e)
+            return None

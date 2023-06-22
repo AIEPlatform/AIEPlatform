@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 from helpers import *
 from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
+from Policies.TSConfigurable import TSConfigurable
 import datetime
 import time
 import threading
