@@ -7,6 +7,7 @@ from helpers import *
 from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 from Policies.TSConfigurable import TSConfigurable
+from Policies.WeightedRandom import WeightedRandom
 import datetime
 import time
 import threading

@@ -229,8 +229,8 @@ TreatmentLog.delete_many({})
 VariableValue.delete_many({})
 MOOCletIndividualLevelInformation.delete_many({})
 deployment = 'Sim'
-study = 'tsc3'
+study = 'weighted_random'
 variables = ['male']
-two_var_strong_predictor(num_users = 500)
+two_var_strong_predictor(num_users = 100)
 
 #Lock.insert_one({"moocletId": "sim_user_9@64924c34fda141ab1c31f38e"})
