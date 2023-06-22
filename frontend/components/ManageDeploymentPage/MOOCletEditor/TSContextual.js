@@ -89,9 +89,6 @@ function TSContextual(props) {
 
     let regressionFormulaVariables = variables.concat(factors);
 
-    // check if individual-level or not.
-    const [individualLevel, sIndividualLevel] = useState(false);
-
     let handleWeightChange = (event, name) => {
         mooclet['parameters'][name] = Number(event.target.value);
         sMooclets(tree)
@@ -148,9 +145,6 @@ function TSContextual(props) {
         sMooclets(tree);
     };
 
-
-
-
     const coefMeanAddNewItem = () => {
         if (!mooclet['parameters']['coef_mean']) {
             mooclet['parameters']['coef_mean'] = [];
@@ -200,6 +194,21 @@ function TSContextual(props) {
         mooclet['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value)
         sMooclets(tree)
     };
+
+
+    useEffect(() => {
+        // Initial parameters for TSContextual.
+        if (!mooclet['parameters']['batch_size']) mooclet['parameters']['batch_size'] = 4
+        if (!mooclet['parameters']['variance_a']) mooclet['parameters']['variance_a'] = 1
+        if (!mooclet['parameters']['variance_b']) mooclet['parameters']['variance_b'] = 2
+        if (!mooclet['parameters']['uniform_threshold']) mooclet['parameters']['uniform_threshold'] = 8
+        if (!mooclet['parameters']['precision_draw']) mooclet['parameters']['precision_draw'] = 0.1
+        if (!mooclet['parameters']['updatedPerMinute']) mooclet['parameters']['updatedPerMinute'] = 0
+        if (!mooclet['parameters']['include_intercept']) mooclet['parameters']['include_intercept'] = false
+        sMooclets(tree);
+
+    }, []);
+
 
 
     return (
@@ -280,7 +289,6 @@ function TSContextual(props) {
                     control={<Checkbox checked={mooclet['parameters']['individualLevel'] || false} onChange={(e) => {
                         if(!mooclet['parameters']['individualLevelThreshold']) mooclet['parameters']['individualLevelThreshold'] = 0;
                         mooclet['parameters']['individualLevel'] = e.target.checked;
-                        mooclet['parameters']['individualParameters'] = {};
                         sMooclets(tree);
                     }} />}
                     label="Enable individual-level regression after receiving a certain number of feedbacks"
