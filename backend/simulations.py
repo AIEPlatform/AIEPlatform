@@ -229,8 +229,8 @@ TreatmentLog.delete_many({})
 VariableValue.delete_many({})
 MOOCletIndividualLevelInformation.delete_many({})
 deployment = 'Sim'
-study = 'testing'
-variables = ['male']
+study = 'chatgpt_uniform_ts'
+variables = ['gender']
 two_var_strong_predictor(num_users = 20)
 
 #Lock.insert_one({"moocletId": "sim_user_9@64924c34fda141ab1c31f38e"})
