@@ -44,7 +44,6 @@ class ThompsonSamplingContextual(Policy):
                 self.parameters = theIndividualInformation['parameters']
             else:
                 # TODO: Do we need lock here? Is it possible that the concurrency issue happens for one user?
-                print("copying from the existing group parameter")
                 current_params = {key: value for key, value in self.parameters.items() if key not in  ["individualParameters", "individualLevel", "individualLevelThreshold"]}
                 response = MOOCletIndividualLevelInformation.insert_one({"moocletId": self._id, "user": user, "parameters": current_params})
                 the_info = MOOCletIndividualLevelInformation.find_one({"_id": response.inserted_id})
@@ -82,11 +81,11 @@ class ThompsonSamplingContextual(Policy):
         if self.individualMode:
             return choose_arm_individual(self, user, where, other_information)
         
-        if self.should_update_model(current_time):
-            print("check if this group needs model to be updated")
+        current_enrolled = InteractionModel.get_num_participants_for_assigner(moocletId = self._id) #TODO: is it number of learners or number of observations????
+        
+        if self.should_update_model(current_time) and current_enrolled % self.parameters['batch_size'] == 0:
             someone_is_updating = False
             lock.acquire()
-            print(f'{user} checking lock...')
             # TODO: check if it prevents the lock being occupied infinitely.
             try:
                 new_lock_id = check_lock(self._id)
@@ -96,10 +95,8 @@ class ThompsonSamplingContextual(Policy):
                 new_lock_id = None
             if new_lock_id is None:
                 someone_is_updating = True
-                print(f'{user} finds someone\'s updating the model...')
             lock.release()
             if not someone_is_updating:
-                print(f'{user} updating model..')
                 p = threading.Thread(target=self.update_model, args=(new_lock_id, ))
                 p.start()
                 start_time = time.time()
@@ -155,11 +152,8 @@ class ThompsonSamplingContextual(Policy):
                 contextual_vars_id_dict = {}
 
                 for contextual_value in contextual_values:
-                    print(contextual_value['value'])
                     contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                     contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
-                
-                current_enrolled = InteractionModel.get_num_participants_for_assigner(moocletId = self._id) #TODO: is it number of learners or number of observations????
 
                 if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                     lucky_version = random.choice(self.study['versions'])
@@ -232,12 +226,9 @@ class ThompsonSamplingContextual(Policy):
             }
 
             InteractionModel.insert_one(new_interaction)
-            print(f'{user} gets a treatment...')
             return lucky_version
         except Exception as e:
             print(traceback.format_exc())
-            # or
-            print(sys.exc_info()[2])
             return None
 
 
@@ -274,7 +265,6 @@ class ThompsonSamplingContextual(Policy):
                 
                 numpy_rewards = np.array([interaction['outcome'] for interaction in interactions_for_posterior])
 
-                print(current_params)
                 regression_formula = current_params['regression_formula']
                 all_versions = self.study['versions']
 
@@ -340,7 +330,6 @@ class ThompsonSamplingContextual(Policy):
                     "variance_a": posterior_vals['variance_a'],
                     "variance_b": posterior_vals['variance_b'],
                     "include_intercept": include_intercept,
-                    "precision_draw": current_params['precision_draw'],
                     "batch_size": current_params['batch_size'],
                     "uniform_threshold": current_params['uniform_threshold'],
                     "updatedPerMinute": current_params['updatedPerMinute'],
@@ -368,7 +357,6 @@ class ThompsonSamplingContextual(Policy):
         if latest_interaction is None:
             return 400
         else:
-            print(f'{user} sends reward...')
             InteractionModel.append_reward(latest_interaction['_id'], value)
             # Note that TS Contextual won't update inmediately.
             # We should do a check if to see if should update the parameters or not.
@@ -491,18 +479,14 @@ class ThompsonSamplingContextual(Policy):
 
 # get_num_participants_for_assigner_individual
 def choose_arm_individual(self, user, where, other_information):
-    print("choose_arm_individual")
     try:
         current_time = datetime.datetime.now()
         lucky_version = self.get_consistent_assignment(user, where)
-
-        print("****************************************************************")
 
         if self.should_update_model_individual(current_time, user):
 
             i_am_updating = False
             lock.acquire()
-            print(f'{user} checking lock...')
             # TODO: check if it prevents the lock being occupied infinitely.
             try:
                 new_lock_id = check_lock_individual(self._id, user)
@@ -512,10 +496,8 @@ def choose_arm_individual(self, user, where, other_information):
                 new_lock_id = None
             if new_lock_id is None:
                 i_am_updating = True
-                print(f'{user} finds they\'re updating the model...')
             lock.release()
             if not i_am_updating:
-                print(f'{user} updating their model..')
                 p = threading.Thread(target=self.update_model_individual, args=(new_lock_id, user))
                 p.start()
                 start_time = time.time()
@@ -575,7 +557,6 @@ def choose_arm_individual(self, user, where, other_information):
             contextual_vars_id_dict = {}
 
             for contextual_value in contextual_values:
-                print(contextual_value['value'])
                 contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                 contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
             
@@ -652,12 +633,9 @@ def choose_arm_individual(self, user, where, other_information):
         }
 
         InteractionModel.insert_one(new_interaction)
-        print(f'{user} gets a treatment...')
         return lucky_version
     except Exception as e:
         print(traceback.format_exc())
-        # or
-        print(sys.exc_info()[2])
         return None
 
 
@@ -694,10 +672,6 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     # Add 1 for intercept in variable list if specified
     if include_intercept:
         vars_list.insert(0,1.)
-
-    # Raise assertion error if variable list different length then coeff list
-    #print(vars_list)
-    #print(coef_list)
 
     assert(len(vars_list) == len(coef_list))
 

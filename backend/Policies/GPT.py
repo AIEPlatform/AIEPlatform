@@ -7,7 +7,7 @@ from Models.VariableValueModel import VariableValueModel
 from Models.MOOCletModel import MOOCletModel
 import openai
 
-openai.api_key = 
+openai.api_key = OPEN_AI_KEY
 import threading
 lock = threading.Lock()
 
@@ -41,7 +41,6 @@ class GPT(Policy):
 
 			prompt = self.parameters['prompt']
 			for contextual_value in contextual_values:
-				print(contextual_value['value'])
 				contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
 				contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
 
@@ -53,7 +52,6 @@ class GPT(Policy):
 			prompt = prompt.replace("{versions}", str(versions))
 
 			version_chosen = chatbot({"role": "user", "content": prompt}, self.parameters['messages'])
-			print(version_chosen)
 			lucky_version = None
 			for version in self.study['versions']:
 				if version['name'] in version_chosen:

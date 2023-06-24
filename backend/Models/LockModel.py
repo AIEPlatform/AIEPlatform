@@ -22,8 +22,6 @@ class LockModel:
             return response
         except Exception as e:
             print("Lock Inserting Error Report Start")
-            print(lock)
-            print(locks)
             print(e)
             print(traceback.format_exc())
             print("Lock Inserting Error Report End")

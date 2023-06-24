@@ -199,10 +199,9 @@ function TSContextual(props) {
     useEffect(() => {
         // Initial parameters for TSContextual.
         if (!mooclet['parameters']['batch_size']) mooclet['parameters']['batch_size'] = 4
-        if (!mooclet['parameters']['variance_a']) mooclet['parameters']['variance_a'] = 1
-        if (!mooclet['parameters']['variance_b']) mooclet['parameters']['variance_b'] = 2
+        if (!mooclet['parameters']['variance_a']) mooclet['parameters']['variance_a'] = 2
+        if (!mooclet['parameters']['variance_b']) mooclet['parameters']['variance_b'] = 1
         if (!mooclet['parameters']['uniform_threshold']) mooclet['parameters']['uniform_threshold'] = 8
-        if (!mooclet['parameters']['precision_draw']) mooclet['parameters']['precision_draw'] = 0.1
         if (!mooclet['parameters']['updatedPerMinute']) mooclet['parameters']['updatedPerMinute'] = 0
         if (!mooclet['parameters']['include_intercept']) mooclet['parameters']['include_intercept'] = false
         sMooclets(tree);
@@ -244,15 +243,6 @@ function TSContextual(props) {
                 type="number"
                 value={mooclet['parameters']['uniform_threshold'] || ''}
                 onChange={(e) => handleWeightChange(e, 'uniform_threshold')}
-            />
-
-            <TextField
-                sx={{ m: 1 }}
-                required
-                label={`Precision Draw`}
-                type="number"
-                value={mooclet['parameters']['precision_draw'] || ''}
-                onChange={(e) => handleWeightChange(e, 'precision_draw')}
             />
 
             <TextField

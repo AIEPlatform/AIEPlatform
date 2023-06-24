@@ -205,7 +205,6 @@ def give_reward():
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
 
     the_deployment = DeploymentModel.get_one({"name": deployment}, public = True)
-    print(the_deployment)
     the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}})
 
     if the_study is None:

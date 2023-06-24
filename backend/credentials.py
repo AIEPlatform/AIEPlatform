@@ -11,6 +11,7 @@ EMAIL_NOTIFICATION = os.getenv('EMAIL_NOTIFICATION') == 'True'
 EMAIL_USERNAME=os.getenv('EMAIL_USERNAME')
 EMAIL_PASSWORD=os.getenv('EMAIL_PASSWORD')
 ROOT_URL=os.getenv('ROOT_URL')
+OPEN_AI_KEY=os.getenv('OPEN_AI_KEY')
 
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError

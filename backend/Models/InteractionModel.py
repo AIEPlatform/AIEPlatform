@@ -124,6 +124,14 @@ class InteractionModel:
             Interaction.update_many(
                 {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
                 )
+            
+            # TODO: Verify that when this function is called, there should never be overlapping in two different calls.
+            # get ids of interactions
+            # interaction_ids = [interaction['_id'] for interaction in interactions_for_posterior]
+            # # write into a text: one line is one id
+            # with open('interactions_for_posterior.txt', 'a') as f:
+            #     for item in interaction_ids:
+            #         f.write("%s\n" % item)
             return interactions_for_posterior
         else:
             interactions_for_posterior = list(Interaction.find(
