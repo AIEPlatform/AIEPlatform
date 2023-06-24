@@ -4,6 +4,7 @@ import sys
 from credentials import *
 import itertools
 from scipy import stats
+from statsmodels.stats.power import FTestAnovaPower
 
 
 
@@ -47,12 +48,29 @@ def filter_dataframe(df, filter_dict):
     return filtered_df_boolean
     # return filtered_df_boolean
 
+# Statistical power
+def calculate_statistical_power(df, outcome_var):
+    nobs = len(df[outcome_var])  # total number of observations
+    n_groups = df[outcome_var].nunique()  # unique outcome
+
+    # Calculate effect size (eta squared)
+    ss_total = np.sum((df[outcome_var] - np.mean(df[outcome_var]))**2)
+    ss_explained = (np.sum(df.groupby('treatment')[outcome_var].count() *
+                           (df.groupby('treatment')[outcome_var].mean() - np.mean(df[outcome_var]))**2))
+    eta_squared = ss_explained / ss_total
+
+    # Perform power analysis
+    analysis = FTestAnovaPower()
+    
+    # Statistical Power calculations F-test for one factor balanced ANOVA
+    # This is based on Cohen’s f as effect size measure.
+    power = analysis.solve_power(eta_squared, nobs=nobs, alpha=0.05, k_groups=n_groups)
+    
+    return round(power, 3)  # return rounded power
 
 # Final function
 def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
     result_df = None
-    if len(selectedAssigners) > 0:
-        df = df[df['assigner'].isin(selectedAssigners)]
     data = df
     all_combs = get_all_combinations(selectedVariables)
     if len(selectedVariables) == 0:
@@ -77,7 +95,7 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
 
 
     unique_versions = result_df['treatment'].unique()
-    # Get the filter conditions -> TODO: since the table won't have many rows, it is fine to do a for loop?
+    # Get the filter conditions -> TODO: since the table won't have many rows, it is fine to do a for loop? - solved
         
     filter_conditions = []
     for comb in all_combs:
@@ -87,22 +105,25 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
         filter_conditions.extend(unique_combinations)
     
     
-    # ! Use ANOVA to calculate p-value and f-value
+    # ! Use ANOVA to calculate p-value and power 
     for filter_condition in filter_conditions:
         filtered_df = filter_dataframe(df, filter_condition)
         outcomes = [filtered_df[filtered_df['treatment'] == version]['outcome'].dropna() for version in unique_versions]
         f_value, p_value = stats.f_oneway(*outcomes)
+        # calculate power for the filtered dataframe
+        power = calculate_statistical_power(filtered_df, 'outcome')
         
         for index, row in result_df.iterrows():
             if all(row[key] == value for key, value in filter_condition.items()):
-                result_df.loc[index, 'p value'] = round(p_value,3)
-                result_df.loc[index, 'f value'] = round(f_value,3)
+                result_df.loc[index, 'P value'] = round(p_value,3)
+                result_df.loc[index, 'Power'] = power
 
-    # ! calculate p value for the whole dataset.
+    # ! calculate p value, power for the whole dataset.
     outcomes = [df[df['treatment'] == version]['outcome'].dropna() for version in unique_versions]
     f_value, p_value = stats.f_oneway(*outcomes)
+    power = calculate_statistical_power(df, 'outcome')
     for index, row in result_df.iterrows():
         if all(row[key] == "" for key in selectedVariables):
-            result_df.loc[index, 'p value'] = round(p_value,3)
-            result_df.loc[index, 'f value'] = round(f_value,3)
+            result_df.loc[index, 'P value'] = round(p_value,3)
+            result_df.loc[index, 'Power'] = power
     return result_df
