@@ -4,7 +4,7 @@ import Select from 'react-select';
 import WeightedRandom from './WeightedRandom';
 import TSContextual from './TSContextual';
 import TSConfigurable from './TSConfigurable'
-
+import GPT from './GPT'
 const availablePolicies = [
     {
         value: 'UniformRandom',
@@ -21,6 +21,10 @@ const availablePolicies = [
     {
         value: 'ThompsonSamplingContextual',
         label: 'Thompson Sampling Contextual'
+    },
+    {
+        value: 'GPT',
+        label: 'GPT'
     }
 ];
 
@@ -92,6 +96,9 @@ function MOOCletEditor(props) {
                 {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
                 {mooclet.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSConfigurable>}
                 {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
+                {mooclet.policy === 'GPT' && <GPT factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></GPT>}
+
+                
             </Box>
         </Paper>
     );
