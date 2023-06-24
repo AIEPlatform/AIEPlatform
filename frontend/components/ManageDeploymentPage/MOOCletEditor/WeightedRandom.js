@@ -9,6 +9,8 @@ function WeightedRandom(props) {
     let tree = [...mooclets];
     let mooclet = tree.find(mooclet => mooclet.id === myId);
 
+    console.log(mooclet)
+
     let handleWeightChange =(index, event) => {
         let data = [...mooclets];
         let mooclet = data.find(mooclet => mooclet.id === myId);
