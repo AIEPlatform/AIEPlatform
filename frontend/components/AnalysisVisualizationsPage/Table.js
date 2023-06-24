@@ -50,7 +50,7 @@ export default function BasicTable(props) {
     else {
       getTable([]);
     }
-  }, [theDataset, selectedVariables, selectedAssigners]);
+  }, [theDataset, selectedVariables, selectedAssigners, props.datasetTime]);
 
 
   const shouldMergeCells = (rowIndex, columnIndex) => {
@@ -61,6 +61,7 @@ export default function BasicTable(props) {
 
   return (
     <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h6">Basic Reward Summary Table</Typography>
       <Typography variant="p">Choose a policy</Typography>
       <Select
         isMulti

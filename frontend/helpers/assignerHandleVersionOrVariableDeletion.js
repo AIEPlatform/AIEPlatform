@@ -9,7 +9,7 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
     }
     else if (policy === "WeightedRandom") {
         for (const key in parameters) {
-            if (!factors.some(obj => obj === key)) {
+            if (!versions.some(obj => obj['name'] === key)) {
               delete parameters[key];
             }
           }

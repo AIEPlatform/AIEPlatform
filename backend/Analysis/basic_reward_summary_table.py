@@ -48,8 +48,6 @@ def filter_dataframe(df, filter_dict):
     return filtered_df_boolean
     # return filtered_df_boolean
 
-
-
 # Statistical power
 def calculate_statistical_power(df, outcome_var):
     nobs = len(df[outcome_var])  # total number of observations
@@ -70,9 +68,8 @@ def calculate_statistical_power(df, outcome_var):
     
     return round(power, 3)  # return rounded power
 
-
-# final function
-def basic_reward_summary_table(df, selectedVariables):
+# Final function
+def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
     result_df = None
     data = df
     all_combs = get_all_combinations(selectedVariables)

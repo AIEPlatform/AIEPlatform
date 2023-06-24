@@ -184,7 +184,7 @@ def two_var_strong_predictor(num_users = 100):
                             value = 0
                         get_reward(deployment, study, user, value)
                 else:
-                    if random.random() < 0.3:
+                    if random.random() < 0.1:
                         version_to_show = assign_treatment(deployment, study, user)['name']
                         users_status[user] = version_to_show
                     else:
@@ -192,20 +192,20 @@ def two_var_strong_predictor(num_users = 100):
                         reward_prob = user_matrix[i][0] if users_status[user] == "version1" else user_matrix[i][1]
                         if users_status[user] == "version1" and predictor == 1:
                             print("111")
-                            reward_prob += 0.40
+                            reward_prob += 0.15
                             reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 1:
                             print("222")
-                            reward_prob -= 0.40
+                            reward_prob -= 0.15
                             reward_prob = np.max([reward_prob, 0])
 
                         if users_status[user] == "version1" and predictor == 0:
                             print("333")
-                            reward_prob -= 0.20
+                            reward_prob -= 0.10
                             reward_prob = np.min([reward_prob, 1])
                         elif users_status[user] == "version2" and predictor == 0:
                             print("444")
-                            reward_prob += 0.20
+                            reward_prob += 0.10
                             reward_prob = np.max([reward_prob, 0])
 
                         if random.random() < reward_prob:
@@ -229,8 +229,8 @@ TreatmentLog.delete_many({})
 VariableValue.delete_many({})
 MOOCletIndividualLevelInformation.delete_many({})
 deployment = 'Sim'
-study = 'weighted_random'
-variables = ['male']
-two_var_strong_predictor(num_users = 100)
+study = 'chatgpt_uniform_ts'
+variables = ['gender']
+two_var_strong_predictor(num_users = 20)
 
 #Lock.insert_one({"moocletId": "sim_user_9@64924c34fda141ab1c31f38e"})
