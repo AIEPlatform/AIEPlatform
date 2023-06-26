@@ -212,6 +212,19 @@ function StudyEditor(props) {
                 alert("Study modification failed!")
             })
     };
+
+    const handleResetStudy = () => {
+        fetch('/apis/experimentDesign/resetStudy', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "studyId": theStudy['_id']['$oid']
+            })
+            
+        })
+    }
     
     const getWeight = (node) => {
         // get all slibings.
@@ -330,6 +343,7 @@ function StudyEditor(props) {
 
                 {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>}
                 {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study.</Button>}
+                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleResetStudy} fullWidth>Reset this study.</Button>}
             </Box>
             <Modal
                 open={moocletModalOpen}

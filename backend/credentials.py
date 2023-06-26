@@ -32,6 +32,7 @@ Interaction = db['interaction']
 Variable = db['variable']
 Lock = db['lock']
 User = db['user']
+History = db['history']
 
 TreatmentLog = db['treatmentLog']
 RewardLog = db['rewardLog']

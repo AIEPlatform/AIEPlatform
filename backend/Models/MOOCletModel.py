@@ -5,6 +5,13 @@ class MOOCletModel:
     @staticmethod
     def update_policy_parameters(moocletId, toUpdate, session = None):
         try:
+            # Write into History!!!
+            current_mooclet = MOOClet.find_one({"_id": moocletId}, session=session)
+            History.insert_one({
+                "moocletId": moocletId,
+                "timestamp": datetime.datetime.now(),
+                "parameters": current_mooclet['parameters']
+            }, session=session)
             MOOClet.update_one({"_id": moocletId}, {"$set": toUpdate}, session=session)
             return 200
         except Exception as e:

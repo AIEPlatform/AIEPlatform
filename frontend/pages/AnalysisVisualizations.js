@@ -48,7 +48,7 @@ export default function DataAnalysis(props) {
   const handleDatasetDelete = () => {
     // /apis/analysis/deleteArrowDataset/<id>" DELETE
     if (theDataset) {
-      fetch(`/apis/analysis/deleteArrowDataset/${theDataset['_id']['$oid']}`, {method: "DELETE"})
+      fetch(`/apis/analysis/deleteArrowDataset/${theDataset['_id']['$oid']}`, { method: "DELETE" })
         .then(response => response.json())
         .then(data => {
           if (data["status"] === 200) {
@@ -64,13 +64,13 @@ export default function DataAnalysis(props) {
 
   const handleDatasetUpdate = () => {
     if (theDataset) {
-      fetch(`/apis/analysis/updateArrowDataset/${theDataset['_id']['$oid']}`, {method: "PUT"})
+      fetch(`/apis/analysis/updateArrowDataset/${theDataset['_id']['$oid']}`, { method: "PUT" })
         .then(response => response.json())
         .then(data => {
           if (data["status"] === 200) {
             // alert("Dataset Updated.");
             // Replace the dataset with the new returned one.
-            sDatasetTime(datasetTime+ 1)
+            sDatasetTime(datasetTime + 1)
           }
           else {
             alert("Error: " + data["message"]);
@@ -82,8 +82,8 @@ export default function DataAnalysis(props) {
   const [csvFile, setCsvFile] = useState(null);
 
   const handleCsvUpload = (event) => {
-      const file = event.target.files[0];
-      setCsvFile(file);
+    const file = event.target.files[0];
+    setCsvFile(file);
   };
 
 
@@ -93,30 +93,30 @@ export default function DataAnalysis(props) {
     formData.append('datasetId', theDataset['_id']['$oid']);
 
     fetch('/apis/upload_local_modification', {
-        method: 'PUT',
-        body: formData
+      method: 'PUT',
+      body: formData
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data['status'] === 200) {
-              window.location.reload();
-            }
-            else {
-                alert("Error: " + data["message"]);
-            }
-          }
-        )
-        .catch(error => {
-            console.error('Error uploading file:', error);
-        });
-};
+      .then(response => response.json())
+      .then(data => {
+        if (data['status'] === 200) {
+          window.location.reload();
+        }
+        else {
+          alert("Error: " + data["message"]);
+        }
+      }
+      )
+      .catch(error => {
+        console.error('Error uploading file:', error);
+      });
+  };
 
   if (userContext !== undefined && userContext !== null) {
     return (
       <Layout>
         <Head><title>Data Analysis - DataArrow</title></Head>
         <Container maxWidth="md">
-        <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
+          <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
           <Box sx={{ mb: 3 }}>
             <Typography variant="p">Deployment: </Typography>
             <Select
@@ -142,23 +142,23 @@ export default function DataAnalysis(props) {
           </Box>
 
           {theDataset && <Box sx={{ m: 3, ml: 0 }}>
-          <Button sx={{m: 2, ml: 0}} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
-          <Button sx = {{m: 2, ml:0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
+            <Button sx={{ m: 2, ml: 0 }} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
+            <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
 
-          <Button sx = {{m: 2, ml:0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
+            <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
 
-          {theDataset && <Box>
-                    <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
-                    <label htmlFor="csv-upload">Upload CSV file:</label>
-                    <input
-                        id="csv-upload"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleCsvUpload}
-                    />
-                    {csvFile && <p>File selected: {csvFile.name}</p>}
-                    {csvFile && <button onClick={handleFileUpload}>Upload</button>}
-                </Box>}
+            {theDataset && <Box>
+              <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
+              <label htmlFor="csv-upload">Upload CSV file:</label>
+              <input
+                id="csv-upload"
+                type="file"
+                accept=".csv"
+                onChange={handleCsvUpload}
+              />
+              {csvFile && <p>File selected: {csvFile.name}</p>}
+              {csvFile && <button onClick={handleFileUpload}>Upload</button>}
+            </Box>}
           </Box>}
 
         </Container>
@@ -188,7 +188,7 @@ export default function DataAnalysis(props) {
             </Paper>
           </Masonry>
         </ResponsiveMasonry>
-        
+
       </Layout>
     );
   }

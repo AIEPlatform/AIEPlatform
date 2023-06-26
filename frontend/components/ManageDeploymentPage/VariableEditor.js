@@ -16,7 +16,8 @@ function VariableEditor(props) {
     let variableTypes = [
         { value: 'discrete', label: 'discrete' },
         { value: 'continuous', label: 'continuous' },
-        { value: 'ordinary', label: 'ordinary'}
+        { value: 'ordinary', label: 'ordinary'}, 
+        { value: 'text', label: 'text'}
     ];
 
     let missingDataOptions = [

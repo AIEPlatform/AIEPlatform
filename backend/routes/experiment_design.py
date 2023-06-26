@@ -123,7 +123,7 @@ def create_study():
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
-    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name})
+    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name}, public = True)
     if doc is not None: 
         return json_util.dumps({
             "status_code": 400, 
@@ -426,3 +426,49 @@ def create_variable():
             "status_code": 500, 
             "message": e
         }), 500
+    
+
+
+
+
+@experiment_design_apis.route("/apis/experimentDesign/resetStudy", methods=["PUT"])
+def reset_study():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    studyId = request.json['studyId']
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+            # get all mooclet ids
+            mooclets = MOOCletModel.find_mooclets({"studyId": ObjectId(studyId)})
+            mooclet_ids = [mooclet['_id'] for mooclet in mooclets]
+            # reset all mooclet parameters to the earliest one in the History collection.
+            for mooclet_id in mooclet_ids:
+                # get the earliest history by timestamp
+                print(mooclet_id)
+                history_parameter = History.find_one({"moocletId": ObjectId(mooclet_id)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
+                # update the mooclet
+                if history_parameter is None: continue
+                MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
+                # remove all history
+                History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+                # Remove all interactions.
+                Interaction.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+                # remove individualLevel history
+                MOOCletIndividualLevelInformation.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            session.commit_transaction()
+
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "The study has been reset."
+            }), 200
+
+        except Exception as e:
+            print(e)
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 500, 
+                "message": e
+            }), 500
