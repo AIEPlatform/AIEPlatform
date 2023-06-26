@@ -44,7 +44,8 @@ class ThompsonSamplingContextual(Policy):
                 self.parameters = theIndividualInformation['parameters']
             else:
                 # TODO: Do we need lock here? Is it possible that the concurrency issue happens for one user?
-                current_params = {key: value for key, value in self.parameters.items() if key not in  ["individualParameters", "individualLevel", "individualLevelThreshold"]}
+                current_params = {key: value for key, value in self.parameters.items() if key not in  ["individualParameters", "individualLevel", "individualLevelThreshold", "individualLevelBatchSize", "batch_size"]}
+                current_params['batch_size'] = self.parameters["individualLevelBatchSize"]
                 response = MOOCletIndividualLevelInformation.insert_one({"moocletId": self._id, "user": user, "parameters": current_params})
                 the_info = MOOCletIndividualLevelInformation.find_one({"_id": response.inserted_id})
                 self.parameters = the_info['parameters']
@@ -482,8 +483,9 @@ def choose_arm_individual(self, user, where, other_information):
     try:
         current_time = datetime.datetime.now()
         lucky_version = self.get_consistent_assignment(user, where)
+        current_enrolled = InteractionModel.get_num_participants_for_assigner_individual(moocletId = self._id, user = user) #TODO: is it number of learners or number of observations????
 
-        if self.should_update_model_individual(current_time, user):
+        if self.should_update_model_individual(current_time, user) and current_enrolled % self.parameters['batch_size'] == 0:
 
             i_am_updating = False
             lock.acquire()
@@ -559,8 +561,6 @@ def choose_arm_individual(self, user, where, other_information):
             for contextual_value in contextual_values:
                 contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                 contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
-            
-            current_enrolled = InteractionModel.get_num_participants_for_assigner_individual(moocletId = self._id, user = user) #TODO: is it number of learners or number of observations????
 
             if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                 lucky_version = random.choice(self.study['versions'])

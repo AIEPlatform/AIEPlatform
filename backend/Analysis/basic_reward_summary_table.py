@@ -70,8 +70,12 @@ def calculate_statistical_power(df, outcome_var):
 
 # Final function
 def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
+
     result_df = None
     data = df
+    # filter out selected assigners
+    if len(selectedAssigners) > 0:
+        data = df[df['assigner'].isin(selectedAssigners)]
     all_combs = get_all_combinations(selectedVariables)
     if len(selectedVariables) == 0:
         result_df = get_stats(data, ['treatment'])

@@ -33,8 +33,6 @@ class GPT(Policy):
 				self.parameters['messages'].append({"role": "system", "content": self.parameters['initialPrompt']})
 				MOOCletModel.update_policy_parameters(self._id, {'parameters': self.parameters})
 
-
-
 			contextual_values = VariableValueModel.get_latest_variable_values(self.study['variables'], user)
 			contextual_vars_dict = {}
 			contextual_vars_id_dict = {}
@@ -57,6 +55,9 @@ class GPT(Policy):
 				if version['name'] in version_chosen:
 					lucky_version = version
 					break
+			if lucky_version is None:
+				# do unifoirm
+				lucky_version = random.choice(self.study['versions'])
 			
 			new_interaction = {
 				"user": user,
@@ -74,7 +75,23 @@ class GPT(Policy):
 			return lucky_version
 		except Exception as e:
 			print(e)
-			return None
+			lucky_version = random.choice(self.study['versions'])
+			
+			new_interaction = {
+				"user": user,
+				"treatment": lucky_version,
+				"outcome": None,
+				"where": where,
+				"moocletId": self._id,
+				"timestamp": datetime.datetime.now(),
+				"otherInformation": other_information,
+				"contextuals": contextual_vars_dict,
+				"contextualIds": contextual_vars_id_dict, 
+				"gptError": True
+			}
+
+			InteractionModel.insert_one(new_interaction)
+			return lucky_version
 		
 	def get_reward(self, user, value, where, other_information):
 		current_time = datetime.datetime.now()

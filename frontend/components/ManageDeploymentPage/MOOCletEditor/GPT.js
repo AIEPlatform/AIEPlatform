@@ -17,6 +17,8 @@ function GPT(props) {
             mooclet['parameters']['initialPrompt'] = '';
         }
         sMooclets(tree);
+
+        console.log(mooclet)
     }, []);
     return (
         <Box>

@@ -73,6 +73,9 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         console.log(parameters)
         return parameters;
     }
+    else {
+        return parameters;
+    }
 }
 
 export default assignerHandleVersionOrVariableDeletion;

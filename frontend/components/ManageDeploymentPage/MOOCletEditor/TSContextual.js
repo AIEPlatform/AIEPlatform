@@ -204,6 +204,7 @@ function TSContextual(props) {
         if (!mooclet['parameters']['uniform_threshold']) mooclet['parameters']['uniform_threshold'] = 8
         if (!mooclet['parameters']['updatedPerMinute']) mooclet['parameters']['updatedPerMinute'] = 0
         if (!mooclet['parameters']['include_intercept']) mooclet['parameters']['include_intercept'] = false
+        if (!mooclet['parameters']['individualLevelBatchSize']) mooclet['parameters']['individualLevelBatchSize'] = 1
         sMooclets(tree);
 
     }, []);
@@ -277,24 +278,35 @@ function TSContextual(props) {
 
                 <FormControlLabel
                     control={<Checkbox checked={mooclet['parameters']['individualLevel'] || false} onChange={(e) => {
-                        if(!mooclet['parameters']['individualLevelThreshold']) mooclet['parameters']['individualLevelThreshold'] = 0;
+                        if (!mooclet['parameters']['individualLevelThreshold']) mooclet['parameters']['individualLevelThreshold'] = 0;
                         mooclet['parameters']['individualLevel'] = e.target.checked;
                         sMooclets(tree);
                     }} />}
                     label="Enable individual-level regression after receiving a certain number of feedbacks"
                 />
-                {mooclet['parameters']['individualLevel'] && <Box> 
+                {mooclet['parameters']['individualLevel'] && <Box>
                     <p><mark>The individual level regressions will be turned on after receiving the following number of user feedbacks.</mark></p>
                     <TextField
-                    sx={{ m: 1 }}
-                    value={mooclet['parameters']['individualLevelThreshold']}
-                    onChange={(e) => {
-                        mooclet['parameters']['individualLevelThreshold'] = parseFloat(e.target.value);
-                        sMooclets(tree);
-                    }}
-                    label={`Individual-level regression threshold`}
-                    type="number"
-                /></Box>}
+                        sx={{ m: 1 }}
+                        value={mooclet['parameters']['individualLevelThreshold']}
+                        onChange={(e) => {
+                            mooclet['parameters']['individualLevelThreshold'] = parseFloat(e.target.value);
+                            sMooclets(tree);
+                        }}
+                        label={`Individual-level regression threshold`}
+                        type="number"
+                    />
+                    <TextField
+                        sx={{ m: 1 }}
+                        value={mooclet['parameters']['individualLevelBatchSize']}
+                        onChange={(e) => {
+                            mooclet['parameters']['individualLevelBatchSize'] = parseFloat(e.target.value);
+                            sMooclets(tree);
+                        }}
+                        label={`Individual-level regression batch size`}
+                        type="number"
+                    />
+                </Box>}
             </Box>
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>
@@ -308,7 +320,7 @@ function TSContextual(props) {
                                 options={regressionFormulaVariables.map((option) => ({
                                     value: option,
                                     label: option
-                                  }))}
+                                }))}
                                 className="basic-multi-select"
                                 classNamePrefix="select"
                                 value={regressionFormulaItem.map(v => ({ label: v, value: v }))}

@@ -70,15 +70,15 @@ def two_var_strong_predictor(num_users = 100):
 
         k = 0
         while k < 100:
+            user = str(k)
             predictor = None
             for variable in variables:
                 # randomly get 0 or 1
                 predictor = random.randint(0, 1)
-                give_variable_value(deployment, study, variable, i, predictor)
-            k+=1
+                give_variable_value(deployment, study, variable, user, predictor)
             #time.sleep(1) # every 2 seconds I pick a random user, assign arm or send reward.
             # get arm
-            version_to_show = assign_treatment(deployment, study, i)['name']
+            version_to_show = assign_treatment(deployment, study, user)['name']
 
 
             # give reward
@@ -86,9 +86,11 @@ def two_var_strong_predictor(num_users = 100):
             reward_prob = 0.4 + predictor * arm_indicator * 0.3 - arm_indicator * 0.2
             value = 1 if random.random() < reward_prob else 0
             if random.random() < reward_prob:
-                get_reward(deployment, study, i, value)
+                get_reward(deployment, study, user, value)
             else:
-                get_reward(deployment, study, i, value)
+                get_reward(deployment, study, user, value)
+
+            k+=1
             #print(f"*** predictor {str(predictor)} is gives reward {str(value)} on arm {version_to_show}")
 
     for i in range(0, len(users)):
@@ -98,7 +100,7 @@ def two_var_strong_predictor(num_users = 100):
 
 num_users = 1
 deployment = 'Simulations'
-study = 'TSC'
+study = 'CHATGPT_VS_TSC'
 variables = ['gender']
 two_var_strong_predictor(num_users = num_users)
 
