@@ -437,9 +437,13 @@ def reset_study():
         return json_util.dumps({
             "status_code": 403,
         }), 403
-    studyId = request.json['studyId']
+    deployment = request.json['deployment']
+    study = request.json['study']
     with client.start_session() as session:
         try:
+            the_deployment = DeploymentModel.get_one({"name": deployment})
+            the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+            studyId = the_study['_id']
             session.start_transaction()
             # get all mooclet ids
             mooclets = MOOCletModel.find_mooclets({"studyId": ObjectId(studyId)})
@@ -447,13 +451,12 @@ def reset_study():
             # reset all mooclet parameters to the earliest one in the History collection.
             for mooclet_id in mooclet_ids:
                 # get the earliest history by timestamp
-                print(mooclet_id)
                 history_parameter = History.find_one({"moocletId": ObjectId(mooclet_id)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
-                # update the mooclet
-                if history_parameter is None: continue
-                MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
-                # remove all history
-                History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+                if history_parameter is not None:
+                    # update the mooclet
+                    MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
+                    # remove all history
+                    History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
                 # Remove all interactions.
                 Interaction.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
                 # remove individualLevel history

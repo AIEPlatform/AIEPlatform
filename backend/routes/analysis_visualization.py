@@ -21,6 +21,7 @@ from bson.objectid import ObjectId
 from flask import send_file, make_response
 from Analysis.basic_reward_summary_table import basic_reward_summary_table
 from Analysis.AverageRewardByTime import AverageRewardByTime
+from collections import Counter
 
 analysis_visualization_apis = Blueprint('analysis_visualization_apis', __name__)
 
@@ -113,7 +114,7 @@ def update_arrow_dataset(id):
         deployment = theDeployment['name']
         theStudy = StudyModel.get_one({"name": study, "deploymentId": deploymentId})
 
-        if dataset['variables'] == theStudy['variables']:
+        if Counter(dataset['variables']) == Counter(theStudy['variables']):
             df = create_df_from_mongo(study, deployment)
             DatasetModel.update_one(ObjectId(id), df)
             return json_util.dumps({

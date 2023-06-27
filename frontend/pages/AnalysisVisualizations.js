@@ -167,22 +167,21 @@ export default function DataAnalysis(props) {
           columnsCountBreakPoints={{ 350: 1, 750: 2 }}
         >
           <Masonry>
-            <Paper style={{ width: '100%', height: '300px' }}>
+            {/* <Paper style={{ width: '100%', height: '300px' }}>
               <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
-              {/* Content for the first div */}
-            </Paper>
+            </Paper> */}
 
-            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+            <Paper sx={{m: 2, p: 2}} style={{ maxWidth: '100%', maxHeight: '500px' }}>
               <Table theDataset={theDataset} datasetTime={datasetTime} />
               {/* Content for the first div */}
             </Paper>
 
-            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+            <Paper sx={{m: 2, p: 2}} style={{ maxWidth: '100%', maxHeight: '500px' }}>
               <Table theDataset={theDataset} datasetTime={datasetTime} />
               {/* Content for the first div */}
             </Paper>
 
-            <Paper style={{ maxWidth: '100%', maxHeight: '500px' }}>
+            <Paper sx={{m: 2, p: 2}} style={{ maxWidth: '100%', maxHeight: '500px' }}>
               <Table theDataset={theDataset} datasetTime={datasetTime} />
               {/* Content for the first div */}
             </Paper>

@@ -220,9 +220,10 @@ function StudyEditor(props) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "studyId": theStudy['_id']['$oid']
+                "deployment": deploymentName, // TODO: change to "deploymentId
+                "study": studyName
             })
-            
+
         })
     }
     
@@ -341,9 +342,9 @@ function StudyEditor(props) {
                     </AccordionDetails>
                 </Accordion>}
 
-                {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study.</Button>}
-                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study.</Button>}
-                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleResetStudy} fullWidth>Reset this study.</Button>}
+                {status === 1 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreateStudy} fullWidth>Create this study</Button>}
+                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleModifyStudy} fullWidth>Modify this study</Button>}
+                {status === 2 && <Button sx={{ mt: 2 }} variant="contained" onClick={handleResetStudy} fullWidth>Reset this study</Button>}
             </Box>
             <Modal
                 open={moocletModalOpen}
