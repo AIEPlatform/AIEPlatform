@@ -3,6 +3,10 @@ import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } f
 import Layout from '../components/layout';
 import Head from 'next/head';
 import { UserContext } from "../contexts/UserContextWrapper";
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 function NewDeployment() {
     const [deploymentName, sDeploymentName] = useState("");
@@ -45,7 +49,7 @@ function NewDeployment() {
     if (userContext !== undefined && userContext !== null) {
         return (
             <Layout>
-                <Head><title>New Deployment - DataArrow</title></Head>
+                <Head><title>New Deployment - {websiteName}</title></Head>
                 <Container>
                     <TextField sx={{ mr: 3 }} label="Deployment name" value={deploymentName} onChange={(e) => sDeploymentName(e.target.value)}></TextField>
                     <TextField sx={{ mr: 3 }} label="Deployment description" value={deploymentDescription} onChange={(e) => sDeploymentDescription(e.target.value)}></TextField>

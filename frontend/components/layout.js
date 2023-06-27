@@ -24,6 +24,10 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import { UserContext } from "../contexts/UserContextWrapper";
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 
 
@@ -118,7 +122,7 @@ export default function Layout({ children }) {
                         <MenuIcon />
                     </IconButton>}
                     <Typography variant="h6" noWrap component="div">
-                        DataArrow
+                    {websiteName}
                     </Typography>
                 </Toolbar>
             </AppBar>

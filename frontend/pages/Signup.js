@@ -10,6 +10,10 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Head from 'next/head';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 function Copyright(props) {
   return (
@@ -61,7 +65,7 @@ export default function SignUp() {
 
   return (
     <>
-      <Head><title>Sign up - DataArrow</title></Head>
+      <Head><title>Sign up - {websiteName}</title></Head>
       <Container component="main" maxWidth="xs">
         <Box
           sx={{

@@ -6,7 +6,11 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { CacheProvider } from '@emotion/react';
 import theme from '../src/theme';
 import createEmotionCache from '../src/createEmotionCache';
-import UserContextWrapper from "../contexts/UserContextWrapper"
+import UserContextWrapper from "../contexts/UserContextWrapper";
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -18,7 +22,7 @@ export default function MyApp(props) {
     <CacheProvider value={emotionCache}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
-        <title>DataArrow</title>
+        <title>{websiteName}</title>
       </Head>
       <ThemeProvider theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}

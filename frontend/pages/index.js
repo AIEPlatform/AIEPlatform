@@ -6,6 +6,11 @@ import Select from 'react-select';
 import StudyEditor from '../components/ManageDeploymentPage/StudyEditor';
 import { UserContext } from "../contexts/UserContextWrapper";
 
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
+
 
 const newStudy = {
     "name": "Create New Study",
@@ -49,7 +54,7 @@ function ManageDeployment() {
     if (userContext !== undefined && userContext !== null) {
         return (
             <Layout>
-                <Head><title>Manage Deployment - DataArrow</title></Head>
+                <Head><title>Manage Deployment - {websiteName}</title></Head>
                 <Container>
                     <Box>
                         <Typography variant="p">Deployment: </Typography>

@@ -8,5 +8,8 @@ module.exports = {
         destination: `${API_URL}/apis/:path*` // Proxy to Backend
       }
     ]
+  }, 
+  publicRuntimeConfig: {
+    websiteName: 'Adaptive Experimentation Platform',
   }
 };

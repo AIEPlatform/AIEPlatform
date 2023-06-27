@@ -4,6 +4,10 @@ import Layout from '../components/layout';
 import Head from 'next/head';
 import Select from 'react-select';
 import { UserContext } from "../contexts/UserContextWrapper";
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 
 function DataWorkshop() {
@@ -67,7 +71,7 @@ function DataWorkshop() {
     if (userContext !== undefined && userContext !== null) {
         return (
             <Layout>
-                <Head><title>Manage Deployment - DataArrow</title></Head>
+                <Head><title>Manage Deployment - {websiteName}</title></Head>
                 <Container>
                     <Box sx={{ mb: 3 }}>
                         <Typography variant="p">Deployment: </Typography>

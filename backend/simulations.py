@@ -60,6 +60,7 @@ from Analysis.AverageRewardByTime import AverageRewardByTime
 import datetime
 from Models.VariableValueModel import VariableValueModel
 def fake_data_time(deployment, study):
+    print("faking data time...")
     the_deployment = Deployment.find_one({"name": deployment})
     the_study = Study.find_one({"name": study, "deploymentId": the_deployment['_id']})
     mooclet_ids = list(
@@ -277,8 +278,9 @@ def run_case_three(deployment, study, num_devices = 100, num_users_per_device = 
     fake_data_time(deployment, study)
     print("simulations done.")
 
-num_devices = 200
+num_devices = 50
 num_users_per_device = 10
 deployment = "Simulations"
 study = "case3"
-run_case_three(deployment = "Simulations", study = "case3", num_devices= num_devices, num_users_per_device = num_users_per_device, variables = ['gender', 'mood'])
+variables = ['gender', 'mood']
+run_case_three(deployment = "Simulations", study = "case3", num_devices= num_devices, num_users_per_device = num_users_per_device, variables = variables)

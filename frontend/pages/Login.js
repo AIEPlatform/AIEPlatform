@@ -12,6 +12,10 @@ import Layout from '../components/layout';
 import { UserContext } from "../contexts/UserContextWrapper";
 import { useContext, useEffect } from "react";
 import Head from 'next/head';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 function Copyright(props) {
   return (
@@ -70,7 +74,7 @@ export default function SignIn() {
 
     return (
       <>
-        <Head><title>Log in - DataArrow</title></Head>
+        <Head><title>Log in - {websiteName}</title></Head>
         {userContext === null && <Container component="main" maxWidth="10%">
           <Box
             sx={{

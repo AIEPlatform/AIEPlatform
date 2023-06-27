@@ -4,6 +4,10 @@ import Link from '@mui/material/Link';
 import Layout from '../components/layout';
 import Head from 'next/head';
 import { UserContext } from "../contexts/UserContextWrapper";
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
 
 function NewDeployment() {
     const { userContext, sUserContext } = useContext(UserContext);
@@ -52,7 +56,7 @@ function NewDeployment() {
     if (userContext !== undefined && userContext !== null) {
         return (
             <Layout>
-                <Head><title>New Deployment - DataArrow</title></Head>
+                <Head><title>New Deployment - {websiteName}</title></Head>
                 <Container>
                     <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
                         <Grid container spacing={2}>

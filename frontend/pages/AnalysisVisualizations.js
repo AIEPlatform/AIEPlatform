@@ -13,6 +13,15 @@ import UpgradeIcon from '@mui/icons-material/Upgrade';
 import { UserContext } from "../contexts/UserContextWrapper";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const websiteName = publicRuntimeConfig.websiteName;
+
 const availableAnalysises = [
   {
     value: 'basicRewardTable',
@@ -111,12 +120,13 @@ export default function DataAnalysis(props) {
   }
 
   const handleSelectMyDeployment = (option) => {
+    if (option == null) return;
     fetch(`/apis/analysis/get_deployment_datasets?deployment=${option["name"]}`)
-    .then(response => response.json())
-    .then(data => {
-      sTheDatasets(data["datasets"]);
-      sTheDeployment(option);
-    });
+      .then(response => response.json())
+      .then(data => {
+        sTheDatasets(data["datasets"]);
+        sTheDeployment(option);
+      });
   }
 
 
@@ -212,122 +222,119 @@ export default function DataAnalysis(props) {
   if (userContext !== undefined && userContext !== null) {
     return (
       <Layout>
-        <Head><title>Data Analysis - DataArrow</title></Head>
-        <Container maxWidth="md">
-          <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="p">Deployment: </Typography>
-            <Select
-              options={myDeployments}
-              getOptionLabel={(option) => option["name"]}
-              getOptionValue={(option) => option["_id"]["$oid"]}
-              onChange={(option) => {
-                handleSelectMyDeployment(option)
-                resetAnalysises();
-              }}
-              value={theDeployment}
-            />
-          </Box>
+        <Head><title>Data Analysis - {websiteName}</title></Head>
+
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="panel1a-content"
+            id="reward-editor"
+          >
+            <Typography variant='h6'>Customize your analysis and visualizations</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Container maxWidth="md">
+              <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="p">Deployment: </Typography>
+                <Select
+                  options={myDeployments}
+                  getOptionLabel={(option) => option["name"]}
+                  getOptionValue={(option) => option["_id"]["$oid"]}
+                  onChange={(option) => {
+                    handleSelectMyDeployment(option)
+                    resetAnalysises();
+                  }}
+                  value={theDeployment}
+                />
+              </Box>
 
 
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="p">Dataset: </Typography>
-            <Select
-              options={theDatasets}
-              getOptionLabel={(option) => `${option['study']}: ${option["name"]}`}
-              getOptionValue={(option) => option["_id"]["$oid"]}
-              value={theDataset}
-              onChange={(option) => {
-                sTheDataset(option);
-                resetAnalysises();
-              }}
-            />
-          </Box>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="p">Dataset: </Typography>
+                <Select
+                  options={theDatasets}
+                  getOptionLabel={(option) => `${option['study']}: ${option["name"]}`}
+                  getOptionValue={(option) => option["_id"]["$oid"]}
+                  value={theDataset}
+                  onChange={(option) => {
+                    sTheDataset(option);
+                    resetAnalysises();
+                  }}
+                />
+              </Box>
 
-          {theDataset && <Box sx={{ m: 3, ml: 0 }}>
-            <Button sx={{ m: 2, ml: 0 }} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
-            <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
+              {theDataset && <Box sx={{ m: 3, ml: 0 }}>
+                <Button sx={{ m: 2, ml: 0 }} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
+                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
 
-            <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
+                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
 
-            {theDataset && <Box>
-              <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
-              <label htmlFor="csv-upload">Upload CSV file:</label>
-              <input
-                id="csv-upload"
-                type="file"
-                accept=".csv"
-                onChange={handleCsvUpload}
-              />
-              {csvFile && <p>File selected: {csvFile.name}</p>}
-              {csvFile && <button onClick={handleFileUpload}>Upload</button>}
-            </Box>}
-          </Box>}
+                {theDataset && <Box>
+                  <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
+                  <label htmlFor="csv-upload">Upload CSV file:</label>
+                  <input
+                    id="csv-upload"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCsvUpload}
+                  />
+                  {csvFile && <p>File selected: {csvFile.name}</p>}
+                  {csvFile && <button onClick={handleFileUpload}>Upload</button>}
+                </Box>}
+              </Box>}
 
-          <Box sx={{ m: 3, ml: 0 }}>
-            <DragDropContext onDragEnd={handleDrop}>
-              <Droppable droppableId="list-container">
-                {(provided) => (
-                  <div
-                    className="list-container"
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                  >
-                    {analysises.map((item, index) => (
-                      <Draggable key={item['value']} draggableId={item['value']} index={index}>
-                        {(provided) => (
-                          <div
-                            className="item-container"
-                            ref={provided.innerRef}
-                            {...provided.dragHandleProps}
-                            {...provided.draggableProps}
-                          >
-                            {item['label']}
-                            <Button onClick={() => handleDeleteAnalysis(item)}>X</Button>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-            <Typography variant="p">New Analysis: </Typography>
-            <Select
-              options={availableAnalysises}
-              onChange={(option) => {
-                sNewAnalysis(option);
-              }}
-            />
-            <Button sx={{ m: 2, ml: 0 }} variant="contained" color="success" onClick={() => handleAddNewAnalysis()}>Add</Button>
-          </Box>
+              <Box sx={{ m: 3, ml: 0 }}>
+                <DragDropContext onDragEnd={handleDrop}>
+                  <Droppable droppableId="list-container">
+                    {(provided) => (
+                      <div
+                        className="list-container"
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                      >
+                        {analysises.map((item, index) => (
+                          <Draggable key={item['value']} draggableId={item['value']} index={index}>
+                            {(provided) => (
+                              <div
+                                className="item-container"
+                                ref={provided.innerRef}
+                                {...provided.dragHandleProps}
+                                {...provided.draggableProps}
+                              >
+                                {item['label']}
+                                <Button onClick={() => handleDeleteAnalysis(item)}>X</Button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                <Typography variant="p">New Analysis: </Typography>
+                <Select
+                  options={availableAnalysises}
+                  onChange={(option) => {
+                    sNewAnalysis(option);
+                  }}
+                />
+                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="success" onClick={() => handleAddNewAnalysis()}>Add</Button>
+              </Box>
 
-        </Container>
+            </Container>
 
+          </AccordionDetails>
+        </Accordion>
         <ResponsiveMasonry
           columnsCountBreakPoints={{ 350: 1, 750: 2 }}
         >
           <Masonry>
-            {/* <Paper style={{ width: '100%', height: '300px' }}>
-              <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} style={{ position: "fixed", width: "100vw", height: "100vh" }} />
-            </Paper> */}
-            {/* 
-            <Paper sx={{ m: 2, p: 2 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-              <Table theDataset={theDataset} datasetTime={datasetTime} />
-            </Paper>
-
-            <Paper sx={{ m: 2, p: 2 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-              <Table theDataset={theDataset} datasetTime={datasetTime} />
-            </Paper>
-
-            <Paper sx={{ m: 2, p: 2 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-              <Table theDataset={theDataset} datasetTime={datasetTime} />
-            </Paper> */}
             {analysises.map((item, index) => (
-              <Paper key = {item['value']} sx={{ m: 2, p: 2 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-                {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises}/>}
-                {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises}/>}
+              <Paper key={item['value']} sx={{ m: 2, p: 4 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
+                {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
+                {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
               </Paper>
             ))}
           </Masonry>
