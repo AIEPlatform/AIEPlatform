@@ -15,8 +15,11 @@ import { Typography } from '@mui/material';
 export default function BasicTable(props) {
 
   const theDataset = props.theDataset;
-  const [selectedVariables, sSelectedVariables] = useState([]);
-  const [selectedAssigners, sSelectedAssigners] = useState([]);
+  // const [selectedVariables, sSelectedVariables] = useState([]);
+  // const [selectedAssigners, sSelectedAssigners] = useState([]);
+  const analysis = props.analysis;
+  const analysises = props.analysises;
+  const sAnalysises = props.sAnalysises;
 
   const [columns, sColumns] = useState([]);
   const [rows, sRows] = useState([]);
@@ -29,8 +32,8 @@ export default function BasicTable(props) {
       },
       body: JSON.stringify({
         theDatasetId: theDataset['_id']['$oid'],
-        selectedVariables: selectedVariables, 
-        selectedAssigners: selectedAssigners
+        selectedVariables: analysis['selectedVariables'].map((variable) => variable['value']), 
+        selectedAssigners: analysis['selectedAssigners'].map((variable) => variable['value'])
       })
     })
       .then(res => res.json())
@@ -42,6 +45,16 @@ export default function BasicTable(props) {
   }
 
   React.useEffect(() => {
+    if(!analysis['selectedVariables']) {
+      analysis['selectedVariables'] = [];
+    }
+    if(!analysis['selectedAssigners']) {
+      analysis['selectedAssigners'] = [];
+    }
+    sAnalysises([...analysises]);
+  }, [analysis])
+
+  React.useEffect(() => {
     // Get the very basic A/B test info without any contextual variables
     // make a post request to the backend
     if (theDataset == null) {
@@ -50,7 +63,7 @@ export default function BasicTable(props) {
     else {
       getTable([]);
     }
-  }, [theDataset, selectedVariables, selectedAssigners, props.datasetTime]);
+  }, [theDataset, props.datasetTime, analysis['selectedVariables'], analysis['selectedAssigners']]);
 
 
   const shouldMergeCells = (rowIndex, columnIndex) => {
@@ -66,22 +79,26 @@ export default function BasicTable(props) {
       <Select
         isMulti
         options={theDataset ? theDataset['assigners'].map((assigner, index) => ({
-          value: index,
+          value: assigner,
           label: assigner
         })) : []}
+        value={analysis['selectedAssigners']}
         onChange={(options) => {
-          sSelectedAssigners(options.map(option => option['label']));
+          analysis['selectedAssigners'] = options;
+          sAnalysises([...analysises]);
         }}
       />
       <Typography variant="p">Choose a variable</Typography>
       <Select
         isMulti
         options={theDataset ? theDataset['variables'].map((variable, index) => ({
-          value: index,
+          value: variable,
           label: variable
         })) : []}
+        value={analysis['selectedVariables']}
         onChange={(options) => {
-          sSelectedVariables(options.map(option => option['label']));
+          analysis['selectedVariables'] = options;
+          sAnalysises([...analysises]);
         }}
       />
       <TableContainer component={Paper} style={{ marginTop: "2em", flex: '1', overflowY: 'auto' }}>
