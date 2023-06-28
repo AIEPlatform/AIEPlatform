@@ -8,3 +8,4 @@ pymongo==4.3.3
 python-dotenv==1.0.0
 scipy==1.10.1
 statsmodels==0.14.0
+flask_session==0.5.0

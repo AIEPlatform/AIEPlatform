@@ -149,6 +149,27 @@ function StudyEditor(props) {
             })
     };
 
+    const loadCurrentStudy = () => {
+        fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
+        .then(response => response.json())
+        .then(data => {
+            sStatus(4);
+            console.log(data['mooclets'][0]['parameters']);
+            sMooclets(data['mooclets']);
+            console.log(data['mooclets'][0]['parameters']);
+
+            sStudyName(data['studyName']);
+            sVariables(data['variables']);
+            sVersions(data['versions']);
+            sFactors(data['factors']);
+            sRewardInformation(data['rewardInformation']);
+            sStatus(2);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        })
+    }
+
 
 
     useEffect(() => {
@@ -167,24 +188,7 @@ function StudyEditor(props) {
             sStatus(1);
         }
         else {
-            fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
-            .then(response => response.json())
-            .then(data => {
-                sStatus(4);
-                console.log(data['mooclets'][0]['parameters']);
-                sMooclets(data['mooclets']);
-                console.log(data['mooclets'][0]['parameters']);
-
-                sStudyName(data['studyName']);
-                sVariables(data['variables']);
-                sVersions(data['versions']);
-                sFactors(data['factors']);
-                sRewardInformation(data['rewardInformation']);
-                sStatus(2);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            })
+            loadCurrentStudy();
         }
     }, [theStudy]);
 
@@ -223,7 +227,18 @@ function StudyEditor(props) {
                 "deployment": deploymentName, // TODO: change to "deploymentId
                 "study": studyName
             })
-
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data['status_code'] === 200) {
+                loadCurrentStudy();
+                alert("reset successfully!")
+            }
+            else {
+                alert("Something is wrong.");
+            }
+        }).catch((error) => {
+            alert("Something is wrong.");
         })
     }
     
