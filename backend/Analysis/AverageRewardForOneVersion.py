@@ -13,7 +13,7 @@ import itertools
 from scipy import stats
 
 def average_reward_for_one_version(df, selectedVersion, selectedVariable, selectedPolicy, per_day="d"):
-    # Filter dataframe``
+    # Filter dataframe
     filtered_df = df[(df['treatment'] == selectedVersion) &  
                      (df['policy'] == selectedPolicy)]
     # Select columns
