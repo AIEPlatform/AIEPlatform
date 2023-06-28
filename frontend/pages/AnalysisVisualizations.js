@@ -47,7 +47,6 @@ export default function DataAnalysis(props) {
   const [myDeployments, sMyDeployments] = useState([]);
   const [theDatasets, sTheDatasets] = useState([]);
   const [theDataset, sTheDataset] = useState(null);
-  const [datasetTime, sDatasetTime] = useState(0);
   const [theDeployment, sTheDeployment] = useState(null);
 
   const [analysises, sAnalysises] = useState([]);
@@ -137,8 +136,10 @@ export default function DataAnalysis(props) {
         .then(response => response.json())
         .then(data => {
           if (data["status"] === 200) {
-            alert("Dataset deleted.");
-            window.location.reload();
+            sTheDataset(null);
+            // remove from datasets list
+            const filteredArray = theDatasets.filter(item => item['_id']['$oid'] !== theDataset['_id']['$oid']);
+            sTheDatasets(filteredArray);
           }
           else {
             alert("Error: " + data["message"]);
@@ -147,7 +148,8 @@ export default function DataAnalysis(props) {
     }
   }
 
-  const handleDatasetUpdate = () => {
+  const handleDatasetUpdate = (event) => {
+    event.stopPropagation();
     if (theDataset) {
       fetch(`/apis/analysis/updateArrowDataset/${theDataset['_id']['$oid']}`, { method: "PUT" })
         .then(response => response.json())
@@ -155,7 +157,9 @@ export default function DataAnalysis(props) {
           if (data["status"] === 200) {
             // alert("Dataset Updated.");
             // Replace the dataset with the new returned one.
-            sDatasetTime(datasetTime + 1)
+            sTheDataset(data["dataset"]);
+            sTheDatasets(data["datasets"]);
+            console.log(data["dataset"]);
           }
           else {
             alert("Error: " + data["message"]);
@@ -229,8 +233,10 @@ export default function DataAnalysis(props) {
             expandIcon={<ExpandMoreIcon />}
             aria-controls="panel1a-content"
             id="reward-editor"
+            style={{ display: 'flex', justifyContent: 'space-between' }}
           >
             <Typography variant='h6'>Customize your analysis and visualizations</Typography>
+            <Button onClick={(event) => handleDatasetUpdate(event)}><UpgradeIcon></UpgradeIcon>Update</Button>
           </AccordionSummary>
           <AccordionDetails>
             <Container maxWidth="md">
@@ -267,9 +273,6 @@ export default function DataAnalysis(props) {
               {theDataset && <Box sx={{ m: 3, ml: 0 }}>
                 <Button sx={{ m: 2, ml: 0 }} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
                 <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
-
-                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetUpdate}><UpgradeIcon></UpgradeIcon>Update</Button>
-
                 {theDataset && <Box>
                   <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
                   <label htmlFor="csv-upload">Upload CSV file:</label>
@@ -327,18 +330,22 @@ export default function DataAnalysis(props) {
 
           </AccordionDetails>
         </Accordion>
-        <ResponsiveMasonry
+
+
+        {theDataset && <ResponsiveMasonry
           columnsCountBreakPoints={{ 350: 1, 750: 2 }}
         >
+          <Box><mark variant='small'>Last updated at: {theDataset['updatedAt']['$date']}</mark></Box>
           <Masonry>
             {analysises.map((item, index) => (
               <Paper key={item['value']} sx={{ m: 2, p: 4 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-                {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
-                {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} datasetTime={datasetTime} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
+                {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
+                {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
               </Paper>
             ))}
           </Masonry>
         </ResponsiveMasonry>
+        }
 
       </Layout>
     );

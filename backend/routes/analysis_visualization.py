@@ -116,22 +116,33 @@ def update_arrow_dataset(id):
 
         if Counter(dataset['variables']) == Counter(theStudy['variables']):
             df = create_df_from_mongo(study, deployment)
-            DatasetModel.update_one(ObjectId(id), df)
-            return json_util.dumps({
+            if len(df) == 0:
+                return json_util.dumps({
+                    "status": 400,
+                    "message": "Dataset is empty, can't update."
+                }), 400      
+            _ = DatasetModel.update_one(ObjectId(id), df)
+            the_deployment = DeploymentModel.get_one({"name": deployment})
+            the_datasets = DatasetModel.get_many({"deploymentId": the_deployment['_id']}, {'dataset': 0})
+            updatedDataset = DatasetModel.get_one({"_id": ObjectId(id)})
+
+            return json_util.dumps(
+                {
                 "status": 200,
-                "message": "Dataset is deleted."
-            }), 200
+                "datasets": the_datasets, 
+                "dataset": updatedDataset
+                }
+            ), 200
         else:
             return json_util.dumps({
                 "status": 400,
                 "message": "We can't update a dataset that has different variables. Please create a new one instead."
             }), 400     
     except Exception as e:
-        print(e
-              )
+        print(e)
         return json_util.dumps({
             "status": 500, 
-            "message": "deleting error"
+            "message": "update error"
         }), 500
     
 
@@ -210,7 +221,8 @@ def create_df_from_mongo(study_name, deployment_name):
 
     list_cur = list(result)
     df = pd.DataFrame(list_cur)
-
+    if len(df) == 0:
+        return df
     if 'contextuals' in df.columns:
         # fill nan with {}
         # TODO: Uniform may not have contextual.
@@ -286,8 +298,7 @@ def create_dataset():
                 'study': study, 
                 'variables': variables,
                 'assigners': list(df['assigner'].unique()),
-                'deploymentId': DeploymentModel.get_one({"name": deployment})['_id'],
-                'createdAt': datetime.datetime.utcnow()
+                'deploymentId': DeploymentModel.get_one({"name": deployment})['_id']
             }
             response = DatasetModel.create(document)
 

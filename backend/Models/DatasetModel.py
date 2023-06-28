@@ -25,8 +25,11 @@ class DatasetModel:
     @staticmethod
     def create(dataset, session = None):
         try:
+            updatedAt = datetime.datetime.now()
             email = get_username()
             dataset['owner'] = email
+            dataset['createdAt'] = updatedAt
+            dataset['updatedAt'] = updatedAt
             response = Dataset.insert_one(dataset, session=session)
             return response
         except:
@@ -47,12 +50,13 @@ class DatasetModel:
     def update_one(datasetId, newDataset, session = None):
         try:
             # update the dataset field of theDataset, and refresh the updatedAt field.
+            updatedAt = datetime.datetime.now()
             email = get_username()
             theDataset = Dataset.find_one({"_id": ObjectId(datasetId), "owner": email}, session=session)
             if theDataset is None:
                 return 404 # not found or no permission.
 
-            Dataset.update_one({"_id": ObjectId(datasetId)}, {"$set": {"dataset": pickle.dumps(newDataset), "updatedAt": datetime.datetime.utcnow()}}, session=session)
+            Dataset.update_one({"_id": ObjectId(datasetId)}, {"$set": {"dataset": pickle.dumps(newDataset), "updatedAt": updatedAt}}, session=session)
             return 200
         except Exception as e:
             print(e)

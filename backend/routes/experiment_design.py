@@ -73,7 +73,7 @@ def convert_front_list_mooclets_into_tree(mooclets):
 
 
 def create_mooclet(mooclet, study_id, session):
-    time = datetime.datetime.utcnow()
+    time = datetime.datetime.now()
     my_children = []
     for child in mooclet['children']:
         child_mooclet_id = create_mooclet(child, study_id, session)
@@ -278,7 +278,7 @@ def isExistingMOOClet(mooclet):
 def modify_mooclet(mooclet, study_id, session):
     # Modify or Create
     print(mooclet)
-    time = datetime.datetime.utcnow()
+    time = datetime.datetime.now()
     my_children = []
     for child in mooclet['children']:
         child_mooclet_id = modify_mooclet(child, study_id, session)
@@ -296,7 +296,7 @@ def modify_mooclet(mooclet, study_id, session):
                 "autoZeroPerMinute": False, 
                 "children": my_children, 
                 "weight": float(mooclet['weight']), 
-                "modifiedAt": time
+                "updatedAt": time
             }
         }, session=session)
         return ObjectId(mooclet['_id']['$oid'])
@@ -310,7 +310,8 @@ def modify_mooclet(mooclet, study_id, session):
             "autoZeroPerMinute": False, 
             "children": my_children, 
             "weight": float(mooclet['weight']), 
-            "createdAt": time
+            "createdAt": time, 
+            "updatedAt": time
         }
         response = MOOCletModel.create(new_mooclet, session=session)
         return response.inserted_id
