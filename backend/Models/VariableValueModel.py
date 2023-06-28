@@ -1,4 +1,5 @@
 from credentials import *
+from Models.VariableModel import VariableModel
 class VariableValueModel:
     # Static methods:
     # Get the latest value for each of the given variables for the given user.
@@ -41,6 +42,9 @@ class VariableValueModel:
     @staticmethod
     def insert_variable_value(variable, session = None):
         try:
+            # Need to check if it is a text variable or not.
+            theVariable = VariableModel.get_one({'name': variable['variableName']}, public = True, session = session)
+            print(theVariable)
             VariableValue.insert_one(variable, session = session)
             return 200
         except Exception as e:

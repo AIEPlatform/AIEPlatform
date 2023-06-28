@@ -398,6 +398,8 @@ def create_variable():
         new_variable_min = data['newVariableMin']
         new_variable_max = data['newVariableMax']
         new_variable_type = data['newVariableType']
+        new_variable_value_prompt = 'variableValuePromptL' in data and data['variableValuePromptL'] or ""
+
 
         # check if the variable name exists
         doc = VariableModel.get_one({"name": new_variable_name}, public = True)
@@ -406,7 +408,8 @@ def create_variable():
                 "status_code": 400, 
                 "message": "The variable name exists."
             }), 400
-        VariableModel.create({
+        
+        newVariable = {
             "name": new_variable_name,
             "min": new_variable_min,
             "max": new_variable_max,
@@ -414,7 +417,10 @@ def create_variable():
             "owner": username, 
             "collaborators": [], 
             "created_at": datetime.datetime.now()
-        })
+        }
+        if new_variable_type == "text":
+            newVariable['variableValuePrompt'] = new_variable_value_prompt
+        VariableModel.create(newVariable)
 
         return json_util.dumps({
             "status_code": 200,

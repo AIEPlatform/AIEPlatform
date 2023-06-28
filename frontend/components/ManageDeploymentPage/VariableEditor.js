@@ -9,22 +9,23 @@ function VariableEditor(props) {
     let [newVariableMin, sNewVariableMin] = useState(0);
     let [newVariableMax, sNewVariableMax] = useState(1);
     let [newVariableType, sNewVariableType] = useState("discrete");
-    
+    let [variableValuePrompt, sVariableValuePrompt] = useState("");
+
 
     let [newVariableMissingStrategy, sNewVariableMissingStrategy] = useState("Random");
 
     let variableTypes = [
         { value: 'discrete', label: 'discrete' },
         { value: 'continuous', label: 'continuous' },
-        { value: 'ordinary', label: 'ordinary'}, 
-        { value: 'text', label: 'text'}
+        { value: 'ordinary', label: 'ordinary' },
+        { value: 'text', label: 'text' }
     ];
 
     let missingDataOptions = [
         { value: 'Random', label: 'Random' },
         { value: 'Average', label: 'Average' },
-        { value: 'Closest', label: 'Closest' }, 
-        { value: 'Most Frequent', label: 'Most Frequent' }, 
+        { value: 'Closest', label: 'Closest' },
+        { value: 'Most Frequent', label: 'Most Frequent' },
         { value: 'Error', label: 'Error' }
     ];
 
@@ -55,10 +56,11 @@ function VariableEditor(props) {
         fetch(`/apis/variable`, {
             method: "post",
             body: JSON.stringify({
-                newVariableName: newVariable, 
+                newVariableName: newVariable,
                 newVariableMin: newVariableMin,
                 newVariableMax: newVariableMax,
-                newVariableType: newVariableType
+                newVariableType: newVariableType, 
+                variableValuePromptL: variableValuePrompt
             }),
             headers: {
                 Accept: "application/json, text/plain, */*",
@@ -128,7 +130,7 @@ function VariableEditor(props) {
                 label="Min Value"
                 type="number"
                 value={newVariableMin}
-                onChange={(e) => sNewVariableMin(e.target.value)}
+                onChange={(e) => sNewVariableMin(parseFloat(e.target.value))}
             />
 
             <TextField
@@ -137,7 +139,7 @@ function VariableEditor(props) {
                 label="Max Value"
                 type="number"
                 value={newVariableMax}
-                onChange={(e) => sNewVariableMax(e.target.value)}
+                onChange={(e) => sNewVariableMax(parseFloat(e.target.value))}
             />
 
             <label htmlFor="variable-type-select">Variable Type:</label>
@@ -157,6 +159,17 @@ function VariableEditor(props) {
                     menu: provided => ({ ...provided, zIndex: 9999 })
                 }}
             />
+
+            {newVariableType === "text" &&
+                <TextField
+                    sx={{ mt: 1, mb: 1 }}
+                    id="variable-value-prompt"
+                    label="Prompt"
+                    multiline
+                    maxRows={4}
+                    onChange={(e) => sVariableValuePrompt(e.target.value)}
+                />
+            }
             <label htmlFor="variable-missing-option">Missing strategy:</label>
             <Select
                 name="colors"

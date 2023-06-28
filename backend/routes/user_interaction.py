@@ -203,10 +203,9 @@ def give_reward():
 
 
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
-
     the_deployment = DeploymentModel.get_one({"name": deployment}, public = True)
-    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}})
-
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}}, public = True)
+    print({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}})
     if the_study is None:
         return 400
     current_time = datetime.datetime.now()
@@ -248,11 +247,17 @@ def give_variable():
         
 
             
-            give_variable_value(deployment, study, variableName, user, value, where, other_information)
-            return json_util.dumps({
-                "status_code": 200,
-                "message": "Variable is saved."
-            }), 200
+            response = give_variable_value(deployment, study, variableName, user, value, where, other_information)
+            if response == 200:
+                return json_util.dumps({
+                    "status_code": 200,
+                    "message": "Variable is saved."
+                }), 200
+            else:
+                return json_util.dumps({
+                    "status_code": 400,
+                    "message": "The deployment or study not exist or the variable is not in the study."
+                }), 400
     except Exception as e:
         print("Error in giving_variable:")
         print(e)
