@@ -61,12 +61,13 @@ class VariableValueModel:
     @staticmethod
     def gpt_reader(variable, value):
         messages = []
+        messages.append({"role": "system", "content": "You are a teacher."})
         messages.append({"role": "system", "content": "Please return a numeric without any extra information."})
         messages.append({"role": "system", "content": "Please always return a numeric, do not ask follow questions. If you think a text is very bad or irrelevant, feel free to give the min value."})
         messages.append({"role": "system", "content": variable['variableValuePrompt']})
-        messages.append({"role": "user", "content": "A text to measure: " + value})
+        messages.append({"role": "user", "content": "A text to measure the understanding: " + value})
         chat = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=messages
+            model="gpt-3.5-turbo", messages=messages, temperature=0.0
         )
         reply = chat.choices[0].message.content
         return reply

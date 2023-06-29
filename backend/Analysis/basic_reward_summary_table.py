@@ -142,7 +142,7 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
     f_value, overall_p_value = stats.f_oneway(*outcomes)
     
     # Create a new DataFrame for overall statistics with no version
-    overall_df = pd.DataFrame({"treatment": ["No Version"], 
+    overall_df = pd.DataFrame({"treatment": ["All versions"], 
                                "Count": [df["outcome"].size],# size is the count including NA valuess
                                "Mean": [round(df['outcome'].mean(),3)],
                                "Count of non-response": [df['outcome'].isnull().sum()],
@@ -152,7 +152,6 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
 
     # Append the overall statistics DataFrame to the result DataFrame
     result_df = pd.concat([result_df, overall_df], ignore_index=True)
-    ``
     # Fill NaN with ""
     result_df = result_df.fillna("")
     result_df = result_df.reindex([result_df.index[-1]] + list(result_df.index[:-1]))
