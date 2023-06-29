@@ -114,6 +114,7 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
         filtered_df = filter_dataframe(df, filter_condition)
         outcomes = [filtered_df[filtered_df['treatment'] == version]['outcome'].dropna() for version in unique_versions]
         f_value, p_value = stats.f_oneway(*outcomes)
+        
         # calculate power for the filtered dataframe
         power = calculate_statistical_power(filtered_df, 'outcome')
         
@@ -130,4 +131,29 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
         if all(row[key] == "" for key in selectedVariables):
             result_df.loc[index, 'P value'] = round(p_value,3)
             result_df.loc[index, 'Power'] = power
+            
+    # change P-value to string
+    result_df["P value"] = result_df["P value"].astype("string")
+    
+    
+    
+    # Calculate overall statistics
+    outcomes = [df[df['treatment'] == version]['outcome'].dropna() for version in unique_versions]
+    f_value, overall_p_value = stats.f_oneway(*outcomes)
+    
+    # Create a new DataFrame for overall statistics with no version
+    overall_df = pd.DataFrame({"treatment": ["No Version"], 
+                               "Count": [df["outcome"].size],# size is the count including NA valuess
+                               "Mean": [round(df['outcome'].mean(),3)],
+                               "Count of non-response": [df['outcome'].isnull().sum()],
+                               "% of non-response": [round(df['outcome'].isnull().mean() * 100,3)],
+                               "P value": [round(overall_p_value,3)],
+                               "Power": [calculate_statistical_power(df, 'outcome')]})
+
+    # Append the overall statistics DataFrame to the result DataFrame
+    result_df = pd.concat([result_df, overall_df], ignore_index=True)
+    ``
+    # Fill NaN with ""
+    result_df = result_df.fillna("")
+    result_df = result_df.reindex([result_df.index[-1]] + list(result_df.index[:-1]))
     return result_df
