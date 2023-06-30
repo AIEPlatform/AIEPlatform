@@ -21,10 +21,13 @@ MOOCletIndividualLevelInformation.delete_many({})
 
 # login first
 def reset_study_helper(deployment, study):
+    return
     url = 'http://localhost:20110/apis/auth/login'
     headers = {'Content-Type': 'application/json'}
     payload = {'email': SIMULATION_EMAIL, 'password': SIMULATION_PASSWORD}
     response = session.post(url, headers=headers, data=json.dumps(payload))
+
+    print(response)
 
     headers = {'Content-Type': 'application/json'}
     payload = {'deployment': deployment, 'study': study}
@@ -275,8 +278,8 @@ def run_case_three(deployment, study, num_devices = 100, num_users_per_device = 
     fake_data_time(deployment, study)
     print("simulations done.")
 
-num_devices = 50
-num_users_per_device = 10
+num_devices = 1
+num_users_per_device = 1
 deployment = "Simulations"
 study = "case3"
 variables = ['gender', 'mood']

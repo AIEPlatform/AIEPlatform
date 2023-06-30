@@ -11,7 +11,8 @@ class Policy(ABC):
 		study = StudyModel.get_one(
 			{
 				"_id": self.studyId
-			}
+			}, 
+			public = True
 		)
 		self.study = study
 		self.user = user

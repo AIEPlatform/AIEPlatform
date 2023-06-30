@@ -46,12 +46,10 @@ def get_mooclet_for_user(deployment_name, study_name, user):
     # Note that, a deployment + study_name + user uniquely identify a mooclet.
     # OR, this function will decide one and return.
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
-    study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name})
+    study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
     # TODO: Check if re-assignment is needed. For example, the mooclet is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
-
-
     # Find the latest interaction.
-    the_interaction = InteractionModel.find_last_interaction(study, user)
+    the_interaction = InteractionModel.find_last_interaction(study, user, public = True)
 
     if the_interaction is not None:
         the_mooclet = MOOCletModel.find_mooclet({'_id': the_interaction['moocletId']})

@@ -5,8 +5,8 @@ from Models.MOOCletModel import MOOCletModel
 class InteractionModel:
     # Get the last interaction for the given user at a study.
     @staticmethod
-    def find_last_interaction(study, user, session = None):
-        mooclets = MOOCletModel.find_study_mooclets(study, session)
+    def find_last_interaction(study, user, public = False, session = None):
+        mooclets = MOOCletModel.find_study_mooclets(study, session, public)
 
         # Find the latest interaction.
         the_interaction = Interaction.find_one({
