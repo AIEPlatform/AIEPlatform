@@ -9,13 +9,13 @@
 5. Gmail Credentials for sending notification emails (Optional)
 
 ## Environment File
-You need to fill in environment variables. First, you need to make a `.env` file by copying `.env-sample`:
+You need to fill in environment variables. First, you need to make a `config.sample.py` file by copying `config.py`:
 
 ```
-cp .env-sample .env
+cp config.sample.py config.py
 ```
 
-Fill in `.env` file.
+Fill in `config.py` file.
 
 ## Development
 
