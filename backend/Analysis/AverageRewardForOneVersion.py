@@ -11,16 +11,18 @@ import sys
 from credentials import *
 import itertools
 from scipy import stats
+import json
 
-def average_reward_for_one_version(df, selectedVersion, selectedVariable, selectedPolicy, per_day="d"):
+def AverageRewardForOneVersion(df, selectedVersion, selectedVariable, selectedPolicy, per_day="D"):
     # Filter dataframe
     filtered_df = df[(df['treatment'] == selectedVersion) &  
-                     (df['policy'] == selectedPolicy)]
+                     (df['assigner'] == selectedPolicy)]
     # Select columns
-    filtered_df = filtered_df[['treatment', 'policy', 'outcome', 'outcome.timestamp', selectedVariable]]
+    filtered_df = filtered_df[['treatment', 'assigner', 'outcome', 'outcome.timestamp', selectedVariable]]
 
     # Format rewardTimestamp
     filtered_df['outcome.timestamp'] = pd.to_datetime(filtered_df['outcome.timestamp'])
+    filtered_df.dropna(subset=['outcome.timestamp'], inplace=True)
     filtered_df['outcome.timestamp'] = filtered_df['outcome.timestamp'].dt.to_period(per_day)
     
     # Group by rewardTimestamp and calculate mean and standard error of outcome
@@ -32,5 +34,5 @@ def average_reward_for_one_version(df, selectedVersion, selectedVariable, select
     
     # Rename columns
     result_df.columns = ['time','mean', 'std', 'count', '25th quantile', '75th quantile']
-
-    return result_df
+    result_df['time'] = result_df['time'].astype(str)
+    return json.loads(result_df.to_json(orient="records")), [c for c in result_df.columns if c != 'time']

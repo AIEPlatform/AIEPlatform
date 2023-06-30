@@ -8,12 +8,8 @@ from routes.experiment_design import experiment_design_apis
 from routes.analysis_visualization import analysis_visualization_apis
 
 from routes.auth import auth_apis
-from dotenv import load_dotenv
-import os
-load_dotenv()
+from config import *
 from credentials import *
-
-MOOCLET_TOKEN = os.getenv('MOOCLET_TOKEN')
 app = Flask(__name__)
 
 app.config["SESSION_PERMANENT"] = False

@@ -27,3 +27,4 @@ sensitive.cp
 nohup.out
 *.env
 test.py
+config.py

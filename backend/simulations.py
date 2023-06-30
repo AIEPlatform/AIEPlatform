@@ -9,9 +9,8 @@ from credentials import *
 import numpy as np
 import requests
 session = requests.Session()
-from dotenv import load_dotenv
 import json
-load_dotenv()
+from config import *
 
 Interaction.delete_many({})
 Lock.delete_many({})
@@ -22,8 +21,6 @@ MOOCletIndividualLevelInformation.delete_many({})
 
 # login first
 def reset_study_helper(deployment, study):
-    SIMULATION_EMAIL=os.getenv('SIMULATION_EMAIL')
-    SIMULATION_PASSWORD=os.getenv('SIMULATION_PASSWORD')
     url = 'http://localhost:20110/apis/auth/login'
     headers = {'Content-Type': 'application/json'}
     payload = {'email': SIMULATION_EMAIL, 'password': SIMULATION_PASSWORD}

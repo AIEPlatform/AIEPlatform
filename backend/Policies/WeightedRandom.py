@@ -8,16 +8,7 @@ class WeightedRandom(Policy):
     def choose_arm(self, user, where, other_information):
         # TODO: Check if consistent assignment!
         try:
-            lucky_version = self.get_consistent_assignment(user, where)
-            if lucky_version is None:
-                keys = list(self.parameters.keys())
-                weights = list(self.parameters.values())
-                drawn_key = random.choices(keys, weights)[0]
-                for version in self.study['versions']:
-                    if version['name'] == drawn_key:
-                        lucky_version = version
-                        break
-
+                    
             # TODO: what if a version is deleted?
 
             contextual_values = VariableValueModel.get_latest_variable_values(self.study['variables'], user)
@@ -29,6 +20,16 @@ class WeightedRandom(Policy):
                 contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
                 contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
 
+
+            lucky_version = self.get_consistent_assignment(user, where)
+            if lucky_version is None:
+                keys = list(self.parameters.keys())
+                weights = list(self.parameters.values())
+                drawn_key = random.choices(keys, weights)[0]
+                for version in self.study['versions']:
+                    if version['name'] == drawn_key:
+                        lucky_version = version
+                        break
 
             new_interaction = {
                 "user": user,

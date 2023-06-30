@@ -18,6 +18,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import getConfig from 'next/config';
+import AverageRewardByTimeForOneVersion from '../components/AnalysisVisualizationsPage/AverageRewardByTimeForOneVersion';
+
 
 const { publicRuntimeConfig } = getConfig();
 const websiteName = publicRuntimeConfig.websiteName;
@@ -30,6 +32,10 @@ const availableAnalysises = [
   {
     value: 'averageRewardByTime',
     label: 'Average Reward By Time',
+  }, 
+  {
+    value: 'averageRewardByTimeForOneVersion', 
+    label: 'Average Reward By Time For One Version (with error bar)'
   }
 ];
 
@@ -341,6 +347,8 @@ export default function DataAnalysis(props) {
               <Paper key={item['value']} sx={{ m: 2, p: 4 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
                 {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
                 {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
+                {item['label'] == 'Average Reward By Time For One Version (with error bar)' && <AverageRewardByTimeForOneVersion theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
+                {/* pretty bad */}
               </Paper>
             ))}
           </Masonry>

@@ -32,7 +32,7 @@ export default function BasicTable(props) {
       },
       body: JSON.stringify({
         theDatasetId: theDataset['_id']['$oid'],
-        selectedVariables: analysis['selectedVariables'].map((variable) => variable['value']), 
+        selectedVariables: analysis['selectedVariables'].map((variable) => variable['value']) , 
         selectedAssigners: analysis['selectedAssigners'].map((variable) => variable['value'])
       })
     })
@@ -44,7 +44,7 @@ export default function BasicTable(props) {
       .catch(err => console.log(err))
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if(!analysis['selectedVariables']) {
       analysis['selectedVariables'] = [];
     }
@@ -54,14 +54,14 @@ export default function BasicTable(props) {
     sAnalysises([...analysises]);
   }, [analysis])
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Get the very basic A/B test info without any contextual variables
     // make a post request to the backend
     if (theDataset == null) {
       return;
     }
     else {
-      getTable([]);
+      getTable();
     }
   }, [theDataset, props.datasetTime, analysis['selectedVariables'], analysis['selectedAssigners']]);
 

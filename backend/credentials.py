@@ -1,18 +1,7 @@
 import os
-from dotenv import load_dotenv
-load_dotenv()
+from config import *
 from flask import session
 import pymongo
-
-MONGO_DB_CONNECTION_STRING = os.getenv('MONGO_DB_CONNECTION_STRING')
-DEV_MODE = os.getenv('DEV_MODE') == 'True'
-EMAIL_NOTIFICATION = os.getenv('EMAIL_NOTIFICATION') == 'True'
-
-EMAIL_USERNAME=os.getenv('EMAIL_USERNAME')
-EMAIL_PASSWORD=os.getenv('EMAIL_PASSWORD')
-ROOT_URL=os.getenv('ROOT_URL')
-OPEN_AI_KEY=os.getenv('OPEN_AI_KEY')
-
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
