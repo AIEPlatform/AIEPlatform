@@ -1,4 +1,5 @@
 
+
   
 
 ## Requirements:
@@ -48,7 +49,11 @@ const API_URL = 'http://127.0.0.1:20110';
 Make sure that you have `pm2` installed.
 Run `./production.sh`.
 
-## Instructions on installing external software
+## Instructions on installing/using external software
+
+### Get the connection string to use Replication set in MongoDB Atlas
+When you sign up and get a MongoDB instance at https://www.mongodb.com/cloud/atlas/register (Free tier available). 
+When getting the connection string, please choose Node version to be 2.0.14 or ealier.
 
 ### Install MongoDB and Set up Replication 
 #### Installation (Use Ubuntu 22.04 LTS as an example)
