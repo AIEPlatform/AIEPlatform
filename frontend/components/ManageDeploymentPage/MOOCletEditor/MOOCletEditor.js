@@ -5,6 +5,7 @@ import WeightedRandom from './WeightedRandom';
 import TSContextual from './TSContextual';
 import TSConfigurable from './TSConfigurable'
 import GPT from './GPT'
+import UniformRandom from './UniformRandom';
 const availablePolicies = [
     {
         value: 'UniformRandom',
@@ -92,7 +93,7 @@ function MOOCletEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy Parameters</Typography>
-                {mooclet.policy === 'UniformRandom' && <Typography>Uniform doesn't require a policy parameter!</Typography>}
+                {mooclet.policy === 'UniformRandom' && <UniformRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}>Uniform doesn't require a policy parameter!</UniformRandom>}
                 {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
                 {mooclet.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSConfigurable>}
                 {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}

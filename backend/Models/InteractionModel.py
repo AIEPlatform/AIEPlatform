@@ -59,6 +59,7 @@ class InteractionModel:
             if where is None:
                 return Interaction.find_one({"user": user, "moocletId": moocletId}, sort=[("timestamp", -1)])
             else:
+                print({"user": user, "moocletId": moocletId, "where": where})
                 return Interaction.find_one({"user": user, "moocletId": moocletId, "where": where}, sort=[("timestamp", -1)])
         except Exception as e:
             print(e)

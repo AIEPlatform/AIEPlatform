@@ -120,7 +120,7 @@ class ThompsonSamplingContextual(Policy):
                 
                 contextual_vars = self.study['variables']
                 # Get the contextual variables for the learner (most recent ones), or auto init ones.
-
+                
                 result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
                 
                 # Iterate over the array list
@@ -133,7 +133,7 @@ class ThompsonSamplingContextual(Policy):
                             has_document = True
                             break
 
-
+                    
                     imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
 
                     # Insert a document into the other collection if no document exists
@@ -198,8 +198,6 @@ class ThompsonSamplingContextual(Policy):
                     if best_action is None or outcome > best_outcome:
                         best_outcome = outcome
                         best_action = version
-
-                # lucky_version = next(version for version in self.study['versions'] if version['name'] == best_action)
 
                 lucky_version = best_action
 

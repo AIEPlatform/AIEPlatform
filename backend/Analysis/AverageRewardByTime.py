@@ -26,7 +26,6 @@ def AverageRewardByTime(df, selectedAssigners = [], selectedVersions = [], perDa
 
    # Merge the pivoted DataFrame and error bars
    pivoted_df = pivoted_df.merge(error_bars, on='x', suffixes=('', '-errorBar'))
-   print(pivoted_df)
 
 
 

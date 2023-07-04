@@ -67,7 +67,6 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
         if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
-
             the_log = {
                 "policy": the_mooclet['policy'],
                 "execution_time": execution_time, 
@@ -92,8 +91,10 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
 def get_reward(deployment_name, study_name, user, value, where = None, other_information = None):
     # Get MOOClet!
     try:
+
         start_time = time.time()
         the_mooclet = get_mooclet_for_user(deployment_name, study_name, user)
+
         mooclet = create_mooclet_instance(user, the_mooclet)
         response = mooclet.get_reward(user, value, where, other_information)
 
@@ -110,6 +111,8 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
             RewardLog.insert_one(the_log)
         return response
     except Exception as e:
+        # traceback
+        print(traceback.format_exc())
         if DEV_MODE:
             the_log = {
                 "policy": the_mooclet['policy'],
@@ -203,6 +206,7 @@ def give_reward():
 def give_variable_value(deployment, study, variableName, user, value, where = None, other_information = None):
     the_deployment = DeploymentModel.get_one({"name": deployment}, public = True)
     the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}}, public = True)
+    print(the_study)
     print({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}})
     if the_study is None:
         return 400

@@ -50,8 +50,9 @@ class VariableValueModel:
             # Need to check if it is a text variable or not.
             theVariable = VariableModel.get_one({'name': variable['variableName']}, public = True, session = session)
             if theVariable['type'] == 'text':
-                print(VariableValueModel.gpt_reader(theVariable, variable['value']))
-                return 200
+                numeric_value = int(VariableValueModel.gpt_reader(theVariable, variable['value']))
+                variable['text'] = variable['value']
+                variable['value'] = numeric_value
             VariableValue.insert_one(variable, session = session)
             return 200
         except Exception as e:

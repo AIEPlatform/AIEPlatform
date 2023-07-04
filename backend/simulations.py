@@ -27,8 +27,6 @@ def reset_study_helper(deployment, study):
     payload = {'email': SIMULATION_EMAIL, 'password': SIMULATION_PASSWORD}
     response = session.post(url, headers=headers, data=json.dumps(payload))
 
-    print(response)
-
     headers = {'Content-Type': 'application/json'}
     payload = {'deployment': deployment, 'study': study}
     response = session.put("http://localhost:20110/apis/experimentDesign/resetStudy", headers=headers, data=json.dumps(payload))
