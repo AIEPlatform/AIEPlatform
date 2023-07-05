@@ -3,10 +3,16 @@ import datetime
 
 from Models.MOOCletModel import MOOCletModel
 class InteractionModel:
+    @staticmethod
+    def get_many(filter, public = False, session = None):
+        if not public:
+            email = get_username()
+            filter['owner'] = email
+        return Interaction.find(filter, session = session)
     # Get the last interaction for the given user at a study.
     @staticmethod
     def find_last_interaction(study, user, public = False, session = None):
-        mooclets = MOOCletModel.find_study_mooclets(study, session, public)
+        mooclets = MOOCletModel.find_study_mooclets(study, public, session)
 
         # Find the latest interaction.
         the_interaction = Interaction.find_one({

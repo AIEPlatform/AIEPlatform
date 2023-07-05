@@ -20,7 +20,7 @@ class MOOCletModel:
 
     # find mooclets of a specific study
     @staticmethod
-    def find_study_mooclets(study, session, public = False):
+    def find_study_mooclets(study, public = False, session = None):
         mooclets = list(MOOClet.find(
             {
                 'studyId': study['_id'],

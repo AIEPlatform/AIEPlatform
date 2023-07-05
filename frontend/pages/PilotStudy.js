@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Typography } from '@mui/material';
+import Select from 'react-select';
 
 const ratings = [
     {
@@ -39,8 +40,8 @@ const ratings = [
 
 export default function PilotStudy() {
     // load question:
-    const router = useRouter()
-
+    const router = useRouter();
+    let topic = router.query.topic;
     const [question, sQuestion] = useState(null);
     const [username, sUsername] = useState(null);
     const [usernameInput, sUsernameInput] = useState(null);
@@ -48,7 +49,7 @@ export default function PilotStudy() {
     const [contextualValue, sContextualValue] = useState(null);
     const [variableName, sVariableName] = useState(null);
     const [treatment, sTreatment] = useState(null);
-    const [done, sDone] = useState(false);
+    const [done, sDone] = useState(null);
     const [quizAnswer, sQuizAnswer] = useState(null);
     const loadQuestion = () => {
         if (router.query.topic === null || username === null) return;
@@ -62,6 +63,34 @@ export default function PilotStudy() {
 
     const submitQuizAnswer = () => {
         // send quiz answer
+        if (quizAnswer == null) {
+            alert("Please select an answer!")
+        }
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+            "topic": router.query.topic,
+            "study": whichStudy,
+            "username": username,
+            "choice": quizAnswer
+        });
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
+
+        fetch("/apis/pilotStudy/giveReward", requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status_code == 200) {
+                    sDone(true);
+                }
+            })
+            .catch(error => console.log('error', error));
     }
 
     const loadTreatment = () => {
@@ -112,6 +141,25 @@ export default function PilotStudy() {
                     sWhichStudy(result["treatment"]["content"]);
                     if (result["treatment"]["content"] === "numeric") sVariableName("understanding_rating");
                     else sVariableName("understanding");
+
+
+                    // loadDoneOrNoe
+                    var requestOptions = {
+                        method: 'GET',
+                        redirect: 'follow'
+                    };
+
+                    fetch(`/apis/pilotStudy/checkDoneOrNot?topic=${router.query.topic}&study=${result["treatment"]["content"]}&username=${username}`, requestOptions)
+                        .then(response => response.json())
+                        .then(result => {
+                            if(result['status_code'] == 200) {
+                                sDone(result['done'])
+                            }
+                            else {
+                                alert("Something is wrong. Please try again later.")
+                            }
+                        })
+                        .catch(error => console.log('error', error));
                 }
             })
             .catch(error => alert("Something is wrong, please try again later!"));
@@ -120,14 +168,18 @@ export default function PilotStudy() {
     useEffect(() => {
         // load question
         // get username from local storage
+        if(router.query.topic == null) return;
         let username = localStorage.getItem("dataarrowPilotStudyUsername") // null
         if (username !== "null") {
             sUsername(username);
             loadWhichStudy(username);
         }
-    }, []);
+    }, [router.query.topic]);
 
     const submitContextual = () => {
+        if (contextualValue == null) {
+            alert("Please describe your understanding first!")
+        }
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
@@ -158,88 +210,89 @@ export default function PilotStudy() {
             })
             .catch(error => console.log('error', error));
     }
-    return (
-        <div>
-            <h1>Pilot Study</h1>
-            {treatment}
-            <h2>Topic: {router.query.topic}</h2>
-            {username !== null && <h2>Welcome back: {username}</h2>}
-            {username === null &&
-                <div>
-                    <h2>Please enter your name:</h2>
-                    <TextField id="outlined-basic" label="Name" variant="outlined" onChange={(event) => { sUsernameInput(event.target.value) }} />
-                    <Button onClick={() => {
-                        sUsername(usernameInput);
-                        localStorage.setItem('dataarrowPilotStudyUsername', usernameInput);
+    if (done === false) {
+        return (
+            <Box sx={{ m: 3 }}>
+                <Typography sx={{ mb: 2 }} variant='h6'>Topic: {router.query.topic}</Typography>
+                {username === null &&
+                    <Box>
+                        <Typography variant='p'>Please enter your name:</Typography>
+                        <Box><TextField id="outlined-basic" label="Name" variant="outlined" onChange={(event) => { sUsernameInput(event.target.value) }} /></Box>
+                        <Button sx={{ mt: 2 }} onClick={() => {
+                            sUsername(usernameInput);
+                            localStorage.setItem('dataarrowPilotStudyUsername', usernameInput);
+                            loadWhichStudy(usernameInput);
+                        }} variant='contained'>Submit</Button>
+                    </Box>
+                }
 
-                        loadWhichStudy();
-                    }}>Submit</Button>
-                </div>
-            }
-
-            {username !== null && question === null && whichStudy &&
-                <Box>
-                    {whichStudy === "text" && <TextField
-                        id="outlined-multiline-flexible"
-                        label="Please write your understanding of the topic."
-                        multiline
-                        maxRows={4}
-                        fullWidth={true}
-                        minRows={5}
-                        onChange={(event) => { sContextualValue(event.target.value) }}
-                    />}
-                    {whichStudy === "numeric" &&
-                        <TextField
-                            id="outlined-select-currency-native"
-                            select
-                            label="Please rate your understanding of the topic."
+                {username !== null && question === null && whichStudy &&
+                    <Box>
+                        {whichStudy === "text" && <TextField
+                            id="outlined-multiline-flexible"
+                            label="Please write your understanding of the topic."
+                            multiline
+                            maxRows={4}
                             fullWidth={true}
-                            SelectProps={{
-                                native: true,
-                            }}
+                            minRows={5}
                             onChange={(event) => { sContextualValue(event.target.value) }}
+                        />}
+                        {whichStudy === "numeric" &&
+                            <Select
+                                className="basic-single"
+                                classNamePrefix="select"
+                                name="understanding"
+                                options={ratings}
+                                onChange={(event) => { sContextualValue(event.value) }}
+                            />
+                        }
+
+                        <Button sx={{ mt: 2 }} onClick={submitContextual} variant='contained'>Submit</Button>
+                    </Box>}
+                {done === false && treatment === "concept_first" &&
+                    <Box>
+                        <mark>{question['concept']}</mark>
+                    </Box>}
+                {question !== null && username !== null && contextualValue !== null && done === false &&
+                    <FormControl>
+                        <FormLabel id="demo-radio-buttons-group-label">{question['question']}</FormLabel>
+                        <RadioGroup
+                            aria-labelledby="demo-radio-buttons-group-label"
+                            name="radio-buttons-group"
+                            onChange={(event) => { sQuizAnswer(event.target.value) }}
+
                         >
-                            {ratings.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </TextField>
-                    }
+                            {/* iterate over question['choices'], which is an array */}
 
-                    <Button onClick={submitContextual}>Submit my self-reporting understanding on the topic.</Button>
-                </Box>}
-            {done === false && treatment === "concept_first" &&
-                <Box>
-                    <mark>{question['concept']}</mark>
-                </Box>}
-            {question !== null && username !== null && contextualValue !== null && done === false &&
-                <FormControl>
-                    <FormLabel id="demo-radio-buttons-group-label">{question['question']}</FormLabel>
-                    <RadioGroup
-                        aria-labelledby="demo-radio-buttons-group-label"
-                        name="radio-buttons-group"
-                        onChange={(event) => { sQuizAnswer(event.target.value) }}
-                        
-                    >
-                        {/* iterate over question['choices'], which is an array */}
-
-                        {
-                            question['choices'].map((choice, index) => {
-                                return (
-                                    <FormControlLabel disabled={done} key={index} value={index} control={<Radio />} label={choice} />
+                            {
+                                question['choices'].map((choice, index) => {
+                                    return (
+                                        <FormControlLabel disabled={done} key={index} value={index} control={<Radio />} label={choice} />
+                                    )
+                                }
                                 )
                             }
-                            )
-                        }
-                    </RadioGroup>
-                    <Button onClick={submitQuizAnswer} disabled={done}>Submit</Button>
-                </FormControl>
-            }
-            {done === true && treatment === "concept_later" &&
-                <Box>
-                    <mark>{question['concept']}</mark>
-                </Box>}
-        </div>
-    )
+                        </RadioGroup>
+                        <Button sx={{ m: 2 }} variant="contained" onClick={submitQuizAnswer} disabled={done}>Submit</Button>
+                    </FormControl>
+                }
+                {done === true && treatment === "concept_later" &&
+                    <Box>
+                        <mark>{question['concept']}</mark>
+                    </Box>}
+            </Box>
+        )
+    }
+    else if(done === true) {
+        return (
+            <Box sx={{ m: 3 }}>
+                Your are done for this topic ({router.query.topic}). Thanks for your participation!
+            </Box>
+        )
+    }
+    else {
+        return (
+            <Box sx={{ m: 3 }} />
+        )
+    }
 }

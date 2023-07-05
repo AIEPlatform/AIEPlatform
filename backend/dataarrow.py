@@ -7,6 +7,7 @@ from routes.user_interaction import user_interaction_apis
 from routes.experiment_design import experiment_design_apis
 from routes.analysis_visualization import analysis_visualization_apis
 from routes.examples import examples_apis
+from routes.integration import integration_apis
 
 from routes.auth import auth_apis
 from config import *
@@ -24,6 +25,7 @@ app.register_blueprint(experiment_design_apis)
 app.register_blueprint(analysis_visualization_apis)
 app.register_blueprint(auth_apis)
 app.register_blueprint(examples_apis)
+app.register_blueprint(integration_apis)
 
 
 if __name__ == '__main__':
