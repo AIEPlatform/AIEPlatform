@@ -49,7 +49,7 @@ export default function PilotStudy() {
     const [contextualValue, sContextualValue] = useState(null);
     const [variableName, sVariableName] = useState(null);
     const [treatment, sTreatment] = useState(null);
-    const [done, sDone] = useState(null);
+    const [done, sDone] = useState(false);
     const [quizAnswer, sQuizAnswer] = useState(null);
     const loadQuestion = () => {
         if (router.query.topic === null || username === null) return;
@@ -170,7 +170,7 @@ export default function PilotStudy() {
         // get username from local storage
         if(router.query.topic == null) return;
         let username = localStorage.getItem("dataarrowPilotStudyUsername") // null
-        if (username !== "null") {
+        if (username !== null) {
             sUsername(username);
             loadWhichStudy(username);
         }
