@@ -51,6 +51,7 @@ export default function PilotStudy() {
     const [treatment, sTreatment] = useState(null);
     const [done, sDone] = useState(false);
     const [quizAnswer, sQuizAnswer] = useState(null);
+    const [score, sScore] = useState(null);
     const loadQuestion = () => {
         if (router.query.topic === null || username === null) return;
         fetch(`/apis/pilotStudy/loadQuestion/${router.query.topic}`)
@@ -87,7 +88,7 @@ export default function PilotStudy() {
             .then(response => response.json())
             .then(result => {
                 if (result.status_code == 200) {
-                    sDone(true);
+                    sScore(result['score']);
                 }
             })
             .catch(error => console.log('error', error));
@@ -249,11 +250,11 @@ export default function PilotStudy() {
 
                         <Button sx={{ mt: 2 }} onClick={submitContextual} variant='contained'>Submit</Button>
                     </Box>}
-                {done === false && treatment === "concept_first" &&
+                {treatment === "concept_first" &&
                     <Box>
                         <mark>{question['concept']}</mark>
                     </Box>}
-                {question !== null && username !== null && contextualValue !== null && done === false &&
+                {question !== null && username !== null && contextualValue !== null &&
                     <FormControl>
                         <FormLabel id="demo-radio-buttons-group-label">{question['question']}</FormLabel>
                         <RadioGroup
@@ -267,16 +268,17 @@ export default function PilotStudy() {
                             {
                                 question['choices'].map((choice, index) => {
                                     return (
-                                        <FormControlLabel disabled={done} key={index} value={index} control={<Radio />} label={choice} />
+                                        <FormControlLabel disabled={score !== null} key={index} value={index} control={<Radio />} label={choice} />
                                     )
                                 }
                                 )
                             }
                         </RadioGroup>
-                        <Button sx={{ m: 2 }} variant="contained" onClick={submitQuizAnswer} disabled={done}>Submit</Button>
+                        <Button sx={{ m: 2 }} variant="contained" onClick={submitQuizAnswer} disabled={score !== null}>Submit</Button>
                     </FormControl>
                 }
-                {done === true && treatment === "concept_later" &&
+                {score !== null && <Box>Your answer got a score {score}</Box>}
+                {score != null && treatment === "concept_later" &&
                     <Box>
                         <mark>{question['concept']}</mark>
                     </Box>}

@@ -93,7 +93,8 @@ def giveReward():
             if response["status_code"] == 200:
                 return json_util.dumps({
                     "status_code": 200, 
-                    "message": "added"
+                    "message": "added", 
+                    "score": reward
                 })
             else:
                 return json_util.dumps({
