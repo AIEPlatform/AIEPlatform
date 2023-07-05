@@ -87,6 +87,7 @@ def create_mooclet(mooclet, study_id, session):
         "policy": mooclet['policy'],
         "parameters": mooclet['parameters'],
         "studyId": study_id,
+        "reassignAfterReward": mooclet['reassignAfterReward'] if 'reassignAfterReward' in mooclet else False,
         "isConsistent": False, 
         "autoZeroPerMinute": False, 
         "children": my_children, 
@@ -229,6 +230,7 @@ def convert_mooclet_tree_to_list(mooclet, parentId, mooclet_list):
         "parameters": mooclet["parameters"],
         "weight": mooclet["weight"], 
         "isConsistent": mooclet["isConsistent"] if "isConsistent" in mooclet else None,
+        "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
         "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
     })
     for child in mooclet["children"]:
@@ -293,6 +295,7 @@ def modify_mooclet(mooclet, study_id, session):
                 "parameters": mooclet['parameters'],
                 "studyId": study_id,
                 "isConsistent": False, 
+                "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
                 "autoZeroPerMinute": False, 
                 "children": my_children, 
                 "weight": float(mooclet['weight']), 
@@ -307,6 +310,7 @@ def modify_mooclet(mooclet, study_id, session):
             "parameters": mooclet['parameters'],
             "studyId": study_id,
             "isConsistent": False, 
+            "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
             "autoZeroPerMinute": False, 
             "children": my_children, 
             "weight": float(mooclet['weight']), 

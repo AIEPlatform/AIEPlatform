@@ -21,11 +21,12 @@ function CommonMOOCletAttribute(props) {
                 label="Consistent assignment"
             />
             <FormControlLabel
-                control={<Checkbox checked={mooclet['reassignBeforeReward'] || false} onChange={(e) => {
-                    mooclet['reassignBeforeReward'] = e.target.checked;
+                control={<Checkbox checked={mooclet['reassignAfterReward'] || false} onChange={(e) => {
+                    mooclet['reassignAfterReward'] = e.target.checked;
                     sMooclets(tree)
+                    console.log(tree);
                 }} />}
-                label="Allow to re-assign treatment before a reward is received."
+                label="Re-assign a treatment only if the previous one has received a reward"
             />
         </Box>
     )

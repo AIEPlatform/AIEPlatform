@@ -8,7 +8,7 @@ class UniformRandom(Policy):
 	def choose_arm(self, user, where, other_information):
 		# TODO: Check if consistent assignment!
 		try:
-			lucky_version = self.get_consistent_assignment(user, where)
+			lucky_version = self.get_incomplete_consistent_assignment(user, where)
 			if lucky_version is None:
 				lucky_version = random.choice(self.study['versions'])
 

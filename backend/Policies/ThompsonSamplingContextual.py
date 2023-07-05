@@ -76,7 +76,7 @@ class ThompsonSamplingContextual(Policy):
 
     def choose_arm(self, user, where, other_information):
         current_time = datetime.datetime.now()
-        lucky_version = self.get_consistent_assignment(user, where)
+        lucky_version = self.get_incomplete_consistent_assignment(user, where)
 
         # check if we should switch to individual
         if self.individualMode:
@@ -480,7 +480,7 @@ class ThompsonSamplingContextual(Policy):
 def choose_arm_individual(self, user, where, other_information):
     try:
         current_time = datetime.datetime.now()
-        lucky_version = self.get_consistent_assignment(user, where)
+        lucky_version = self.get_incomplete_consistent_assignment(user, where)
         current_enrolled = InteractionModel.get_num_participants_for_assigner_individual(moocletId = self._id, user = user) #TODO: is it number of learners or number of observations????
 
         if self.should_update_model_individual(current_time, user) and current_enrolled % self.parameters['batch_size'] == 0:

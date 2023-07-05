@@ -21,7 +21,7 @@ class WeightedRandom(Policy):
                 contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
 
 
-            lucky_version = self.get_consistent_assignment(user, where)
+            lucky_version = self.get_incomplete_consistent_assignment(user, where)
             if lucky_version is None:
                 keys = list(self.parameters.keys())
                 weights = list(self.parameters.values())
