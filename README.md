@@ -1,5 +1,6 @@
 
 
+
   
 
 ## Requirements:
@@ -55,8 +56,9 @@ Run `./production.sh`.
 When you sign up and get a MongoDB instance at https://www.mongodb.com/cloud/atlas/register (Free tier available). 
 When getting the connection string, please choose Node version to be 2.0.14 or ealier.
 
-### Install MongoDB and Set up Replication 
-#### Installation (Use Ubuntu 22.04 LTS as an example)
+### Install MongoDB locally and Set up Replication Set
+#### Ubuntu 22.04 LTS 
+##### Installation (Use Ubuntu 22.04 LTS as an example)
 Reference: [Install MongoDB Community Edition on Ubuntu — MongoDB Manual](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/)
 
 Note that MongoDB is not compatible with Windows WSL.
@@ -81,7 +83,7 @@ You can start the MongoDB software by `sudo systemctl start mongod`.
 You can start the MongoDB on system boot by `sudo systemctl enable mongod`.
 You can check the MongoDB status by `sudo systemctl status mongod`.
 
-#### Create User for DataArrow
+##### Create User for DataArrow
 When you make sure that MongoDB is running, type `mongosh`.
 Switch to the admin collection by `use admin`;
 
@@ -95,7 +97,7 @@ Now, let's create the user for our DB.
 
 Type `ctrl+c` to exit the mongosh.
 
-Modify MongoDB configuration file at `/etc/mongod.conf`:
+Modify MongoDB configuration file at `/etc/mongod.conf`.
 
 Uncomment the `security` section, add/replace with the following information:
 ```
@@ -109,7 +111,7 @@ Restart MongoDB by `sudo systemctl restart mongod`
 
 Now, the authedication is on. We can move on to enable replication set.
 
-#### Set up Replication Set
+##### Set up Replication Set
 Reference: [MongoDB Replica Set Configuration: 7 Easy Steps - Learn | Hevo (hevodata.com)](https://hevodata.com/learn/mongodb-replica-set-config/)
 
 Use a `root` by `sudo su`.
@@ -137,6 +139,76 @@ replication:
 Be careful about the intent.
 
 Restart MongoDB by `sudo systemctl restart mongod`
+
+Enter MongoDB shell by `mongosh`. Switch to admin by `use admin`;
+
+Auth yourself with the admin account by: `db.auth(username, password)`;
+
+Initialize the replication set: `rs.initiate()`.
+
+Now, we can get access to the replication set by `mongodb://username:password@localhost:27017/?authMechanism=DEFAULT&replicaSet=replicaset-01`.
+
+#### MacOS
+##### Installation
+Please read this to install MongoDB on your local machine: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/
+
+You can verify if MongoDB is installed and running by `mongosh`.
+
+##### Create User for DataArrow
+When you make sure that MongoDB is running, type `mongosh`.
+Switch to the admin collection by `use admin`;
+
+Let's create an admin user first before we turn on authedication.
+`db.createUser({user: "admin", "pwd": passwordPrompt(), roles: ["root"]});`
+
+Give a secure password.
+
+Now, let's create the user for our DB.
+`db.createUser({user: "dataarrow", "pwd": passwordPrompt(), roles: [{ role: 'readWrite', db: 'dataarrow' }]});`
+
+Type `ctrl+c` to exit the mongosh.
+
+Modify MongoDB configuration file at `/usr/local/etc/mongod.conf` or `/opt/homebrew/etc/mongod.conf`, depending on whether Intel or M processors. Let's refer to the path as `MONGO_CONFIG_FILE` for this README file.
+
+Uncomment the `security` section, add/replace with the following information:
+```
+security:
+    authorization: "enabled"
+```
+
+** keyFile is required for our next step: replication set.
+
+Restart MongoDB by `brew services restart mongodb-community@6.0`
+
+Now, the authedication is on. We can move on to enable replication set.
+
+##### Set up Replication Set
+Reference: [MongoDB Replica Set Configuration: 7 Easy Steps - Learn | Hevo (hevodata.com)](https://hevodata.com/learn/mongodb-replica-set-config/)
+
+Make a directly to save the key by `mkdir /usr/local/var/mongodb/keys` or `mkdir /opt/homebrew/var/mongodb/keys`, depending on whether Intel or M processors. Let's refer to the path as `MONGODB_KEYFILE_DIR` for this README file.
+
+Generate key (which's required for replication set).
+```
+openssl rand -base64 756 > MONGODB_KEYFILE_DIR/mongo-key
+chmod 400 MONGODB_KEYFILE_DIR/mongo-key
+```
+*** You can also choose to generate the key somewhere else. But make sure that mongodb can access it.
+
+Modify MongoDB configuration file at `MONGO_CONFIG_FILE`:
+
+Uncomment the `replication` section, add/replace with the following information:
+
+```
+security:
+    authorization: "enabled"
+    keyFile: MONGODB_KEYFILE_DIR/mongo-key
+replication:
+	replSetName: "replicaset-01"
+```
+
+Be careful about the intent.
+
+Restart MongoDB by `brew services restart mongodb-community@6.0`
 
 Enter MongoDB shell by `mongosh`. Switch to admin by `use admin`;
 
