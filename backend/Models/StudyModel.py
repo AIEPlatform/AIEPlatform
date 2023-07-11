@@ -2,7 +2,6 @@ from credentials import *
 import datetime
 from Models.DeploymentModel import DeploymentModel
 
-
 class StudyModel:
     # get a study
     @staticmethod
@@ -23,12 +22,27 @@ class StudyModel:
             deploymentIds = [r['_id'] for r in deploymentIds]
             filter['deploymentId'] = {"$in": deploymentIds}
         return Study.find(filter, projection, session=session)
+    
+
+    def get_deployment_studies(deploymentId, session = None):
+        return Study.find({"deploymentId": deploymentId}, session=session)
 
     # create
     @staticmethod
     def create(study, session = None):
         try:
             response = Study.insert_one(study, session=session)
+            return response
+        except:
+            return None
+        
+    # delete by id
+    @staticmethod
+    def delete_one_by_id(studyId, session = None):
+        try:
+            response = Study.delete_one({"_id": studyId}, session=session)
+            print(studyId)
+            print(response.deleted_count)
             return response
         except:
             return None

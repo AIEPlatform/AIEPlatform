@@ -7,7 +7,7 @@ class InteractionModel:
     def get_many(filter, public = False, session = None):
         if not public:
             email = get_username()
-            filter['owner'] = email
+            filter['owner'] = email # TODO: Interaction doesn't have owner, but we still some protection.
         return Interaction.find(filter, session = session)
     # Get the last interaction for the given user at a study.
     @staticmethod

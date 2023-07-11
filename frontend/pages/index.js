@@ -5,6 +5,8 @@ import Head from 'next/head';
 import Select from 'react-select';
 import StudyEditor from '../components/ManageDeploymentPage/StudyEditor';
 import { UserContext } from "../contexts/UserContextWrapper";
+import DeleteIcon from '@mui/icons-material/Delete';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import getConfig from 'next/config';
 
@@ -39,7 +41,7 @@ function ManageDeployment() {
     }, []);
 
     const handleSelectMyDeployment = (option) => {
-        fetch(`/apis/the_studies/?deployment_id=${option["_id"]["$oid"]}`)
+        fetch(`/apis/experimentDesign/the_studies/?deployment_id=${option["_id"]["$oid"]}`)
             .then(response => response.json())
             .then(data => {
                 sTheStudies([newStudy].concat(data["studies"]));
@@ -51,34 +53,66 @@ function ManageDeployment() {
         sTheStudy(option);
     }
 
+    const handleDeleteDeployment = () => {
+        fetch(`/apis/experimentDesign/deployment`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                deployment: deploymentName
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if(data['status_code'] === 200) {
+                    // refresh
+                    location.reload();
+                }
+                else {
+                    alert("Failed to delete deployment");
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert("Failed to delete deployment");
+            });
+    };
+
     if (userContext !== undefined && userContext !== null) {
         return (
             <Layout>
                 <Head><title>Manage Deployment - {websiteName}</title></Head>
                 <Container>
                     <Box>
-                        <Typography variant="p">Deployment: </Typography>
+                        <Typography variant="h6">Deployment</Typography>
                         <Select
                             options={myDeployments}
                             getOptionLabel={(option) => option["name"]}
                             getOptionValue={(option) => option["_id"]["$oid"]}
                             onChange={(option) => handleSelectMyDeployment(option)}
+                            placeholder="Select a deployment"
                         />
+                        <Box>
+                            <Button sx = {{m: 1}} variant="outlined" startIcon={<DeleteIcon />} onClick={handleDeleteDeployment}>Delete</Button>
+                            <Button sx = {{m: 1}} variant="outlined" startIcon={<RestartAltIcon />} onClick={() => alert("Not complete yet! But you can reset each study.")}>Reset</Button>
+                        </Box>
                     </Box>
 
 
                     <Box>
-                        <Typography variant="p">Study: </Typography>
+                        <Typography variant="h6">Study</Typography>
                         <Select
                             options={theStudies}
                             getOptionLabel={(option) => option["name"]}
                             getOptionValue={(option) => option["_id"]["$oid"]}
                             value={theStudy}
                             onChange={(option) => handleSelectStudy(option)}
+                            placeholder="Select a study"
                         />
                     </Box>
                 </Container>
-                {theStudy && <StudyEditor deploymentName={deploymentName} theStudy={theStudy}></StudyEditor>}
+                {theStudy && <StudyEditor deploymentName={deploymentName} theStudy={theStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></StudyEditor>}
             </Layout>
         );
     }

@@ -46,6 +46,15 @@ class DatasetModel:
         except:
             return None
         
+    @staticmethod
+    def delete_study_datasets(theDeployment, theStudy, session = None):
+        try:
+            email = get_username()
+            response = Dataset.delete_many({"deploymentId": theDeployment['_id'], "study": theStudy['name'], "owner": email}, session=session)
+            return response
+        except:
+            return None
+        
     # update
     def update_one(datasetId, newDataset, session = None):
         try:

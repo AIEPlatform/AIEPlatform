@@ -50,3 +50,11 @@ class MOOCletModel:
     # update mooclet
     def update(filter, toUpdate, session = None):
         MOOClet.update_one(filter,toUpdate, session=session)
+
+
+    def delete_study_mooclets(studyId, session = None):
+        try:
+            response = MOOClet.delete_many({"studyId": studyId}, session=session)
+            return response
+        except:
+            return None

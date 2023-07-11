@@ -98,22 +98,37 @@ def create_mooclet(mooclet, study_id, session):
     response = MOOCletModel.create(new_mooclet, session=session)
     return response.inserted_id
 
-@experiment_design_apis.route("/apis/study", methods=["POST"])
+@experiment_design_apis.route("/apis/experimentDesign/study", methods=["POST"])
 def create_study():
     if check_if_loggedin() == False:
         return json_util.dumps({
             "status_code": 401
         }), 401
     
-    study_name = request.json['studyName']
-    mooclets = request.json['mooclets']
-    versions = request.json['versions']
-    variables = request.json['variables']
-    factors = request.json['factors']
-    deploymentName = request.json['deploymentName']
-    rewardInformation = request.json['rewardInformation']
+    studyName = request.json['studyName'] if 'studyName' in request.json else None;
+    mooclets = request.json['mooclets'] if 'mooclets' in request.json else None;
+    versions = request.json['versions'] if 'versions' in request.json else None;
+    variables = request.json['variables'] if 'variables' in request.json else None;
+    factors = request.json['factors'] if 'factors' in request.json else None;
+    deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
+    rewardInformation = request.json['rewardInformation'] if 'rewardInformation' in request.json else None;
 
-    the_deployment = DeploymentModel.get_one({'name': deploymentName})
+    if studyName is None or mooclets is None or versions is None or variables is None or factors is None or deploymentName is None or rewardInformation is None:
+        return json_util.dumps({
+            "status_code": 400, 
+            "message": "Missing required parameters."
+        }), 400
+    
+
+    # TODO: Check if valid study name or not.
+    if len(studyName) < 3 or len(studyName) > 50:
+        return json_util.dumps({
+            "status_code": 400, 
+            "message": "Study name should be between 3 and 50 characters."
+        }), 400
+
+
+    the_deployment = DeploymentModel.get_one({'name': deploymentName});
 
     # TODO: Check if the deployment exists or not.
     if the_deployment is None:
@@ -124,7 +139,7 @@ def create_study():
 
     mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
 
-    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': study_name}, public = True)
+    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': studyName}, public = True)
     if doc is not None: 
         return json_util.dumps({
             "status_code": 400, 
@@ -135,7 +150,7 @@ def create_study():
         try:
             session.start_transaction()
             the_study = {
-                'name': study_name,
+                'name': studyName,
                 'deploymentId': the_deployment['_id'],
                 'versions': versions,
                 'variables': variables, 
@@ -148,19 +163,23 @@ def create_study():
             root_mooclet = create_mooclet(mooclet_trees, study_id, session=session)
             Study.update_one({'_id': study_id}, {'$set': {'rootMOOClet': root_mooclet}}, session=session)
             session.commit_transaction()
+
+            studies = Study.find({"deploymentId": ObjectId(the_deployment['_id'])})
+            the_study = Study.find_one({'_id': study_id})
+            return json_util.dumps({
+                "status_code": 200, 
+                "message": "success", 
+                "studies": studies,
+                "theStudy": the_study
+            }), 200
         except Exception as e:
             print(e)
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
-                "status": 500,
+                "status_code": 500,
                 "message": "Not successful, please try again later."
             }), 500
-
-    return json_util.dumps({
-        "status": 200, 
-        "message": "success"
-    }), 200
 
 
 @experiment_design_apis.route("/apis/my_deployments", methods=["GET"])
@@ -174,7 +193,7 @@ def my_deployments():
     }), 200
 
 
-@experiment_design_apis.route("/apis/the_studies", methods=["GET"])
+@experiment_design_apis.route("/apis/experimentDesign/the_studies", methods=["GET"])
 def the_studies():
     deployment_id = request.args.get('deployment_id')
     studies = Study.find({"deploymentId": ObjectId(deployment_id)})
@@ -279,7 +298,6 @@ def isExistingMOOClet(mooclet):
 
 def modify_mooclet(mooclet, study_id, session):
     # Modify or Create
-    print(mooclet)
     time = datetime.datetime.now()
     my_children = []
     for child in mooclet['children']:
@@ -349,7 +367,6 @@ def modify_existing_study():
 
             designer_tree = convert_front_list_mooclets_into_tree(mooclets)
 
-            print(designer_tree)
             modify_mooclet(designer_tree, the_study['_id'], session=session)
 
             session.commit_transaction()
@@ -439,7 +456,30 @@ def create_variable():
         }), 500
     
 
-
+def reset_study_helper(the_deployment, the_study, session):
+    try:
+        studyId = the_study['_id']
+        # get all mooclet ids
+        mooclets = MOOCletModel.find_mooclets({"studyId": ObjectId(studyId)})
+        mooclet_ids = [mooclet['_id'] for mooclet in mooclets]
+        # reset all mooclet parameters to the earliest one in the History collection.
+        for mooclet_id in mooclet_ids:
+            # get the earliest history by timestamp
+            history_parameter = History.find_one({"moocletId": ObjectId(mooclet_id)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
+            if history_parameter is not None:
+                # update the mooclet
+                MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
+                # remove all history
+                History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            # Remove all interactions.
+            Interaction.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            # remove individualLevel history
+            MOOCletIndividualLevelInformation.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            DatasetModel.delete_study_datasets(the_deployment, the_study)
+        return 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return 500
 
 
 @experiment_design_apis.route("/apis/experimentDesign/resetStudy", methods=["PUT"])
@@ -450,39 +490,372 @@ def reset_study():
         }), 403
     deployment = request.json['deployment']
     study = request.json['study']
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    if the_deployment is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+    if the_study is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
     with client.start_session() as session:
-        try:
-            the_deployment = DeploymentModel.get_one({"name": deployment})
-            the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
-            studyId = the_study['_id']
-            session.start_transaction()
-            # get all mooclet ids
-            mooclets = MOOCletModel.find_mooclets({"studyId": ObjectId(studyId)})
-            mooclet_ids = [mooclet['_id'] for mooclet in mooclets]
-            # reset all mooclet parameters to the earliest one in the History collection.
-            for mooclet_id in mooclet_ids:
-                # get the earliest history by timestamp
-                history_parameter = History.find_one({"moocletId": ObjectId(mooclet_id)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
-                if history_parameter is not None:
-                    # update the mooclet
-                    MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
-                    # remove all history
-                    History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
-                # Remove all interactions.
-                Interaction.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
-                # remove individualLevel history
-                MOOCletIndividualLevelInformation.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+        session.start_transaction()
+        response = reset_study_helper(the_deployment, the_study, session)
+        if response == 200:
             session.commit_transaction()
-
             return json_util.dumps({
                 "status_code": 200,
-                "message": "The study has been reset."
+                "message": "The study is reset successfully."
             }), 200
-
-        except Exception as e:
-            print(e)
+        else:
             session.abort_transaction()
             return json_util.dumps({
-                "status_code": 500, 
-                "message": e
+                "status_code": 500,
+                "message": "Something went wrong, please try again later."
             }), 500
+    
+
+import traceback
+# well, 
+def delete_study_helper(the_deployment, the_study, session):
+    try:
+        resetResponse = reset_study_helper(the_deployment, the_study, session)
+        if resetResponse != 200:
+            return resetResponse
+        else:
+            # delete the study
+            StudyModel.delete_one_by_id(the_study['_id'], session=session)
+            MOOCletModel.delete_study_mooclets(the_study['_id'], session=session)
+            return 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return 500
+    
+
+@experiment_design_apis.route("/apis/experimentDesign/deleteStudy", methods=["DELETE"])
+def delete_study():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    deployment = request.json['deployment']
+    study = request.json['study']
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    if the_deployment is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
+    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+    if the_study is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
+    with client.start_session() as session:
+        response = delete_study_helper(the_deployment, the_study, session)
+        if response == 200:
+            session.commit_transaction()
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "The study is deleted successfully."
+            }), 200
+        elif response == 403:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 403,
+                "message": "You don't have access to the study."
+            }), 403
+        else:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Something went wrong, please try again later."
+            }), 500
+        
+
+
+@experiment_design_apis.route("/apis/experimentDesign/deployment", methods=["DELETE"])
+def delete_deployment():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    deployment = request.json['deployment']
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+    if the_deployment is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the deployment."
+        }), 403
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+            # get all studies
+            studies = StudyModel.get_deployment_studies(the_deployment['_id'])
+            for study in studies:
+                if delete_study_helper(the_deployment, study, session) != 200:
+                    # throw an error
+                    session.abort_transaction()
+                    return json_util.dumps({
+                        "status_code": 500,
+                        "message": "Something went wrong, please try again later."
+                    }), 500
+
+            # delete the deployment
+            DeploymentModel.delete_one_by_id(the_deployment['_id'], session=session)
+            session.commit_transaction()
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "The deployment is deleted successfully."
+            }), 200
+        except Exception as e:
+            print(traceback.format_exc())
+            session.abort_transaction()
+            
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Something went wrong, please try again later."
+            }), 500
+
+
+@experiment_design_apis.route("/apis/experimentDesign/updateSimulationSetting", methods=["PUT"])
+# read deployment and study name from the request body.
+def update_simulation_setting():
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+    simulationSetting = request.json['simulationSetting'] if 'simulationSetting' in request.json else None
+    if deployment is None or study is None or simulationSetting is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment and study name and simulationSetting."
+        }), 400
+    try:
+        # get study object. But get deployment object first.
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        # update the the study object's simulation setting.
+        Study.update_one({'_id': the_study['_id']}, {'$set': {
+            'simulationSetting': simulationSetting
+            }})
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "The simulation setting is updated."
+        }), 200
+    except Exception as e:
+        print(e)
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    
+
+# get simulationSetting
+@experiment_design_apis.route("/apis/experimentDesign/getSimulationSetting", methods=["GET"])
+def get_simulation_setting():
+    deployment = request.args.get('deployment') # Name
+    study = request.args.get('study') # Name
+    if deployment is None or study is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment and study name."
+        }), 400
+    try:
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        simulationSetting = the_study['simulationSetting'] if 'simulationSetting' in the_study else None
+
+        if simulationSetting is None:
+            return json_util.dumps({
+                "status_code": 404,
+                "message": "The simulation setting is not found."
+            }), 404
+        return json_util.dumps({
+            "status_code": 200,
+            "simulationSetting": simulationSetting
+        }), 200
+    except Exception as e:
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    
+import json
+import requests
+import threading
+from Models.InteractionModel import InteractionModel
+requestSession = requests.Session()
+@experiment_design_apis.route("/apis/experimentDesign/runSimulation", methods=["POST"])
+def run_simulation():
+    # TODO: before allowing a simulation to be started, check if there is sufficient threads available.
+
+    def fake_data_time(deployment, study, numDays=5):
+        numDays = int(numDays)
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        mooclet_ids = list(
+            MOOClet.find({"studyId": the_study['_id']}).distinct("_id")
+        )
+        the_interactions = list(InteractionModel.get_many({"moocletId": {"$in": mooclet_ids}}, public=True).sort("timestamp", pymongo.ASCENDING))
+        # change the rewardTimestamp this way:
+        # first 20% of the interactions, change the rewardTimestamp to four days ago.
+        # second 20% of the interactions, change the rewardTimestamp to three days ago.
+        # third 20% of the interactions, change the rewardTimestamp to two days ago.
+        # fourth 20% of the interactions, change the rewardTimestamp to one day ago.
+        # fifth 20% of the interactions, change the rewardTimestamp: no change.
+
+        # create an array of 10 arrays
+        time_mooclet_lists = [[] for i in range(numDays)]
+        
+        for i in range(0, len(the_interactions)):
+            if the_interactions[i]['rewardTimestamp'] is None: continue
+
+            for day in range(numDays):
+                if i < 1/numDays * day * len(list(the_interactions)):
+                    time_mooclet_lists[day].append(the_interactions[i]['_id'])
+                    break
+
+
+        for i in range(0, len(time_mooclet_lists)):
+            Interaction.update_many({"_id": {"$in": time_mooclet_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
+    def compare_values(a, b):
+        return (float(a) - float(b)) == 0
+    def give_variable_value_helper(deployment, study, variableName, user, value):
+        url = f'http://localhost:20110/apis/give_variable'
+        headers = {'Content-Type': 'application/json'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName, 'where': 'simulation'}
+        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
+        return response
+    
+    def assign_treatment_helper(deployment, study, user):
+        url = f'http://localhost:20110/apis/get_treatment'
+        headers = {'Content-Type': 'application/json'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation'}
+        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
+        return response
+
+
+    def get_reward_helper(deployment, study, user, value):
+        url = f'http://localhost:20110/apis/give_reward'
+        headers = {'Content-Type': 'application/json'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation'}
+        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
+        return response
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+
+    
+    if deployment is None or study is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment and study name."
+        }), 400
+    try:
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+    except Exception as e:
+        return json_util.dumps({
+            "status_code": 404, 
+            "message": "Can't find the study."
+        }), 404
+    
+
+    # check if a simulation is running.
+    if 'simulationStatus' in the_study and the_study['simulationStatus'] != 'idle':
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "The simulation is already running or stopping."
+        }), 400
+    simulationSetting = the_study['simulationSetting'] if 'simulationSetting' in the_study else None
+
+    if simulationSetting is None:
+        return json_util.dumps({
+            "status_code": 404,
+            "message": "The simulation setting is not found."
+        }), 404
+    
+
+    # set simulationStatus to running.
+    Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "running"}})
+    
+
+    for i in range(0, 1000):
+        # check if simulationStatus has been changed to stopping or not.
+        study_doc = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        if 'simulationStatus' in study_doc and study_doc['simulationStatus'] == 'stopping':
+            break
+        user = f'{deployment}_{study}_simulated_user_{i}'
+        variable_values = {}
+        for variable in the_study['variables']:
+            predictor = random.choice([0, 1])
+            variable_values[variable] = predictor
+            give_variable_value_helper(deployment, study, variable, user, predictor)
+        assignResponse = assign_treatment_helper(deployment, study, user)
+        treatment = assignResponse.json()['treatment']['name']
+        rewardProb = 0.5
+        # TODO: improve the efficiency of the following code.
+        if treatment in simulationSetting['baseReward']:
+            rewardProb = simulationSetting['baseReward'][treatment] 
+        
+        # modify the reward prob based on the variable values.
+        for variable in variable_values:
+            for contextualEffect in simulationSetting['contextualEffects']:
+                if contextualEffect['variable'] == variable and contextualEffect['version'] == treatment:
+                    if contextualEffect['operator'] == '=':
+                        if compare_values(variable_values[variable], contextualEffect['value']):
+                            rewardProb = rewardProb + float(contextualEffect['effect'])
+                            print(rewardProb)
+                            break                            
+        if random.random() < rewardProb:
+            value = 1
+        else:
+            value = 0
+        get_reward_helper(deployment, study, user, value)
+    fake_data_time(deployment, study, simulationSetting['numDays'])
+
+    print("Simulation Done")
+    # change simulationStatus back to idle.
+    Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
+
+
+
+    return json_util.dumps({
+        "status_code": 200,
+        "message": "The simulation is running."
+    }), 200
+
+
+
+# stop a simulation
+@experiment_design_apis.route('/apis/experimentDesign/stopSimulation', methods=['PUT'])
+def stop_simulation():
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+    if deployment is None or study is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment and study name."
+        }), 400
+    try:
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+
+        # update simulationStatus to stopping
+        if the_study['simulationStatus'] == 'idle':
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "The simulation is not running."
+            }), 400
+        Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "stopping"}})
+        return json_util.dumps({
+            "status_code": 200
+        }), 200
+    except Exception as e:
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500

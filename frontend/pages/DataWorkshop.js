@@ -38,7 +38,7 @@ function DataWorkshop() {
 
     const handleSelectMyDeployment = (option) => {
         sTheDeployment(option);
-        fetch(`/apis/the_studies/?deployment_id=${option["_id"]["$oid"]}`)
+        fetch(`/apis/experimentDesign/the_studies/?deployment_id=${option["_id"]["$oid"]}`)
             .then(response => response.json())
             .then(data => {
                 sTheStudies(data["studies"]);

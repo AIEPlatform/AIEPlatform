@@ -29,3 +29,12 @@ class DeploymentModel:
             return response
         except:
             return None
+        
+    # delete by id
+    @staticmethod
+    def delete_one_by_id(deploymentId, session = None):
+        try:
+            response = Deployment.delete_one({"_id": deploymentId}, session=session)
+            return response
+        except:
+            return None

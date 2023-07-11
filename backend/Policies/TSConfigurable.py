@@ -49,23 +49,18 @@ class TSConfigurable(Policy):
             if batch_size ==0: 
                 batch_size = 1
             if "current_posteriors" not in self.parameters or current_enrolled % batch_size == 0:
-                print("check if this group needs model to be updated")
                 someone_is_updating = False
                 lock.acquire()
-                print(f'{user} checking lock...')
                 # TODO: check if it prevents the lock being occupied infinitely.
                 try:
                     new_lock_id = check_lock(self._id)
                 except Exception as e:
                     print(e)
-                    print("error in check_lock")
                     new_lock_id = None
                 if new_lock_id is None:
                     someone_is_updating = True
-                    print(f'{user} finds someone\'s updating the model...')
                 lock.release()
                 if not someone_is_updating:
-                    print(f'{user} updating model..')
                     p = threading.Thread(target=self.update_model, args=(new_lock_id, ))
                     p.start()
                     start_time = time.time()
@@ -167,63 +162,6 @@ class TSConfigurable(Policy):
         else:
             InteractionModel.append_reward(latest_interaction['_id'], value)
             return 200
-        
-
-    # def ts_postdiff_sample(self, tspostdiff_thresh, versions_dict, context):
-    #     """
-    #     Inputs are a threshold and a dict of versions to successes and failures e.g.:
-    #     {version1: {successess: 1, failures: 1}.
-    #     version2: {successess: 1, failures: 1}, ...}
-    #     """
-    #     Variable = apps.get_model('engine', 'Variable')
-    #     Value = apps.get_model('engine', 'Value')
-    #     Version = apps.get_model('engine', 'Version')
-
-
-    #     version_values = list(versions_dict.values())
-    #     version_beta_1 = beta(version_values[0]["successes"], version_values[0]["failures"])
-    #     version_beta_2 = beta(version_values[1]["successes"], version_values[1]["failures"])
-
-    #     diff = abs(version_beta_1 - version_beta_2)
-
-    #     #log whether was chosen by ts or ur
-    #     ur_or_ts, created = Variable.objects.get_or_create(name="UR_or_TS")
-
-    #     if diff < tspostdiff_thresh:# do UR
-    #         # #print("choices to show")
-    #         #print(context['mooclet'].version_set.all())
-    #         version_to_show = list(versions_dict.keys())
-    #         version_to_show = choice(version_to_show)
-    #         #version_to_show = Version.objects.get(id=version_to_show)
-    #         Value.objects.create(variable=ur_or_ts, value=0.0,
-    #                             text="UR", learner=context["learner"], mooclet=context["mooclet"],
-    #                             version=version_to_show)
-    #         version_dict = model_to_dict(version_to_show)
-    #         version_dict["selection_method"] = "uniform_random"
-    #         return version_dict, "postdiff-uniform"
-
-    #     else: #Do TS with resampling
-    #         version_to_show = None
-    #         max_beta = 0
-    #         for version in versions_dict.keys():
-    #             successes = versions_dict[version]["successes"]
-    #             failures = versions_dict[version]["failures"]
-    #             version_beta = beta(successes, failures)
-    #             #print("pre max beta: " +str(max_beta))
-    #             #print("version_beta: " + str(version_beta))
-    #             if version_beta > max_beta:
-    #                 max_beta = version_beta
-    #                 version_to_show = version
-
-
-    #         #log policy chosen
-    #         Value.objects.create(variable=ur_or_ts, value=1.0,
-    #                             text="TS", learner=context["learner"], mooclet=context["mooclet"],
-    #                             version=version_to_show)
-
-    #         version_dict = model_to_dict(version_to_show)
-    #         version_dict["selection_method"] = "thompson_sampling_postdiff"
-    #         return version_dict, "ts_postdiff"
 
     def ts_sample(self):
         """
@@ -276,9 +214,6 @@ class TSConfigurable(Policy):
                     successes = success_update
                     failures = rating_count - success_update
                     current_posteriors[version['name']] = {"successes":successes, "failures": failures}
-
-                print("new posteriors: ")
-                print(current_posteriors)
                 MOOCletModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
                 self.parameters["current_posteriors"] = current_posteriors
                 session.commit_transaction()
