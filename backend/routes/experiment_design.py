@@ -782,45 +782,47 @@ def run_simulation():
 
     # set simulationStatus to running.
     Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "running"}})
-    
 
-    for i in range(0, sampleSize):
-        # check if simulationStatus has been changed to stopping or not.
-        study_doc = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
-        if 'simulationStatus' in study_doc and study_doc['simulationStatus'] == 'stopping':
-            break
-        user = f'{deployment}_{study}_simulated_user_{i}'
-        variable_values = {}
-        for variable in the_study['variables']:
-            predictor = random.choice([0, 1])
-            variable_values[variable] = predictor
-            give_variable_value_helper(deployment, study, variable, user, predictor)
-        assignResponse = assign_treatment_helper(deployment, study, user)
-        treatment = assignResponse.json()['treatment']['name']
-        rewardProb = 0.5
-        # TODO: improve the efficiency of the following code.
-        if treatment in simulationSetting['baseReward']:
-            rewardProb = simulationSetting['baseReward'][treatment] 
-        
-        # modify the reward prob based on the variable values.
-        for variable in variable_values:
-            for contextualEffect in simulationSetting['contextualEffects']:
-                if contextualEffect['variable'] == variable and contextualEffect['version'] == treatment:
-                    if contextualEffect['operator'] == '=':
-                        if compare_values(variable_values[variable], contextualEffect['value']):
-                            rewardProb = rewardProb + float(contextualEffect['effect'])
-                            print(rewardProb)
-                            break                            
-        if random.random() < rewardProb:
-            value = 1
-        else:
-            value = 0
-        get_reward_helper(deployment, study, user, value)
-    fake_data_time(deployment, study, simulationSetting['numDays'])
+    try:
+        for i in range(0, sampleSize):
+            # check if simulationStatus has been changed to stopping or not.
+            study_doc = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+            if 'simulationStatus' in study_doc and study_doc['simulationStatus'] == 'stopping':
+                break
+            user = f'{deployment}_{study}_simulated_user_{i}'
+            variable_values = {}
+            for variable in the_study['variables']:
+                predictor = random.choice([0, 1])
+                variable_values[variable] = predictor
+                give_variable_value_helper(deployment, study, variable, user, predictor)
+            assignResponse = assign_treatment_helper(deployment, study, user)
+            treatment = assignResponse.json()['treatment']['name']
+            rewardProb = 0.5
+            # TODO: improve the efficiency of the following code.
+            if treatment in simulationSetting['baseReward']:
+                rewardProb = float(simulationSetting['baseReward'][treatment]) 
+            
+            # modify the reward prob based on the variable values.
+            for variable in variable_values:
+                for contextualEffect in simulationSetting['contextualEffects']:
+                    if contextualEffect['variable'] == variable and contextualEffect['version'] == treatment:
+                        if contextualEffect['operator'] == '=':
+                            if compare_values(variable_values[variable], contextualEffect['value']):
+                                rewardProb = rewardProb + float(contextualEffect['effect'])
+                                print(rewardProb)
+                                break                            
+            if random.random() < rewardProb:
+                value = 1
+            else:
+                value = 0
+            get_reward_helper(deployment, study, user, value)
+        fake_data_time(deployment, study, simulationSetting['numDays'])
 
-    print("Simulation Done")
-    # change simulationStatus back to idle.
-    Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
+        print("Simulation Done")
+        # change simulationStatus back to idle.
+        Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
+    except Exception as e:
+        Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
 
 
 
