@@ -31,7 +31,7 @@ examples_apis = Blueprint('examples_apis', __name__)
 questions = [
     {
         "topic": "Confidence Intervals",
-        "concept": "A confidence interval is the mean of your estimate plus and minus the variation in that estimate.", 
+        "concept": 'https://statisticsbyjim.com/hypothesis-testing/confidence-interval/', 
         "question": "A random sample of 100 students was taken to estimate the mean score on a test. The sample mean is 75, and the sample standard deviation is 10. What is the 95% confidence interval for the population mean?", 
         "choices": ["(70.52, 79.48)", "(73.04, 76.96)", "(68.91, 81.09)", "(74.62, 76.38)"], 
         "right_answer_index": 0

@@ -10,7 +10,7 @@ import pickle
 
 
 client = MongoClient(MONGO_DB_CONNECTION_STRING)
-db = client['dataarrow']
+db = client[DB_NAME]
 Dataset = db['dataset']
 Deployment = db['deployment']
 Study = db['study']

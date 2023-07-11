@@ -276,6 +276,54 @@ def run_case_three(deployment, study, num_devices = 100, num_users_per_device = 
     fake_data_time(deployment, study)
     print("simulations done.")
 
+
+# CASE3: THREE VERSIONS, ONE CONTEXTUAL, ONE STRONG PREDICTOR, TWO WEAK PREDICTORS
+def run_case_four(deployment, study, num_devices = 100, num_users_per_device = 10, variables = []):
+    reset_study_helper(deployment, study)
+    # simulate user behaviour.
+
+    # one thread
+    def one_device(device, num_users_per_device):
+        i = 0
+        while i < num_users_per_device:
+            user = device + "_" + str(i)
+            #time.sleep(1) # every 2 seconds I pick a random user, assign arm or send reward.
+            predictors = []
+            for variable in variables:
+                predictor = random.choice([0, 1])
+                give_variable_value_helper(deployment, study, variable, user, predictor)
+                predictors.append(predictor)
+            
+            # get a base reward probability
+            reward_prob = random.random()
+            # get an arm
+            version_to_show = assign_treatment_helper(deployment, study, user)
+            if predictors[0] == 0 and version_to_show == "version1":
+                reward_prob += 0.2
+            elif predictors[0] == 0 and version_to_show == "version2":
+                reward_prob -= 0.2
+            elif predictors[0] == 1 and version_to_show == "version1":
+                reward_prob -= 0.1
+            elif predictors[0] == 1 and version_to_show == "version2":
+                reward_prob += 0.1
+            reward = None
+            if random.random() < reward_prob:
+                reward = 1
+            else:
+                reward = 0
+            get_reward_helper(deployment, study, user, reward)
+            i += 1
+    threads = []
+    for i in range(0, num_devices):
+        t = threading.Thread(target=one_device, args=(str(i), num_users_per_device))
+        threads.append(t)
+    for x in threads:
+        x.start()
+    for x in threads:
+        x.join()
+    fake_data_time(deployment, study)
+    print("simulations done.")
+
 num_devices = 1
 num_users_per_device = 1
 deployment = "Simulations"

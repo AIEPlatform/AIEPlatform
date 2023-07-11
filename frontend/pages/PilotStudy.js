@@ -252,7 +252,7 @@ export default function PilotStudy() {
                     </Box>}
                 {treatment === "concept_first" &&
                     <Box>
-                        <mark>{question['concept']}</mark>
+                        <mark><a href = {question['concept']}> Material To Read</a></mark>
                     </Box>}
                 {question !== null && username !== null && contextualValue !== null &&
                     <FormControl>
@@ -280,7 +280,7 @@ export default function PilotStudy() {
                 {score !== null && <Box>Your answer got a score {score}</Box>}
                 {score != null && treatment === "concept_later" &&
                     <Box>
-                        <mark>{question['concept']}</mark>
+                        <mark><a href = {question['concept']}> Material To Read</a></mark>
                     </Box>}
             </Box>
         )
