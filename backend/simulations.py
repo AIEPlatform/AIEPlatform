@@ -21,7 +21,6 @@ MOOCletIndividualLevelInformation.delete_many({})
 
 # login first
 def reset_study_helper(deployment, study):
-    return
     url = 'http://localhost:20110/apis/auth/login'
     headers = {'Content-Type': 'application/json'}
     payload = {'email': SIMULATION_EMAIL, 'password': SIMULATION_PASSWORD}
