@@ -1,6 +1,5 @@
 import { React, useState, useEffect } from 'react';
 import { Typography, Paper, TextField, Button, Box, FormControl, InputLabel, MenuItem, NativeSelect } from '@mui/material';
-import Select from 'react-select';
 
 function SimulationEditor(props) {
     // TODO: make this saved to DB.
@@ -9,6 +8,8 @@ function SimulationEditor(props) {
     let variables = props.variables;
     let deployment = props.deploymentName;
     let study = props.studyName;
+
+    let [sampleSize, sSampleSize] = useState(100);
     const [simulationSetting, sSimulationSetting] = useState({
         "baseReward": {}, // {version: 1, version: 2}
         "contextualEffects": [], // "{contextual, operator(=, >, < or between), value, version, effect}", 
@@ -214,7 +215,7 @@ function SimulationEditor(props) {
                 <Button variant="contained" sx={{ mt: 2 }} onClick={addNewSimulatedContextualEffect}>Add a new simulated contextual effect</Button>
 
             </Box>
-            <Button onClick={handleRunSimulation}>Run Simulations</Button>
+            <Button onClick={handleRunSimulation}>Run Simulations</Button> with 1000 samples
             <Button onClick={handleSaveSimulationSetting}>Save</Button>
             <Button onClick={handleStopSimulation}>Stop Simulation</Button>
         </Paper>
