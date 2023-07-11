@@ -417,7 +417,7 @@ function StudyEditor(props) {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6'>Run Simulations</Typography>
+                        <Typography variant='h6'>Simulations</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <SimulationEditor studyName={studyName} deploymentName={deploymentName} versions={versions} variables={variables} />
@@ -427,7 +427,7 @@ function StudyEditor(props) {
 
 
 
-                {studyName !== "" && <Accordion>
+                {studyName !== "" && false && <Accordion>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="study-api-doc"

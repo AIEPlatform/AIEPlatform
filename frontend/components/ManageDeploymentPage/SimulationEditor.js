@@ -92,16 +92,20 @@ function SimulationEditor(props) {
             },
             body: JSON.stringify({
                 "deployment": deployment,
-                "study": study
+                "study": study, 
+                "sampleSize": sampleSize, 
+                "simulationSetting": simulationSetting
             })
-        }).then(response => {
-            if (response.status === 200) {
-                alert("Successfully ran the simulation!");
-            } else {
-                alert(response.message);
+        }).then(response => response.json())
+            .then(data => {
+                if (data['status_code'] == 200) {
+                    alert("Successfully ran the simulation!");
+                }
+                else {
+                    alert(data.message);
+                }
             }
-        }
-        );
+            );
     }
 
     const handleStopSimulation = () => {
@@ -132,7 +136,7 @@ function SimulationEditor(props) {
                 <Box variant="body1">When a user is assigned to
                     <FormControl>
                         <NativeSelect
-                            sx={{ml: 1, mr: 1}}
+                            sx={{ ml: 1, mr: 1 }}
                             value={contextualEffect['version'] || ""}
                             onChange={(event) => {
                                 let newSimulationSetting = { ...simulationSetting };
@@ -151,7 +155,7 @@ function SimulationEditor(props) {
                         </NativeSelect>
                     </FormControl>
                     , if <FormControl><NativeSelect
-                        sx={{ml: 1, mr: 1}}
+                        sx={{ ml: 1, mr: 1 }}
                         value={contextualEffect['variable'] || ""}
                         onChange={(event) => {
                             let newSimulationSetting = { ...simulationSetting };
@@ -175,7 +179,7 @@ function SimulationEditor(props) {
                         let newSimulationSetting = { ...simulationSetting };
                         newSimulationSetting['contextualEffects'][index]['effect'] = event.target.value;
                         sSimulationSetting(newSimulationSetting);
-                    }}></input>. <button onClick={() => handleEffectDelete(index)}>Click here if I want to remove this effect {index}</button></Box>
+                    }}></input>. <button onClick={() => handleEffectDelete(index)}>Click here if I want to remove this effect</button></Box>
             </Box>
         )
     }
@@ -215,9 +219,13 @@ function SimulationEditor(props) {
                 <Button variant="contained" sx={{ mt: 2 }} onClick={addNewSimulatedContextualEffect}>Add a new simulated contextual effect</Button>
 
             </Box>
-            <Button onClick={handleRunSimulation}>Run Simulations</Button> with 1000 samples
-            <Button onClick={handleSaveSimulationSetting}>Save</Button>
-            <Button onClick={handleStopSimulation}>Stop Simulation</Button>
+            <Box sx={{ m: "auto", mt: 2 }}><Button onClick={handleRunSimulation} variant="outlined">Run Simulations</Button> with <input type="number" value={sampleSize} onChange={(event) => {
+                sSampleSize(event.target.value);
+            }}></input> samples</Box>
+            <Box sx={{ m: "auto", mt: 2 }}>
+                <Button sx={{ mr: 2}} onClick={handleSaveSimulationSetting} variant="outlined">Save</Button>
+                <Button sx={{ }} onClick={handleStopSimulation} variant="outlined" color="error">Stop Simulation</Button>
+            </Box>
         </Paper>
     )
 }

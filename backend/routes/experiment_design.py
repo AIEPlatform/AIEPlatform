@@ -747,16 +747,25 @@ def run_simulation():
         return response
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
+    sampleSize = int(request.json['sampleSize']) if 'sampleSize' in request.json else None
+    simulationSetting = request.json['simulationSetting'] if 'simulationSetting' in request.json else None
+    
 
     
-    if deployment is None or study is None:
+    if deployment is None or study is None or sampleSize is None or simulationSetting is None:
         return json_util.dumps({
             "status_code": 400,
-            "message": "Please provide deployment and study name."
+            "message": "Please provide deployment and study name and sample size and simulation setting."
         }), 400
+
+
+    sampleSize = min([sampleSize, 1000])
     try:
         the_deployment = DeploymentModel.get_one({"name": deployment})
         the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        Study.update_one({'_id': the_study['_id']}, {'$set': {
+            'simulationSetting': simulationSetting
+            }})
     except Exception as e:
         return json_util.dumps({
             "status_code": 404, 
@@ -770,20 +779,12 @@ def run_simulation():
             "status_code": 400,
             "message": "The simulation is already running or stopping."
         }), 400
-    simulationSetting = the_study['simulationSetting'] if 'simulationSetting' in the_study else None
-
-    if simulationSetting is None:
-        return json_util.dumps({
-            "status_code": 404,
-            "message": "The simulation setting is not found."
-        }), 404
-    
 
     # set simulationStatus to running.
     Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "running"}})
     
 
-    for i in range(0, 1000):
+    for i in range(0, sampleSize):
         # check if simulationStatus has been changed to stopping or not.
         study_doc = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
         if 'simulationStatus' in study_doc and study_doc['simulationStatus'] == 'stopping':
