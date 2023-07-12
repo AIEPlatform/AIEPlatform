@@ -195,6 +195,14 @@ function TSContextual(props) {
         sMooclets(tree)
     };
 
+    const writeRegressionFormula = () => {
+        let formula = "reward ~ "
+        if (mooclet['parameters']['regressionFormulaItems']) {
+            formula += mooclet['parameters']['regressionFormulaItems'].map((item) => item.join(" * ")).join(" + ")
+        }
+        return formula
+    }
+
 
     useEffect(() => {
         // Initial parameters for TSContextual.
@@ -310,7 +318,7 @@ function TSContextual(props) {
             </Box>
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>
-                <mark><small>Current regression formula: reward ~ gender * factor1 + factor1 + gender</small></mark>
+                {mooclet['parameters']['regressionFormulaItems'] && mooclet['parameters']['regressionFormulaItems'].length > 0 && <mark><small>Current regression formula: {writeRegressionFormula()}</small></mark>}
                 {mooclet['parameters']['regressionFormulaItems'] && mooclet['parameters']['regressionFormulaItems'].map((regressionFormulaItem, index) => {
                     return (
                         <Box key={index} margin="10px 0" style={{ position: "relative" }}>
