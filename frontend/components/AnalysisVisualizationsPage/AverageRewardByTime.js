@@ -12,8 +12,6 @@ const distinctColors = ["red", "blue", "green", "orange", "purple", "pink", "cya
 export default function AverageRewardByTime(props) {
 
   const theDataset = props.theDataset;
-  // const [selectedVariables, sSelectedVariables] = useState([]);
-  // const [selectedAssigners, sSelectedAssigners] = useState([]);
   const analysis = props.analysis;
   const analysises = props.analysises;
   const sAnalysises = props.sAnalysises;

@@ -27,6 +27,14 @@ app.register_blueprint(auth_apis)
 app.register_blueprint(examples_apis)
 app.register_blueprint(integration_apis)
 
+# Compatibility check.
+# check if it has simulationSetting, if not, initialize it.
+Study.update_many({"simulationSetting": {"$exists": False}}, {"$set": {"simulationSetting": {
+            "baseReward": {},
+            "contextualEffects": [],
+            "numDays": 5
+        }}})
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=20110, debug=True, threaded=True)

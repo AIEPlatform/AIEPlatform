@@ -3,6 +3,7 @@ import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
 import Select from 'react-select';
 function VariableEditor(props) {
     let selectedVariables = props.selectedVariables;
+    console.log(props)
     let sSelectedVariables = props.sSelectedVariables;
     let [existingVariables, sExistingVariables] = useState([]);
     let [newVariable, sNewVariable] = useState("");

@@ -1,8 +1,5 @@
 // To Policy Author, please note that you need to remove the version and variable from the assigner's policy, if your policy makes use of the version or variable that you are deleting.
 
-import TSConfigurable from "../components/ManageDeploymentPage/MOOCletEditor/TSConfigurable";
-
-
 function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, variables, versions) {
     if(policy === "UniformRandom") {
         return parameters;

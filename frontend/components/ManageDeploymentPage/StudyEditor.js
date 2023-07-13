@@ -1,5 +1,5 @@
 import { React, useState, useRef, useEffect } from 'react';
-import { Typography, TextField, Box, Button, Container, Input, Tooltip } from '@mui/material';
+import { Typography, TextField, Box, Button, Container, Input } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
@@ -14,7 +14,6 @@ import Modal from '@mui/material/Modal';
 import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
 import RewardEditor from './RewardEditor';
 import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
-import APICard from './APICard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -28,7 +27,7 @@ import { DndProvider } from "react-dnd";
 
 function StudyEditor(props) {
 
-    let theStudy = props.theStudy;
+    let theStudy = props.theStudy; // theStudy is not study!
     let sTheStudies = props.sTheStudies;
     let sTheStudy = props.sTheStudy;
 
@@ -46,34 +45,38 @@ function StudyEditor(props) {
         }
     ];
 
-
     const newStudy = {
-        "name": "Create New Study",
-        "_id": { "$oid": "1998" }
-    };
+        "name": "",
+        "variables": [],
+        "factors": [],
+        "versions": [],
+        "mooclets": designGraph,
+        "rewardInformation": {
+            "name": "reward",
+            "min": 0,
+            "max": 1
+        },
+        "simulationSetting": {
+            "baseReward": {},
+            "contextualEffects": [],
+            "numDays": 5
+        }
+    }
+    const [study, sStudy] = useState(
+        newStudy
+    );
 
 
     const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
     const deploymentName = props.deploymentName;
-    const [studyName, sStudyName] = useState("");
-    const [variables, sVariables] = useState([]);
-    const [versions, sVersions] = useState([]);
-    const [factors, sFactors] = useState([]);
-    const [mooclets, sMooclets] = useState(designGraph);
     const handleDrop = (newTreeData) => sMooclets(newTreeData);
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
     const [idToEdit, sIdToEdit] = useState(null);
     const treeRef = useRef(null);
     const handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
-    const [rewardInformation, sRewardInformation] = useState({
-        "name": "reward",
-        "min": 0,
-        "max": 1
-    });
-
     const addMOOClet = () => {
-        let newId = mooclets.length + 1;
+        let newId = study.mooclets.length + 1;
         let newMOOClet = {
             "id": newId,
             "parent": 1,
@@ -85,7 +88,7 @@ function StudyEditor(props) {
             "parameters": {},
             "weight": 100
         }
-        sMooclets([...mooclets, newMOOClet]);
+        sMooclets([...study.mooclets, newMOOClet]);
 
         handleOpen(newId);
     };
@@ -96,14 +99,14 @@ function StudyEditor(props) {
     };
 
     const handleMOOCletWeightChange = (event, myId) => {
-        let data = [...mooclets];
+        let data = [...study.mooclets];
         let mooclet = data.find(mooclet => mooclet.id === myId);
         mooclet['weight'] = event.target.value;
         sMooclets(data);
     }
 
     const handleMOOCletRemove = (myId) => {
-        let Tree = [...mooclets];
+        let Tree = [...study.mooclets];
         function removeNode(id) {
             // Find the index of the node with the given id
             const nodeIndex = Tree.findIndex((node) => node.id === id);
@@ -141,20 +144,15 @@ function StudyEditor(props) {
             },
             body: JSON.stringify({
                 "deploymentName": deploymentName, // TODO: change to "deploymentId
-                "studyName": studyName,
-                "mooclets": mooclets,
-                "variables": variables,
-                "versions": versions,
-                "factors": factors,
-                "rewardInformation": rewardInformation
+                "study": study
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data['status_code'] == 200) {
                     alert("Study created successfully!");
-                    sTheStudies([newStudy].concat(data["studies"]));
-                    sTheStudy(data['theStudy']);
+                    sTheStudies([theStudy].concat(data["studies"]));
+                    sTheStudy(data['study']);
 
                 }
                 else {
@@ -164,16 +162,11 @@ function StudyEditor(props) {
     };
 
     const loadCurrentStudy = () => {
-        fetch(`/apis/load_existing_study?deployment=${deploymentName}&study=${theStudy['name']}`)
+        fetch(`/apis/experimentDesign/study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
                 sStatus(4);
-                sMooclets(data['mooclets']);
-                sStudyName(data['studyName']);
-                sVariables(data['variables']);
-                sVersions(data['versions']);
-                sFactors(data['factors']);
-                sRewardInformation(data['rewardInformation']);
+                sStudy(data['study']);
                 sStatus(2);
             })
             .catch((error) => {
@@ -184,49 +177,34 @@ function StudyEditor(props) {
 
 
     useEffect(() => {
-        for (const element of mooclets) {
-            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, factors, variables, versions);
+        for (const element of study.mooclets) {
+            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
         }
-        let temp = [...mooclets];
+        let temp = [...study.mooclets];
         sMooclets(temp);
-    }, [variables, versions, factors]) //TO Improve: how to do it only when variables or versions deletion?
+    }, [study.variables, study.versions, study.factors]) //TO Improve: how to do it only when variables or versions deletion?
 
     useEffect(() => {
         handleOpen(1);
         // TODO: Think about how to open all the mooclets from cookies.
-        if (theStudy['_id']['$oid'] == 1998) {
-            // TODO: Now we just make them start from empty. But in the future we should allow people to make progress on unfinished study set up!
-            sStatus(1);
-            sStudyName("");
-            sVariables([]);
-            sVersions([]);
-            sFactors([]);
-            sMooclets(designGraph);
-            sRewardInformation({
-                "name": "reward",
-                "min": 0,
-                "max": 1
-            });
+        if (theStudy['_id']['$oid'] != 1998) {
+            loadCurrentStudy();
         }
         else {
-            loadCurrentStudy();
+            sStatus(1);
+            sStudy(newStudy);
         }
     }, [theStudy]);
 
     const handleModifyStudy = () => {
-        fetch('/apis/modify_existing_study', {
+        fetch('/apis/experimentDesign/study', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 "deployment": deploymentName, // TODO: change to "deploymentId
-                "study": studyName,
-                "mooclets": mooclets,
-                "variables": variables,
-                "factors": factors,
-                "versions": versions,
-                "rewardInformation": rewardInformation
+                "study": study
             })
         })
             .then(response => response.json())
@@ -247,7 +225,7 @@ function StudyEditor(props) {
             },
             body: JSON.stringify({
                 "deployment": deploymentName, // TODO: change to "deploymentId
-                "study": studyName
+                "study": study['name']
             })
         })
             .then(response => response.json())
@@ -266,7 +244,7 @@ function StudyEditor(props) {
 
     const getWeight = (node) => {
         // get all slibings.
-        let siblings = mooclets.filter(mooclet => mooclet.parent === node.parent);
+        let siblings = study.mooclets.filter(mooclet => mooclet.parent === node.parent);
         // get total weights of siblings.
         let totalWeight = 0;
         for (const element of siblings) {
@@ -279,14 +257,14 @@ function StudyEditor(props) {
 
     const handleDeleteStudy = () => {
         if (!confirm("Are you sure you want to delete the study? Everything associated to this study will be erased. This operation is NON-UNDOABLE.")) return;
-        fetch('/apis/experimentDesign/deleteStudy', {
+        fetch('/apis/experimentDesign/study', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 "deployment": deploymentName, // TODO: change to "deploymentId
-                "study": studyName
+                "study": study.name
             })
         })
             .then(response => response.json())
@@ -301,6 +279,21 @@ function StudyEditor(props) {
                 }
             })
     };
+
+    // Need to use with bind.
+    const setStudyAttributes = function(newAttribute) {
+        let temp = { ...study };
+        temp[this] = newAttribute;
+        sStudy(temp);
+    }
+
+    const sVariables = setStudyAttributes.bind('variables');
+    const sVersions = setStudyAttributes.bind('versions');
+    const sFactors = setStudyAttributes.bind('factors');
+    const sStudyName = setStudyAttributes.bind('name');
+    const sRewardInformation = setStudyAttributes.bind('rewardInformation');
+    const sMooclets = setStudyAttributes.bind('mooclets');
+    const sSimulationSetting = setStudyAttributes.bind('simulationSetting');
 
 
 
@@ -322,7 +315,7 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Study name</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                    <TextField required sx={{ mb: 3 }} label="Study name" value={studyName} onChange={(e) => sStudyName(e.target.value)}></TextField>
+                        <TextField required sx={{ mb: 3 }} label="Study name" value={study.name} onChange={(e) => sStudyName(e.target.value)}></TextField>
                     </AccordionDetails>
                 </Accordion>}
 
@@ -336,7 +329,7 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Reward</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <RewardEditor rewardInformation={rewardInformation} sRewardInformation={sRewardInformation} />
+                        <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -348,7 +341,7 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Variables</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <VariableEditor selectedVariables={variables} sSelectedVariables={sVariables} />
+                        <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
                     </AccordionDetails>
                 </Accordion>
 
@@ -361,10 +354,10 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Factors & Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <FactorsEditor allowVersionNameChange={status === 1} factors={factors} sFactors={sFactors} versions={versions} sVersions={sVersions} />
+                        <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
 
 
-                        <VersionEditor allowVersionNameChange={status === 1} factors={factors} versions={versions} sVersions={sVersions} />
+                        <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
                     </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -380,7 +373,7 @@ function StudyEditor(props) {
                             {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
                             <Tree
                                 ref={treeRef}
-                                tree={mooclets}
+                                tree={study.mooclets}
                                 rootId={0}
                                 onDrop={handleDrop}
                                 initialOpen={true}
@@ -420,30 +413,15 @@ function StudyEditor(props) {
                         <Typography variant='h6'>Simulations</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <SimulationEditor studyName={studyName} deploymentName={deploymentName} versions={versions} variables={variables} />
+                        <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting = {sSimulationSetting} />
                     </AccordionDetails>
                 </Accordion>
                 }
-
-
-
-                {studyName !== "" && false && <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="study-api-doc"
-                        id="study-api-doc"
-                    >
-                        <Typography variant='h6'>APIs for {studyName} in {deploymentName}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <APICard studyName={studyName} deploymentName={deploymentName}></APICard>
-                    </AccordionDetails>
-                </Accordion>}
             </Box>
 
             <Box sx={{ mb: 2 }}>
-                    {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
-                </Box>
+                {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
+            </Box>
             <Modal
                 open={moocletModalOpen}
                 onClose={handleMOOCletModalClose}
@@ -451,7 +429,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <MOOCletEditor mooclets={mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={variables} factors={factors} versions={versions}></MOOCletEditor>
+                    <MOOCletEditor mooclets={study.mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></MOOCletEditor>
                 </Box>
             </Modal>
         </Container>

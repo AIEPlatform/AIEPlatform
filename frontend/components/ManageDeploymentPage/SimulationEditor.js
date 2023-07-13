@@ -10,38 +10,8 @@ function SimulationEditor(props) {
     let study = props.studyName;
 
     let [sampleSize, sSampleSize] = useState(100);
-    const [simulationSetting, sSimulationSetting] = useState({
-        "baseReward": {}, // {version: 1, version: 2}
-        "contextualEffects": [], // "{contextual, operator(=, >, < or between), value, version, effect}", 
-        "numDays": 5
-    });
-
-    useEffect(() => {
-        // load simulationSetting
-        fetch(`/apis/experimentDesign/getSimulationSetting?deployment=${deployment}&study=${study}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data['status_code'] == 200) {
-                    sSimulationSetting(data['simulationSetting']);
-                }
-                else {
-                    let newSimulationSetting = {
-                        "baseReward": {},
-                        "contextualEffects": [],
-                        "numDays": 5
-                    };
-                    versions.forEach(version => {
-                        newSimulationSetting["baseReward"][version['name']] = 0.5;
-                    });
-                    sSimulationSetting(newSimulationSetting);
-                }
-            });
-    }, []);
+    let simulationSetting = props.simulationSetting;
+    let sSimulationSetting = props.sSimulationSetting;
 
     const addNewSimulatedContextualEffect = () => {
         let newSimulationSetting = { ...simulationSetting };
@@ -194,7 +164,7 @@ function SimulationEditor(props) {
             {/* let's do the base reward probability first. */}
             <Box sx={{ mt: 2 }}>
                 <mark>The simulator is now limited to binary reward, and uniform reward distribution!</mark>
-                <Typography variant="body1">How many days theis simulation have? (the simulated data will be splited evenly) <input type="number" value={simulationSetting['numDays'] || 5} onChange={(event) => {
+                <Typography variant="body1">How many days this simulation have? (the simulated data will be splited evenly) <input type="number" value={simulationSetting['numDays'] || 5} onChange={(event) => {
                     let newSimulationSetting = { ...simulationSetting };
                     newSimulationSetting['numDays'] = event.target.value;
                     sSimulationSetting(newSimulationSetting);

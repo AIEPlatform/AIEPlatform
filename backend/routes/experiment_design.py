@@ -98,26 +98,35 @@ def create_mooclet(mooclet, study_id, session):
     response = MOOCletModel.create(new_mooclet, session=session)
     return response.inserted_id
 
+# Create a study for a deployment.
+# This function should be atomic. (TODO: testing it).
+# This function should verify if the given study is valid or not. (TODO: keep completing it).
 @experiment_design_apis.route("/apis/experimentDesign/study", methods=["POST"])
 def create_study():
+
     if check_if_loggedin() == False:
         return json_util.dumps({
             "status_code": 401
         }), 401
     
-    studyName = request.json['studyName'] if 'studyName' in request.json else None;
-    mooclets = request.json['mooclets'] if 'mooclets' in request.json else None;
-    versions = request.json['versions'] if 'versions' in request.json else None;
-    variables = request.json['variables'] if 'variables' in request.json else None;
-    factors = request.json['factors'] if 'factors' in request.json else None;
-    deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
-    rewardInformation = request.json['rewardInformation'] if 'rewardInformation' in request.json else None;
+    study = request.json['study'] if 'study' in request.json else None;
 
-    if studyName is None or mooclets is None or versions is None or variables is None or factors is None or deploymentName is None or rewardInformation is None:
+    if study is None:
         return json_util.dumps({
             "status_code": 400, 
             "message": "Missing required parameters."
         }), 400
+    
+
+    studyName = study['name'] if 'name' in study else None;
+    mooclets = study['mooclets'] if 'mooclets' in study else None;
+    versions = study['versions'] if 'versions' in study else None;
+    variables = study['variables'] if 'variables' in study else None;
+    factors = study['factors'] if 'factors' in study else None;
+    rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else None;
+    simulationSetting = study['simulationSetting'] if 'simulationSetting' in study else None;
+
+    deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
     
 
     # TODO: Check if valid study name or not.
@@ -155,7 +164,8 @@ def create_study():
                 'versions': versions,
                 'variables': variables, 
                 'factors': factors,
-                'rewardInformation': rewardInformation
+                'rewardInformation': rewardInformation, 
+                'simulationSetting': simulationSetting
             }
             # Induction to create mooclet
             response = StudyModel.create(the_study, session=session)
@@ -170,7 +180,7 @@ def create_study():
                 "status_code": 200, 
                 "message": "success", 
                 "studies": studies,
-                "theStudy": the_study
+                "study": the_study
             }), 200
         except Exception as e:
             print(e)
@@ -265,28 +275,19 @@ def build_json_for_study(studyId):
     return mooclet_list
 
 # TODO: Important: loading existing study.
-@experiment_design_apis.route("/apis/load_existing_study", methods = ["GET"])
+@experiment_design_apis.route("/apis/experimentDesign/study", methods = ["GET"])
 def load_existing_study():
     # load from params.
     deployment = request.args.get('deployment') # Name
     study = request.args.get('study') # Name
     the_deployment = DeploymentModel.get_one({"name": deployment})
-    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
-    studyName = the_study['name'] # Note that we don't allow study name to be changed.
-    variables = the_study['variables']
-    versions = the_study['versions']
-    factors = the_study['factors']
-    rewardInformation = the_study['rewardInformation'] if 'rewardInformation' in the_study else {"name": "reward", "min": 0, "max": 1}
-    mooclets = build_json_for_study(the_study['_id'])
+    theStudy = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+    mooclets = build_json_for_study(theStudy['_id'])
+    theStudy['mooclets'] = mooclets # Note that in DB, we only save the root mooclet!
     return json_util.dumps(
         {
         "status_code": 200,
-        "studyName": studyName,
-        "variables": variables,
-        "versions": versions, 
-        "factors": factors,
-        "mooclets": mooclets,
-        "rewardInformation": rewardInformation
+        "study": theStudy
         }
     ), 200
 
@@ -338,23 +339,26 @@ def modify_mooclet(mooclet, study_id, session):
         response = MOOCletModel.create(new_mooclet, session=session)
         return response.inserted_id
 
-@experiment_design_apis.route("/apis/modify_existing_study", methods = ["PUT"])
+@experiment_design_apis.route("/apis/experimentDesign/study", methods = ["PUT"])
 def modify_existing_study():
     # load from request body.
     deployment = 'deployment' in request.json and request.json['deployment'] or None # Name
     study = 'study' in request.json and request.json['study'] or None # Name
-    mooclets = request.json['mooclets']
-    versions = request.json['versions']
-    variables = request.json['variables']
 
-    if deployment is None or study is None or mooclets is None or versions is None or variables is None:
+    if deployment is None or study is None:
         return json_util.dumps({
             "status_code": 400,
             "message": "Please make sure the deployment, study, mooclets, versions, variables are provided."
         }), 400
-    
+
+    # TODO: check if the following exists (it's part of validate)
+    mooclets = study['mooclets']
+    versions = study['versions']
+    variables = study['variables']
+    studyName = study['name']
+
     the_deployment = DeploymentModel.get_one({"name": deployment})
-    the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+    the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
 
     with client.start_session() as session:
         try:
@@ -536,7 +540,7 @@ def delete_study_helper(the_deployment, the_study, session):
         return 500
     
 
-@experiment_design_apis.route("/apis/experimentDesign/deleteStudy", methods=["DELETE"])
+@experiment_design_apis.route("/apis/experimentDesign/study", methods=["DELETE"])
 def delete_study():
     if check_if_loggedin() is False:
         return json_util.dumps({
@@ -557,6 +561,7 @@ def delete_study():
             "message": "You don't have access to the study."
         }), 403
     with client.start_session() as session:
+        session.start_transaction()
         response = delete_study_helper(the_deployment, the_study, session)
         if response == 200:
             session.commit_transaction()
