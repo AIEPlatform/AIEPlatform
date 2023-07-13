@@ -1,5 +1,5 @@
 import { React, useState, useRef, useEffect } from 'react';
-import { Typography, TextField, Box, Button, Container, Input } from '@mui/material';
+import { Typography, TextField, Box, Button, Container, Input, Checkbox, FormControl, FormGroup, FormControlLabel } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
@@ -46,7 +46,7 @@ function StudyEditor(props) {
             "name": "assigner1",
             "policy": "UniformRandom",
             "parameters": {},
-            "weight": 100
+            "weight": 1
         }
     ];
 
@@ -99,7 +99,7 @@ function StudyEditor(props) {
             "name": `assigner${newId}`,
             "policy": "UniformRandom",
             "parameters": {},
-            "weight": 100
+            "weight": 1
         }
         sMooclets([...study.mooclets, newMOOClet]);
 
@@ -299,9 +299,6 @@ function StudyEditor(props) {
     const setStudyAttributes = function (newAttribute) {
         let temp = { ...study };
         temp[this] = newAttribute;
-        console.log(this)
-        console.log(newAttribute)
-        console.log(temp)
         sStudy(temp);
     }
 
@@ -433,7 +430,6 @@ function StudyEditor(props) {
                 </Accordion>
                 }
             </Box>
-
             <Box sx={{ mb: 2 }}>
                 {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
             </Box>

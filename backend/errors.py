@@ -35,3 +35,13 @@ def status_code(code, others = {}):
         "code": status_codes[code]['code'],
         "message": status_codes[code]['message']
     }), status_codes[code]['status']
+
+
+class StudyNotFound(Exception):
+    pass
+
+class DeploymentNotFound(Exception):
+    pass
+
+class InvalidDeploymentToken(Exception):
+    pass

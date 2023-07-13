@@ -36,5 +36,8 @@ Study.update_many({"simulationSetting": {"$exists": False}}, {"$set": {"simulati
         }}})
 
 
+Deployment.update_many({"apiToken": {"$exists": False}}, {"$set": {"apiToken": None}})
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=20110, debug=True, threaded=True)

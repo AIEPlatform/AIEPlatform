@@ -194,8 +194,7 @@ def create_study():
 
 @experiment_design_apis.route("/apis/my_deployments", methods=["GET"])
 def my_deployments():
-    user = "chenpan"
-    my_deployments = DeploymentModel.get_many({"collaborators": {"$in": [user]}})
+    my_deployments = DeploymentModel.get_many({})
     return json_util.dumps({
         "status_code": 200,
         "message": "These are my deployments.",
@@ -217,7 +216,6 @@ def the_studies():
 
 @experiment_design_apis.route("/apis/create_deployment", methods = ["POST"])
 def create_deployment():
-    user = "chenpan"
     name = request.json['name'] if 'name' in request.json else None
     description = request.json['description'] if 'description' in request.json else None
     collaborators = request.json['collaborators'] if 'collaborators' in request.json else None
@@ -861,6 +859,79 @@ def stop_simulation():
         Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "stopping"}})
         return json_util.dumps({
             "status_code": 200
+        }), 200
+    except Exception as e:
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    
+
+import random
+import string
+# generate deployment api token.
+@experiment_design_apis.route('/apis/experimentDesign/generateDeploymentApiToken', methods=['PUT'])
+def generate_deployment_api_token():
+    def generate_token(length=32):
+        # Define the characters that can be used in the token
+        characters = string.ascii_letters + string.digits
+
+        # Generate a random token using the specified length
+        token = ''.join(random.choice(characters) for _ in range(length))
+
+        return token
+
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    if deployment is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment name."
+        }), 400
+    try:
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        token = generate_token(32) 
+        Deployment.update_one({"_id": the_deployment['_id']}, {"$set": {"apiToken": token}})
+        my_deployments = DeploymentModel.get_many({})
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        return json_util.dumps({
+            "status_code": 200,
+            "deployments": my_deployments, 
+            "theDeployment": the_deployment
+        }), 200
+    except Exception as e:
+        return json_util.dumps({
+            "status_code": 500, 
+            "message": e
+        }), 500
+    
+
+
+@experiment_design_apis.route('/apis/experimentDesign/deleteDeploymentApiToken', methods=['PUT'])
+def delete_deployment_api_token():
+    def generate_token(length=32):
+        # Define the characters that can be used in the token
+        characters = string.ascii_letters + string.digits
+
+        # Generate a random token using the specified length
+        token = ''.join(random.choice(characters) for _ in range(length))
+
+        return token
+
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    if deployment is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment name."
+        }), 400
+    try:
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        Deployment.update_one({"_id": the_deployment['_id']}, {"$set": {"apiToken": None}})
+        my_deployments = DeploymentModel.get_many({})
+        the_deployment = DeploymentModel.get_one({"name": deployment})
+        return json_util.dumps({
+            "status_code": 200,
+            "deployments": my_deployments, 
+            "theDeployment": the_deployment
         }), 200
     except Exception as e:
         return json_util.dumps({

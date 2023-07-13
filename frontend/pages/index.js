@@ -7,6 +7,8 @@ import StudyEditor from '../components/ManageDeploymentPage/StudyEditor';
 import { UserContext } from "../contexts/UserContextWrapper";
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 
 import getConfig from 'next/config';
 
@@ -23,7 +25,7 @@ function ManageDeployment() {
     const [myDeployments, sMyDeployments] = useState([]);
     const [theStudies, sTheStudies] = useState([]);
     const [theStudy, sTheStudy] = useState(null);
-    const [deploymentName, sDeploymentName] = useState(null);
+    const [theDeployment, sTheDeployment] = useState(null);
 
     const { userContext, sUserContext } = useContext(UserContext);
     useEffect(() => {
@@ -45,7 +47,7 @@ function ManageDeployment() {
             .then(response => response.json())
             .then(data => {
                 sTheStudies([newStudy].concat(data["studies"]));
-                sDeploymentName(option['name'])
+                sTheDeployment(option)
             });
     }
 
@@ -60,12 +62,12 @@ function ManageDeployment() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                deployment: deploymentName
+                deployment: theDeployment['name']
             })
         })
             .then(response => response.json())
             .then(data => {
-                if(data['status_code'] === 200) {
+                if (data['status_code'] === 200) {
                     // refresh
                     location.reload();
                 }
@@ -78,6 +80,70 @@ function ManageDeployment() {
                 alert("Failed to delete deployment");
             });
     };
+
+
+    const handleDeploymentTokenUpdate = () => {
+        // put api to /apis/experimentDesign/generateDeploymentApiToken with deployment in the request body
+        
+        fetch(`/apis/experimentDesign/generateDeploymentApiToken`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                deployment: theDeployment['name']
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data['status_code'] === 200) {
+                    // refresh
+                    sMyDeployments(data['deployments']);
+                    sTheDeployment(data['theDeployment']);
+                }
+                else {
+                    alert("Failed to generate deployment token");
+                }
+            }
+            )
+            .catch((error) => {
+                console.error('Error:', error);
+                alert("Failed to generate deployment token");
+            }
+            );
+    }
+
+
+    const handleDeploymentTokenDelete = () => {
+        // put api to /apis/experimentDesign/generateDeploymentApiToken with deployment in the request body
+        
+        fetch(`/apis/experimentDesign/deleteDeploymentApiToken`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                deployment: theDeployment['name']
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data['status_code'] === 200) {
+                    // refresh
+                    sMyDeployments(data['deployments']);
+                    sTheDeployment(data['theDeployment']);
+                }
+                else {
+                    alert("Failed to delete deployment token");
+                }
+            }
+            )
+            .catch((error) => {
+                console.error('Error:', error);
+                alert("Failed to delete deployment token");
+            }
+            );
+    }
 
     if (userContext !== undefined && userContext !== null) {
         return (
@@ -93,10 +159,20 @@ function ManageDeployment() {
                             onChange={(option) => handleSelectMyDeployment(option)}
                             placeholder="Select a deployment"
                         />
-                        <Box>
-                            <Button sx = {{m: 1}} variant="outlined" startIcon={<DeleteIcon />} onClick={handleDeleteDeployment}>Delete</Button>
-                            <Button sx = {{m: 1}} variant="outlined" startIcon={<RestartAltIcon />} onClick={() => alert("Not complete yet! But you can reset each study.")}>Reset</Button>
-                        </Box>
+                        {theDeployment &&
+                            <Box>
+                                <Box>
+                                    <Button sx={{ m: 1, ml: 0 }} variant="outlined" startIcon={<DeleteIcon />} onClick={handleDeleteDeployment}>Delete</Button>
+                                    <Button sx={{ m: 1 }} variant="outlined" startIcon={<RestartAltIcon />} onClick={() => alert("Not complete yet! But you can reset each study.")}>Reset</Button>
+                                </Box>
+                                <Box>
+                                    {!theDeployment['apiToken'] && <Button sx={{ m: 1, ml: 0 }} variant="outlined" startIcon={<VpnKeyIcon />} onClick={handleDeploymentTokenUpdate}>Generate Token</Button>}
+                                    {theDeployment['apiToken'] && <Button sx={{ m: 1, ml: 0 }} variant="outlined" startIcon={<VpnKeyIcon />} onClick={handleDeploymentTokenUpdate}>Re-generate Token</Button>}
+                                    {theDeployment['apiToken'] && <Button sx={{ m: 1 }} variant="outlined" startIcon={<LockOpenIcon />} onClick={handleDeploymentTokenDelete}>Delete Token</Button>}
+                                </Box>
+                                {theDeployment['apiToken'] && <Typography variant="body1">Token: {theDeployment['apiToken']}</Typography>}
+                            </Box>
+                        }
                     </Box>
 
 
@@ -112,7 +188,7 @@ function ManageDeployment() {
                         />
                     </Box>
                 </Container>
-                {theStudy && <StudyEditor deploymentName={deploymentName} theStudy={theStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></StudyEditor>}
+                {theStudy && <StudyEditor deploymentName={theDeployment['name']} theStudy={theStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></StudyEditor>}
             </Layout>
         );
     }

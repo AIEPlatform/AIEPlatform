@@ -28,7 +28,7 @@ function NewDeployment() {
             body: JSON.stringify({
                 "name": deploymentName,
                 "description": deploymentDescription,
-                "collaborators": ["chenpan"]
+                "collaborators": []
             })
         }).then(response => response.json())
             .then(data => {
