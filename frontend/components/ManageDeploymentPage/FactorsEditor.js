@@ -4,8 +4,6 @@ import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
 function VersionEditor(props) {
     let factors = props.factors;
     let sFactors = props.sFactors;
-    let versions = props.versions;
-    let sVersions = props.sVersions;
 
     const handleVersionNameChange = (index, event) => {
         let data = [...factors];
@@ -15,27 +13,12 @@ function VersionEditor(props) {
 
     const addFields = () => {
         sFactors([...factors, `factor${factors.length + 1}`]);
-        // Need to add this factor to every versionJSON in versions.
-        let data = [...versions];
-        data.forEach((version) => {
-            version['versionJSON'][`factor${factors.length + 1}`] = 0;
-        }
-        )
-        sVersions(data);
     }
 
     const removeFields = (index) => {
         let data = [...factors];
         data.splice(index, 1)
         sFactors(data);
-
-        // Need to remove this factor to every versionJSON in versions.
-        let data2 = [...versions];
-        data2.forEach((version) => {
-            delete version['versionJSON'][factors[index]]
-        }
-        )
-        sVersions(data2);
     }
 
     return (

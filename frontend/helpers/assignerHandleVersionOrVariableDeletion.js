@@ -1,5 +1,35 @@
 // To Policy Author, please note that you need to remove the version and variable from the assigner's policy, if your policy makes use of the version or variable that you are deleting.
+function validifyStudy(study) {
+    let modifiedStudy = {...study};
 
+    for (const element of modifiedStudy.mooclets) {
+        element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
+    }
+
+    // For study versions. Need to remove the factor from the version if the factor is deleted, or add the factor if the factor is added.
+    for(let factor of study.factors) {
+        // check versionJSON of each version, and add the factor if it's not there.
+        for(let version of study.versions) {
+            if(!version.versionJSON.hasOwnProperty(factor)) {
+                version.versionJSON[factor] = 0;
+            }
+        }
+    }
+
+    for(let version of study.versions) {
+        // check versionJSON of each version, and remove the factor if it's not there.
+        for(let factor of study.factors) {
+            if(!version.versionJSON.hasOwnProperty(factor)) {
+                delete version.versionJSON[factor];
+            }
+        }
+    }
+
+
+
+    return modifiedStudy;
+
+}
 function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, variables, versions) {
     if(policy === "UniformRandom") {
         return parameters;
@@ -75,4 +105,4 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
     }
 }
 
-export default assignerHandleVersionOrVariableDeletion;
+export default validifyStudy;

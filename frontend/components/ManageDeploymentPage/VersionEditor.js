@@ -68,7 +68,7 @@ function VersionEditor(props) {
                                     sx={{mr: 2, mb: 2}}
                                     key={factor}
                                     label={factor}
-                                    value={input['versionJSON'][factor]}
+                                    value={input['versionJSON'][factor] || 0}
                                     type="number"
                                     onChange={(e) => { handleVersionJSONChange(index, factor, e)}}
                                 />

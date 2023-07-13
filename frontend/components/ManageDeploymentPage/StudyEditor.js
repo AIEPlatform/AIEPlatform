@@ -13,7 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
 import RewardEditor from './RewardEditor';
-import assignerHandleVersionOrVariableDeletion from '../../helpers/assignerHandleVersionOrVariableDeletion';
+import validifyStudy from '../../helpers/assignerHandleVersionOrVariableDeletion';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -177,13 +177,14 @@ function StudyEditor(props) {
 
 
     useEffect(() => {
-        for (const element of study.mooclets) {
-            element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
-        }
-        let temp = [...study.mooclets];
-        sMooclets(temp);
-    }, [study.variables, study.versions, study.factors]) //TO Improve: how to do it only when variables or versions deletion?
-
+        let modifiedStudy = validifyStudy(study);
+        sStudy(modifiedStudy);
+        // for (const element of study.mooclets) {
+        //     element.parameters = validifyStudy(element.policy, element.parameters, study.factors, study.variables, study.versions);
+        // }
+        // let temp = [...study.mooclets];
+        // sMooclets(temp);
+    }, [study.variables.length, study.versions.length, study.factors.length]);
     useEffect(() => {
         handleOpen(1);
         // TODO: Think about how to open all the mooclets from cookies.
@@ -284,6 +285,9 @@ function StudyEditor(props) {
     const setStudyAttributes = function(newAttribute) {
         let temp = { ...study };
         temp[this] = newAttribute;
+        console.log(this)
+        console.log(newAttribute)
+        console.log(temp)
         sStudy(temp);
     }
 
