@@ -17,6 +17,11 @@ import validifyStudy from '../../helpers/validifyStudy';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import ScaleIcon from '@mui/icons-material/Scale';
+import AttributionIcon from '@mui/icons-material/Attribution';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AutoModeIcon from '@mui/icons-material/AutoMode';
+import AbcIcon from '@mui/icons-material/Abc';
 
 import {
     Tree,
@@ -278,7 +283,7 @@ function StudyEditor(props) {
     };
 
     // Need to use with bind.
-    const setStudyAttributes = function(newAttribute) {
+    const setStudyAttributes = function (newAttribute) {
         let temp = { ...study };
         temp[this] = newAttribute;
         console.log(this)
@@ -326,7 +331,7 @@ function StudyEditor(props) {
                         aria-controls="panel1a-content"
                         id="reward-editor"
                     >
-                        <Typography variant='h6'>Reward</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ScaleIcon sx={{ mr: 1 }}></ScaleIcon>Reward</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
@@ -338,7 +343,7 @@ function StudyEditor(props) {
                         aria-controls="panel1a-content"
                         id="panel1a-header"
                     >
-                        <Typography variant='h6'>Variables</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
@@ -351,7 +356,7 @@ function StudyEditor(props) {
                         aria-controls="panel1a-content"
                         id="panel1a-header"
                     >
-                        <Typography variant='h6'>Factors & Versions</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
@@ -366,7 +371,7 @@ function StudyEditor(props) {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6'>Designer Graph</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Designer Graph</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <DndProvider backend={MultiBackend} options={getBackendOptions()}>
@@ -390,11 +395,10 @@ function StudyEditor(props) {
                                         <Button onClick={() => {
                                             sIdToEdit(node.id);
                                             sMoocletModalOpen(true);
-                                        }}><EditIcon /></Button>
+                                        }} startIcon={<EditIcon />}>Edit</Button>
 
-                                        <Button onClick={() => {
-                                            handleMOOCletRemove(node.id)
-                                        }} color='error'> <CloseIcon /></Button>
+
+                                        <Button onClick={() => handleMOOCletRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
                                     </Box>
                                 )}
                             />
@@ -410,10 +414,10 @@ function StudyEditor(props) {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6'>Simulations</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AutoModeIcon sx={{ mr: 1 }}></AutoModeIcon>Simulations</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting = {sSimulationSetting} />
+                        <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
                     </AccordionDetails>
                 </Accordion>
                 }

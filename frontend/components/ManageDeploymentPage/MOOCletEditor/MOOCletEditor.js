@@ -34,7 +34,6 @@ function MOOCletEditor(props) {
     let mooclets = props.mooclets;
     let myId = props.idToEdit;
     let sMooclets = props.sMooclets;
-    let [chosenPolicy, sChosenPolicy] = useState(null);
     let versions = props.versions;
     let factors = props.factors;
     let variables = props.variables;
@@ -55,10 +54,6 @@ function MOOCletEditor(props) {
         mooclet['policy'] = option.value;
         mooclet['parameters'] = {};
         sMooclets(data);
-        // let data = [...policies];
-        // data[index]['type'] = option['value'];
-        // data[index]['parameter'] = {};
-        // sPolicies(data);
     }
 
     return (
