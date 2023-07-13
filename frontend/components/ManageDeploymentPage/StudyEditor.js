@@ -74,7 +74,15 @@ function StudyEditor(props) {
 
     const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
     const deploymentName = props.deploymentName;
-    const handleDrop = (newTreeData) => sMooclets(newTreeData);
+    const handleDrop = (newTreeData) => {
+        // check if two nodes have parent as 0. If so, alert user that they can't do that.
+        let rootNodes = newTreeData.filter(node => node.parent === 0);
+        if (rootNodes.length > 1) {
+            alert("You cannot have more than one root node!");
+            return;
+        }
+        sMooclets(newTreeData)
+    };
     const [moocletModalOpen, sMoocletModalOpen] = useState(false);
     const [idToEdit, sIdToEdit] = useState(null);
     const treeRef = useRef(null);
@@ -110,7 +118,12 @@ function StudyEditor(props) {
         sMooclets(data);
     }
 
-    const handleMOOCletRemove = (myId) => {
+    const handleAssignerRemove = (myId) => {
+        // check if this is the root node (if it is, alert user they can't remove the root one)
+        if (myId === 1) {
+            alert("You cannot remove the root assigner!");
+            return;
+        }
         let Tree = [...study.mooclets];
         function removeNode(id) {
             // Find the index of the node with the given id
@@ -360,8 +373,6 @@ function StudyEditor(props) {
                     </AccordionSummary>
                     <AccordionDetails>
                         <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
-
-
                         <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
                     </AccordionDetails>
                 </Accordion>
@@ -371,7 +382,7 @@ function StudyEditor(props) {
                         aria-controls="mooclet-graph"
                         id="mooclet-graph"
                     >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Designer Graph</Typography>
+                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <DndProvider backend={MultiBackend} options={getBackendOptions()}>
@@ -398,7 +409,7 @@ function StudyEditor(props) {
                                         }} startIcon={<EditIcon />}>Edit</Button>
 
 
-                                        <Button onClick={() => handleMOOCletRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
+                                        <Button onClick={() => handleAssignerRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
                                     </Box>
                                 )}
                             />
