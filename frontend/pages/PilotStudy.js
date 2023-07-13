@@ -113,7 +113,7 @@ export default function PilotStudy() {
             redirect: 'follow'
         };
 
-        fetch("/apis/get_treatment", requestOptions)
+        fetch("/apis/treatment", requestOptions)
             .then(response => response.json())
             .then(result => sTreatment(result['treatment']['content']))
             .catch(error => console.log('error', error));
@@ -135,7 +135,7 @@ export default function PilotStudy() {
             body: raw,
             redirect: 'follow'
         };
-        fetch("/apis/get_treatment", requestOptions)
+        fetch("/apis/treatment", requestOptions)
             .then(response => response.json())
             .then(result => {
                 if (result["status_code"] === 200) {
@@ -200,7 +200,7 @@ export default function PilotStudy() {
             redirect: 'follow'
         };
 
-        fetch("/apis/give_variable", requestOptions)
+        fetch("/apis/variable", requestOptions)
             .then(response => response.json())
             .then(result => {
                 if (result['status_code'] == 200) {

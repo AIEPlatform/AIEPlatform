@@ -154,15 +154,6 @@ class TSConfigurable(Policy):
             print(e)
             return None
 
-    def get_reward(self, user, value, where, other_information):
-        current_time = datetime.datetime.now()
-        latest_interaction = self.get_latest_interaction(user, where)
-        if latest_interaction is None:
-            return 400
-        else:
-            InteractionModel.append_reward(latest_interaction['_id'], value)
-            return 200
-
     def ts_sample(self):
         """
         Input is a dict of versions to successes and failures e.g.:

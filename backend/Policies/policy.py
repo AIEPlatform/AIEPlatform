@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from credentials import *
 from Models.InteractionModel import InteractionModel
+from errors import *
 
 from Models.StudyModel import StudyModel
 class Policy(ABC):
@@ -24,9 +25,15 @@ class Policy(ABC):
 	@abstractmethod
 	def choose_arm(self, user, where, other_information):
 		pass
-	@abstractmethod
+
 	def get_reward(self, user, value, where, other_information):
-		pass
+
+		latest_interaction = self.get_latest_interaction(user, where)
+		if latest_interaction is None:
+			raise OrphanReward("There is no interaction this reward to be appended to.") 
+		else:
+			InteractionModel.append_reward(latest_interaction['_id'], value)
+			return 200
 
 	def get_latest_interaction(self, user, where):
 		last_interaction = InteractionModel.get_latest_interaction_for_where(self._id, user, where)

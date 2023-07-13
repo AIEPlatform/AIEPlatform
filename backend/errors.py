@@ -49,3 +49,12 @@ class InvalidDeploymentToken(Exception):
 
 class UpdateTokenWhileSimulation(Exception):
     pass
+
+class OrphanReward(Exception):
+    pass
+
+class VariableNotInStudy(Exception):
+    pass
+
+class VariableNotExist(Exception):
+    pass

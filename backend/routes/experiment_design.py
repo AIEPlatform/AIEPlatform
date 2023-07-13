@@ -728,14 +728,14 @@ def run_simulation():
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
     def give_variable_value_helper(deployment, study, variableName, user, value, apiToken):
-        url = f'http://localhost:20110/apis/give_variable'
+        url = f'http://localhost:20110/apis/variable'
         headers = {'Content-Type': 'application/json'}
         payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
         return response
     
     def assign_treatment_helper(deployment, study, user, apiToken):
-        url = f'http://localhost:20110/apis/get_treatment'
+        url = f'http://localhost:20110/apis/treatment'
         headers = {'Content-Type': 'application/json'}
         payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
@@ -743,7 +743,7 @@ def run_simulation():
 
 
     def get_reward_helper(deployment, study, user, value, apiToken):
-        url = f'http://localhost:20110/apis/give_reward'
+        url = f'http://localhost:20110/apis/reward'
         headers = {'Content-Type': 'application/json'}
         payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))

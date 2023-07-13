@@ -76,7 +76,7 @@ def giveReward():
             # make an api to dataarrow to get reward.
             if choice == question['right_answer_index']:
                 reward = 1
-            url = "http://localhost:3000/apis/give_reward"
+            url = "http://localhost:3000/apis/reward"
             payload = json.dumps({
             "deployment": "Pilot Study",
             "study": study,

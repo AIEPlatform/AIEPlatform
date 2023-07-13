@@ -32,13 +32,13 @@ def reset_study_helper(deployment, study):
 
 
 def give_variable_value_helper(deployment, study, variableName, user, value):
-    url = f'http://localhost:20110/apis/give_variable'
+    url = f'http://localhost:20110/apis/variable'
     headers = {'Content-Type': 'application/json'}
     payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName}
     response = session.post(url, headers=headers, data=json.dumps(payload))
 
 def assign_treatment_helper(deployment, study, user):
-    url = f'http://localhost:20110/apis/get_treatment'
+    url = f'http://localhost:20110/apis/treatment'
     headers = {'Content-Type': 'application/json'}
     payload = {'deployment': deployment, 'study': study, 'user': user}
     response = session.post(url, headers=headers, data=json.dumps(payload))
@@ -46,7 +46,7 @@ def assign_treatment_helper(deployment, study, user):
 
 
 def get_reward_helper(deployment, study, user, value):
-    url = f'http://localhost:20110/apis/give_reward'
+    url = f'http://localhost:20110/apis/reward'
     headers = {'Content-Type': 'application/json'}
     payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value}
     response = session.post(url, headers=headers, data=json.dumps(payload))

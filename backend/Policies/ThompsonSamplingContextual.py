@@ -349,20 +349,6 @@ class ThompsonSamplingContextual(Policy):
                 session.abort_transaction()
                 return
 
-
-    def get_reward(self, user, value, where, other_information):
-
-        latest_interaction = self.get_latest_interaction(user, where)
-        if latest_interaction is None:
-            return 400
-        else:
-            InteractionModel.append_reward(latest_interaction['_id'], value)
-            # Note that TS Contextual won't update inmediately.
-            # We should do a check if to see if should update the parameters or not.
-            if True:
-                pass
-            return 200
-
     def should_update_model(self, current_time):
         # TODO: consider if we should have a time filter.
         # TODO: consider if we can make sure that everything after this interaction are not used??

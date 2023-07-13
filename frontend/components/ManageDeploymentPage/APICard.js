@@ -16,12 +16,12 @@ export default function APICard(props) {
             flexDirection: 'column'
         }}>
             <mark>Complete API doc is not available yet, sorry!</mark>
-            <Box key="get_treatment" margin = "10px 0" style={{position: "relative"}}>
+            <Box key="treatment" margin = "10px 0" style={{position: "relative"}}>
                         <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                             To get an arm for a user for a specific study and deployment.
                         </Typography>
                         <Typography variant="h5" component="div">
-                            /get_treatment
+                            /treatment
                         </Typography>
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST
@@ -40,12 +40,12 @@ export default function APICard(props) {
                         </Box>
             </Box>
 
-            <Box key="give_reward" margin = "10px 0" style={{position: "relative"}}>
+            <Box key="reward" margin = "10px 0" style={{position: "relative"}}>
                         <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                             To send a reward by a user for a specific study and deployment.
                         </Typography>
                         <Typography variant="h5" component="div">
-                            /give_reward
+                            /reward
                         </Typography>
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST
@@ -69,7 +69,7 @@ export default function APICard(props) {
                             To send a value for a variable by a user.
                         </Typography>
                         <Typography variant="h5" component="div">
-                            /give_variable
+                            /variable
                         </Typography>
                         <Typography sx={{ mb: 1.5 }} color="text.secondary">
                             POST

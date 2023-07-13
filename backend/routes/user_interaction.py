@@ -106,41 +106,27 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
         raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
     if deployment['apiToken'] != None and deployment['apiToken'] != apiToken:
         raise InvalidDeploymentToken(f"Invalid token for deployment {deployment_name}.")
-    try:
-        study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
-        if study is None:
-            raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
-        start_time = time.time()
+    study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
+    if study is None:
+        raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
+    start_time = time.time()
+    the_mooclet = get_mooclet_for_user(study, user)
 
-        print("hihihihihihi")
-        the_mooclet = get_mooclet_for_user(study, user)
+    mooclet = create_mooclet_instance(user, the_mooclet)
+    response = mooclet.get_reward(user, value, where, other_information)
 
-        mooclet = create_mooclet_instance(user, the_mooclet)
-        response = mooclet.get_reward(user, value, where, other_information)
+    if DEV_MODE:
+        end_time = time.time()
+        execution_time = end_time - start_time
 
-        if DEV_MODE:
-            end_time = time.time()
-            execution_time = end_time - start_time
-
-            the_log = {
-                "policy": the_mooclet['policy'],
-                "execution_time": execution_time, 
-                "threads": threading.active_count(), 
-                "timestamp": datetime.datetime.now()
-            }
-            RewardLog.insert_one(the_log)
-        return response
-    except Exception as e:
-        # traceback
-        print(traceback.format_exc())
-        if DEV_MODE:
-            the_log = {
-                "policy": the_mooclet['policy'] if the_mooclet is not None else None,
-                "error": True, 
-                "threads": threading.active_count(), 
-                "timestamp": datetime.datetime.now()
-            }
-            RewardLog.insert_one(the_log)
+        the_log = {
+            "policy": the_mooclet['policy'],
+            "execution_time": execution_time, 
+            "threads": threading.active_count(), 
+            "timestamp": datetime.datetime.now()
+        }
+        RewardLog.insert_one(the_log)
+    return response
 
 
 
@@ -149,11 +135,10 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
 # POST : can make changes server side, multiple POST with same parameters can lead to different results and responses - typically add an amount to an account
 # PUT : can make changes server side, multiple PUT with same parameters should lead to same result and response - typically set an account value
 
-@user_interaction_apis.route("/apis/get_treatment", methods=["POST"])
+@user_interaction_apis.route("/apis/treatment", methods=["POST"])
 def get_treatment():
     # read request body.
     try:
-        start_time = time.time()
         deployment = request.json['deployment'] if 'deployment' in request.json else None
         study = request.json['study'] if 'study' in request.json else None
         user = request.json['user'] if 'user' in request.json else None
@@ -192,7 +177,6 @@ def get_treatment():
         }), 401
 
     except Exception as e:
-        print(traceback.format_exc())
         return json_util.dumps({
             "status_code": 500,
             "message": "Server is down please try again later."
@@ -200,7 +184,7 @@ def get_treatment():
     
 
 
-@user_interaction_apis.route("/apis/give_reward", methods=["POST"])
+@user_interaction_apis.route("/apis/reward", methods=["POST"])
 def give_reward():
     # read request body.
     try:
@@ -215,21 +199,21 @@ def give_reward():
         if deployment is None or study is None or user is None or value is None:
             return json_util.dumps({
                 "status_code": 400,
-                "message": "Please make sure deployment, study, user are provided."
-            }), 400    
+                "message": "Please make sure deployment, study, user and value are provided."
+            }), 400
         else:        
             result = get_reward(deployment, study, user, value, where, apiToken, other_information)
-            if result != 200:
-                return json_util.dumps({
-                    "status_code": 400,
-                    "message": "No reward is saved."
-                }), 400
-            else:
 
-                return json_util.dumps({
-                    "status_code": 200,
-                    "message": "Reward is saved."
-                }), 200
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "Reward is saved."
+        }), 200
+            
+    except OrphanReward as e:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": str(e)
+        }), 400
 
     except StudyNotFound as e:
         return json_util.dumps({
@@ -271,7 +255,7 @@ def give_variable_value(variableName, user, value, where = None, apiToken = None
     VariableValueModel.insert_variable_value(the_variable)
     return 200
 
-@user_interaction_apis.route("/apis/give_variable", methods=["POST"])
+@user_interaction_apis.route("/apis/variable", methods=["POST"])
 def give_variable():
     # save a contextual varialble.
     try:
@@ -297,56 +281,44 @@ def give_variable():
             raise DeploymentNotFound(f"Deployment {deployment} not found or you don't have permission.")
         if the_deployment['apiToken'] != None and the_deployment['apiToken'] != apiToken:
             raise InvalidDeploymentToken(f"Invalid token for deployment {deployment}.")
-        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id'], "variables": {"$in": [variableName]}}, public = True)
+        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']}, public = True)
         if the_study is None:
             raise StudyNotFound(f"Study {study} not found or you don't have permission.")
-
+        
+        elif the_study['variables'] is None or variableName not in the_study['variables']:
+            raise VariableNotInStudy(f"Variable {variableName} is not in study {study} in deployment {deployment}.")
         else:
             doc = VariableModel.get_one({"name": variableName}, public = True)
-            if doc is None:
-                return json_util.dumps({
-                    "status_code": 400,
-                    "message": "Variable is not found."
-                }), 400
-        
+            if doc is None: raise VariableNotExist(f"Variable {variableName} does not exist.")
+            give_variable_value(variableName, user, value, where, apiToken, other_information)
 
-            
-            response = give_variable_value(variableName, user, value, where, apiToken, other_information)
-            if response == 200:
-                return json_util.dumps({
+        return json_util.dumps({
                     "status_code": 200,
-                    "message": "Variable is saved."
+                    "message": "Variable value is saved."
                 }), 200
-            else:
-                return json_util.dumps({
-                    "status_code": 400,
-                    "message": "The deployment or study not exist or the variable is not in the study."
-                }), 400
-            
     except StudyNotFound as e:
         return json_util.dumps({
             "status_code": 404,
             "message": str(e)
         }), 404
-    
     except DeploymentNotFound as e:
         return json_util.dumps({
             "status_code": 404,
             "message": str(e)
         }), 404
-    
     except InvalidDeploymentToken as e:
         return json_util.dumps({
             "status_code": 401,
             "message": str(e)
         }), 401
+    except VariableNotExist as e:
+        return json_util.dumps({
+            "status_code": 404,
+            "message": str(e)
+        }), 404
     except Exception as e:
-        print("Error in giving_variable:")
-        print(e)
-        print(traceback.format_exc())
         return json_util.dumps({
             "status_code": 500,
-            "message": "Server is down please try again later."
+            "message": str(e)
         }), 500
-
 
