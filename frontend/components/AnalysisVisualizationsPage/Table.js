@@ -63,13 +63,6 @@ export default function BasicTable(props) {
     }
   }, [theDataset, props.datasetTime, analysis['selectedVariables'], analysis['selectedAssigners']]);
 
-
-  const shouldMergeCells = (rowIndex, columnIndex) => {
-    // Add your logic here to determine if cells should be merged
-    // For example, you can compare adjacent cells or check certain conditions in the data
-    return rowIndex > 0 && rows[rowIndex][columnIndex] === rows[rowIndex - 1][columnIndex];
-  };
-
   return (
     <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6">Basic Reward Summary Table</Typography>
@@ -104,7 +97,7 @@ export default function BasicTable(props) {
           <TableHead>
             <TableRow>
               {columns.map((column) => (
-                <TableCell>{column}</TableCell>
+                <TableCell key={column}>{column}</TableCell>
               ))}
             </TableRow>
           </TableHead>

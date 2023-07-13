@@ -1,5 +1,5 @@
-import { React, useState, useEffect } from 'react';
-import { Typography, Paper, TextField, Button, Box, FormControl, InputLabel, MenuItem, NativeSelect } from '@mui/material';
+import { React, useState } from 'react';
+import { Typography, Paper, Button, Box, FormControl, NativeSelect } from '@mui/material';
 
 function SimulationEditor(props) {
     // TODO: make this saved to DB.

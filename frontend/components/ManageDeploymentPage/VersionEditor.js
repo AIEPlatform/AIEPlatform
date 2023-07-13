@@ -1,5 +1,5 @@
-import { React, useState } from 'react';
-import { Typography, Paper, TextField, Button, Box } from '@mui/material';
+import { React } from 'react';
+import { Paper, TextField, Button, Box } from '@mui/material';
 
 function VersionEditor(props) {
     let versions = props.versions;

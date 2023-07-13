@@ -60,7 +60,7 @@ export default function AverageRewardByTime(props) {
       return;
     }
     else {
-      getGraph([]);
+      getGraph();
     }
   }, [theDataset, props.datasetTime, analysis['selectedVersions'], analysis['selectedAssigners']]);
 
@@ -112,7 +112,7 @@ export default function AverageRewardByTime(props) {
             groups.map((group, index) => {
               if (group.includes('errorBar')) return;
               return (
-                <Line key={index} type="monotone" dataKey={group} stroke={distinctColors[index % 9]} activeDot={{ r: 8 }}>
+                <Line key={group} type="monotone" dataKey={group} stroke={distinctColors[index % 9]} activeDot={{ r: 8 }}>
                   <ErrorBar dataKey={`${group}-errorBar`} width={4} strokeWidth={2} stroke={distinctColors[index % 9]} direction="y" />
                 </Line>
               )

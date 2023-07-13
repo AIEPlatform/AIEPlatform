@@ -1,5 +1,5 @@
 import { React, useState, useEffect } from 'react';
-import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
+import { Typography, Paper, TextField, Button } from '@mui/material';
 import Select from 'react-select';
 function VariableEditor(props) {
     let selectedVariables = props.selectedVariables;

@@ -1,5 +1,5 @@
-import { React, useEffect, useState } from 'react';
-import { Typography, Paper, TextField, Bo, Button, Box, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { React, useEffect } from 'react';
+import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '@mui/material';
 import Select from 'react-select';
 import CommonMOOCletAttribute from './CommonMOOCletAttribute';
 

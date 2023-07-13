@@ -13,7 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
 import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
 import RewardEditor from './RewardEditor';
-import validifyStudy from '../../helpers/assignerHandleVersionOrVariableDeletion';
+import validifyStudy from '../../helpers/validifyStudy';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -175,16 +175,12 @@ function StudyEditor(props) {
     }
 
 
-
+    // Call the helper function to validate the study.
     useEffect(() => {
         let modifiedStudy = validifyStudy(study);
         sStudy(modifiedStudy);
-        // for (const element of study.mooclets) {
-        //     element.parameters = validifyStudy(element.policy, element.parameters, study.factors, study.variables, study.versions);
-        // }
-        // let temp = [...study.mooclets];
-        // sMooclets(temp);
     }, [study.variables.length, study.versions.length, study.factors.length]);
+
     useEffect(() => {
         handleOpen(1);
         // TODO: Think about how to open all the mooclets from cookies.
