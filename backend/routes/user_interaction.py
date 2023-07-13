@@ -316,6 +316,12 @@ def give_variable():
             "status_code": 404,
             "message": str(e)
         }), 404
+    
+    except VariableNotInStudy as e:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": str(e)
+        }), 400
     except Exception as e:
         return json_util.dumps({
             "status_code": 500,
