@@ -26,6 +26,38 @@ function validifyStudy(study) {
     }
 
 
+    // Validify the simulation setting.
+    if(modifiedStudy.simulationSetting) {
+        // first, add version or remove version to Base Reward Probability.
+        // baseReward is a dict. I want to add a key-value from study.versions if the key not exist in baseReward.
+        // Then, I want to remove the key-value from baseReward if the key not exist in study.versions.
+        for(let version of study.versions) {
+            if(!modifiedStudy.simulationSetting.baseReward.hasOwnProperty(version.name)) {
+                modifiedStudy.simulationSetting.baseReward[version.name] = 0.5;
+            }
+        }
+
+        for(let version in study.simulationSetting.baseReward) {
+            if(!study.versions.some(obj => obj.name === version)) {
+                delete modifiedStudy.simulationSetting.baseReward[version];
+            }
+        }
+
+        // NEXT! remove contextual effects whose version or variable is not in the study.
+
+        for(let i = 0; i < modifiedStudy.simulationSetting.contextualEffects.length; i++) {
+            let contextualEffect = modifiedStudy.simulationSetting.contextualEffects[i];
+            if(!study.versions.some(obj => obj.name === contextualEffect.version)) {
+                //remove by index
+                modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
+            }
+            if(!study.variables.some(obj => obj.name === contextualEffect.variable)) {
+                modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
+            }
+        }
+    }
+
+
 
     return modifiedStudy;
 
@@ -96,8 +128,6 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
               delete parameters['current_posteriors'][key];
             }
           }
-
-        console.log(parameters)
         return parameters;
     }
     else {
