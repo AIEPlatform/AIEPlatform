@@ -36,6 +36,10 @@ Study.update_many({"simulationSetting": {"$exists": False}}, {"$set": {"simulati
         }}})
 
 
+# Change all simulation status to idle.
+Study.update_many({}, {"$set": {"simulationStatus": "idle"}})
+
+
 Deployment.update_many({"apiToken": {"$exists": False}}, {"$set": {"apiToken": None}})
 
 

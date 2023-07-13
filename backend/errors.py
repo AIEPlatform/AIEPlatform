@@ -45,3 +45,7 @@ class DeploymentNotFound(Exception):
 
 class InvalidDeploymentToken(Exception):
     pass
+
+
+class UpdateTokenWhileSimulation(Exception):
+    pass

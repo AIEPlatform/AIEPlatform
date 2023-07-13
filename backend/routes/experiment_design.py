@@ -727,32 +727,31 @@ def run_simulation():
             Interaction.update_many({"_id": {"$in": time_mooclet_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
-    def give_variable_value_helper(deployment, study, variableName, user, value):
+    def give_variable_value_helper(deployment, study, variableName, user, value, apiToken):
         url = f'http://localhost:20110/apis/give_variable'
         headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName, 'where': 'simulation'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
         return response
     
-    def assign_treatment_helper(deployment, study, user):
+    def assign_treatment_helper(deployment, study, user, apiToken):
         url = f'http://localhost:20110/apis/get_treatment'
         headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
         return response
 
 
-    def get_reward_helper(deployment, study, user, value):
+    def get_reward_helper(deployment, study, user, value, apiToken):
         url = f'http://localhost:20110/apis/give_reward'
         headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation'}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
         return response
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
     sampleSize = int(request.json['sampleSize']) if 'sampleSize' in request.json else None
     simulationSetting = request.json['simulationSetting'] if 'simulationSetting' in request.json else None
-    
 
     
     if deployment is None or study is None or sampleSize is None or simulationSetting is None:
@@ -776,6 +775,9 @@ def run_simulation():
         }), 404
     
 
+    apiToken = the_deployment['apiToken']
+    
+
     # check if a simulation is running.
     if 'simulationStatus' in the_study and the_study['simulationStatus'] != 'idle':
         return json_util.dumps({
@@ -797,8 +799,8 @@ def run_simulation():
             for variable in the_study['variables']:
                 predictor = random.choice([0, 1])
                 variable_values[variable] = predictor
-                give_variable_value_helper(deployment, study, variable, user, predictor)
-            assignResponse = assign_treatment_helper(deployment, study, user)
+                give_variable_value_helper(deployment, study, variable, user, predictor, apiToken)
+            assignResponse = assign_treatment_helper(deployment, study, user, apiToken)
             treatment = assignResponse.json()['treatment']['name']
             rewardProb = 0.5
             # TODO: improve the efficiency of the following code.
@@ -818,7 +820,7 @@ def run_simulation():
                 value = 1
             else:
                 value = 0
-            get_reward_helper(deployment, study, user, value)
+            get_reward_helper(deployment, study, user, value, apiToken)
         fake_data_time(deployment, study, simulationSetting['numDays'])
 
         print("Simulation Done")
@@ -908,14 +910,6 @@ def generate_deployment_api_token():
 
 @experiment_design_apis.route('/apis/experimentDesign/deleteDeploymentApiToken', methods=['PUT'])
 def delete_deployment_api_token():
-    def generate_token(length=32):
-        # Define the characters that can be used in the token
-        characters = string.ascii_letters + string.digits
-
-        # Generate a random token using the specified length
-        token = ''.join(random.choice(characters) for _ in range(length))
-
-        return token
 
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     if deployment is None:
