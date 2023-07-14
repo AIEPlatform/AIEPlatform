@@ -65,8 +65,13 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
         raise InvalidDeploymentToken(f"Invalid token for deployment {deployment_name}.")
     
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
+
     if study is None:
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
+    
+    # check if the studyis stopped or not.
+    if study['status'] == 'stopped':
+        raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
     
     start_time = time.time()
     the_mooclet = get_mooclet_for_user(study, user)
@@ -109,6 +114,10 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
     if study is None:
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
+    
+    # check if the studyis stopped or not.
+    if study['status'] == 'stopped':
+        raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
     start_time = time.time()
     the_mooclet = get_mooclet_for_user(study, user)
 
@@ -175,6 +184,12 @@ def get_treatment():
             "status_code": 401,
             "message": str(e)
         }), 401
+    
+    except StudyStopped as e:
+        return json_util.dumps({
+            "status_code": 409,
+            "message": str(e)
+        }), 409
 
     except Exception as e:
         return json_util.dumps({
@@ -232,6 +247,12 @@ def give_reward():
             "status_code": 401,
             "message": str(e)
         }), 401
+    
+    except StudyStopped as e:
+        return json_util.dumps({
+            "status_code": 409,
+            "message": str(e)
+        }), 409
 
     except Exception as e:
         print(e)
@@ -285,6 +306,10 @@ def give_variable():
         if the_study is None:
             raise StudyNotFound(f"Study {study} not found or you don't have permission.")
         
+        # check if the studyis stopped or not.
+        if study['status'] == 'stopped':
+            raise StudyStopped(f"Study {study} in {deployment} has stopped.")
+        
         elif the_study['variables'] is None or variableName not in the_study['variables']:
             raise VariableNotInStudy(f"Variable {variableName} is not in study {study} in deployment {deployment}.")
         else:
@@ -322,6 +347,12 @@ def give_variable():
             "status_code": 400,
             "message": str(e)
         }), 400
+    
+    except StudyStopped as e:
+        return json_util.dumps({
+            "status_code": 409,
+            "message": str(e)
+        }), 409
     except Exception as e:
         return json_util.dumps({
             "status_code": 500,

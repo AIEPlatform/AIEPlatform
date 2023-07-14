@@ -113,6 +113,20 @@ If the deployment for the study has apiToken protection on, the following reques
 }
 ```
 
+### Study has stopped
+
+**Condition**: When the study has been stopped.
+**code**: `409`
+
+**Content example** :
+
+```json
+{
+    "status_code": 409,
+    "message": "Study test1 in Simulations has stopped."
+}
+```
+
 ## Notes
 
 * There may be other error cases that are not implemented yet. For example, we need to check if the value is valid by checking the Variable Definition.

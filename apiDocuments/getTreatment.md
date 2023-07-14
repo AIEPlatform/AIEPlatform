@@ -104,6 +104,20 @@ If the deployment for the study has apiToken protection on, the following reques
 }
 ```
 
+### Study has stopped
+
+**Condition**: When the study has been stopped.
+**code**: `409`
+
+**Content example** :
+
+```json
+{
+    "status_code": 409,
+    "message": "Study test1 in Simulations has stopped."
+}
+```
+
 ## Notes
 
 * This API doesn't necessary create an Interaction record, if, for example, the assigner doesn't allow assign a treatment before a reward is received.

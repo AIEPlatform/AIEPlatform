@@ -58,3 +58,6 @@ class VariableNotInStudy(Exception):
 
 class VariableNotExist(Exception):
     pass
+
+class StudyStopped(Exception):
+    pass
