@@ -358,6 +358,7 @@ def modify_existing_study():
     versions = study['versions']
     variables = study['variables']
     studyName = study['name']
+    status = study['status'] if 'status' in study else 'stopped'
 
     the_deployment = DeploymentModel.get_one({"name": deployment})
     the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
@@ -367,7 +368,8 @@ def modify_existing_study():
             session.start_transaction()
             Study.update_one({'_id': the_study['_id']}, {'$set': {
                 'versions': versions, 
-                'variables': variables
+                'variables': variables,
+                'status': status
                 }}, session=session)
             
 
