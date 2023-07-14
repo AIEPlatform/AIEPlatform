@@ -56,6 +56,7 @@ function ManageDeployment() {
     }
 
     const handleDeleteDeployment = () => {
+        if (!confirm("Are you sure you want to delete the deployment? All studies will be deleted. The interactions/datasets associated will all be deleted.")) return;
         fetch(`/apis/experimentDesign/deployment`, {
             method: 'DELETE',
             headers: {

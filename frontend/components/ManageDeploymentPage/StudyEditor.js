@@ -22,6 +22,8 @@ import AttributionIcon from '@mui/icons-material/Attribution';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import AbcIcon from '@mui/icons-material/Abc';
+import StopIcon from '@mui/icons-material/Stop';
+import StartIcon from '@mui/icons-material/Start';
 
 import {
     Tree,
@@ -65,7 +67,8 @@ function StudyEditor(props) {
             "baseReward": {},
             "contextualEffects": [],
             "numDays": 5
-        }
+        },
+        "status": "stopped"
     }
     const [study, sStudy] = useState(
         newStudy
@@ -316,9 +319,23 @@ function StudyEditor(props) {
         <Container>
             <Box>
                 <Box sx={{ mb: 2 }}>
+                    {/* {status === 2 && theStudy['status'] === "stopped" && <Button sx={{ m: 1 }} variant="outlined" onClick={handle} startIcon={<StartIcon />}>Start</Button>}
+                    {status === 2 && theStudy['status'] === "running" && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<StopIcon />}>Stop</Button>} */}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleResetStudy} startIcon={<RestartAltIcon />}>Reset</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
+                        <Box>
+                            <FormGroup>
+                                <FormControlLabel control={<Checkbox checked={study['status'] === 'running'} onChange= {
+                                    (e) => {
+        
+                                        let temp = { ...study };
+                                        temp['status'] = e.target.checked ? 'running' : 'stopped';
+                                        sStudy(temp);
+                                    }
+                                } />} label="Start the study" />
+                            </FormGroup>
+                        </Box>
                 </Box>
 
                 {status === 1 && <Accordion>
@@ -443,7 +460,7 @@ function StudyEditor(props) {
                     <MOOCletEditor mooclets={study.mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></MOOCletEditor>
                 </Box>
             </Modal>
-        </Container>
+        </Container >
     );
 }
 

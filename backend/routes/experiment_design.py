@@ -111,6 +111,8 @@ def create_study():
     
     study = request.json['study'] if 'study' in request.json else None;
 
+    print(study)
+
     if study is None:
         return json_util.dumps({
             "status_code": 400, 
@@ -125,6 +127,7 @@ def create_study():
     factors = study['factors'] if 'factors' in study else None;
     rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else None;
     simulationSetting = study['simulationSetting'] if 'simulationSetting' in study else None;
+    status = study['status'] if 'status' in study else 'stopped';
 
     deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
     
@@ -165,7 +168,8 @@ def create_study():
                 'variables': variables, 
                 'factors': factors,
                 'rewardInformation': rewardInformation, 
-                'simulationSetting': simulationSetting
+                'simulationSetting': simulationSetting,
+                "status": status
             }
             # Induction to create mooclet
             response = StudyModel.create(the_study, session=session)
