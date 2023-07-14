@@ -307,7 +307,7 @@ def give_variable():
             raise StudyNotFound(f"Study {study} not found or you don't have permission.")
         
         # check if the studyis stopped or not.
-        if study['status'] == 'stopped':
+        if the_study['status'] == 'stopped':
             raise StudyStopped(f"Study {study} in {deployment} has stopped.")
         
         elif the_study['variables'] is None or variableName not in the_study['variables']:
@@ -354,6 +354,7 @@ def give_variable():
             "message": str(e)
         }), 409
     except Exception as e:
+        print(traceback.format_exc())
         return json_util.dumps({
             "status_code": 500,
             "message": str(e)

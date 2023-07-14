@@ -413,7 +413,7 @@ def get_variables():
             "message": e
         }), 500
 
-@experiment_design_apis.route("/apis/variable", methods=["POST"])
+@experiment_design_apis.route("/apis/experimentDesign/variable", methods=["POST"])
 def create_variable():
     if check_if_loggedin() is False:
         return json_util.dumps({

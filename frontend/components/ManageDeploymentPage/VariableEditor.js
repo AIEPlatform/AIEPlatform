@@ -54,7 +54,7 @@ function VariableEditor(props) {
     }, []);
 
     let handleCreateNewVariable = () => {
-        fetch(`/apis/variable`, {
+        fetch(`/apis/experimentDesign/variable`, {
             method: "post",
             body: JSON.stringify({
                 newVariableName: newVariable,
