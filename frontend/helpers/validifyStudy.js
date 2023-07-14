@@ -2,10 +2,6 @@
 function validifyStudy(study) {
     let modifiedStudy = {...study};
 
-    for (const element of modifiedStudy.mooclets) {
-        element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
-    }
-
     // For study versions. Need to remove the factor from the version if the factor is deleted, or add the factor if the factor is added.
     for(let factor of study.factors) {
         // check versionJSON of each version, and add the factor if it's not there.
@@ -58,6 +54,11 @@ function validifyStudy(study) {
     }
 
 
+    for (const element of modifiedStudy.mooclets) {
+        element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
+    }
+
+
 
     return modifiedStudy;
 
@@ -80,33 +81,35 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
 
         // Can do: prompt the user it's very risky to do when an experiment is running. They may want to keep a copy of the previous matrices
 
+        console.log(parameters['regressionFormulaItems'][2])
+
         if(parameters['regressionFormulaItems'] === undefined) {
             return parameters;
         }
         let allVariables = factors.concat(variables);
-    
+
+        // if variables or versions changes, the regression formula items also need to be changed.
         for(let i = 0; i < parameters['regressionFormulaItems'].length; i++) {
             parameters['regressionFormulaItems'][i] = parameters['regressionFormulaItems'][i].filter(item => {
                 return allVariables.some(obj => obj === item);
               });
-
-            
         }
-        
+
+        // this is a little bit trick. because we may remove multiple items in the same time, we need to do it in a loop.
         let deepCopy = JSON.parse(JSON.stringify(parameters));
         for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
             if(deepCopy.regressionFormulaItems[i].length === 0) {
-                parameters['regressionFormulaItems'].splice(i, 1);
-
+                deepCopy.regressionFormulaItems.splice(i, 1);
                 let coefIndex = deepCopy['include_intercept'] ? i + 1 : i;
-                parameters['coef_cov'].splice(coefIndex, 1);
-                parameters['coef_cov'].forEach(row => row.splice(coefIndex, 1));
+                deepCopy['coef_cov'].splice(coefIndex, 1);
+                deepCopy['coef_cov'].forEach(row => row.splice(coefIndex, 1));
 
-                parameters['coef_mean'].splice(coefIndex, 1);
+                deepCopy['coef_mean'].splice(coefIndex, 1);
+                i--;
             }
         }
+        parameters = deepCopy;
 
-            
         return parameters;
     }
 
@@ -117,7 +120,6 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         }
         
         for(let version of versions) {
-            console.log(version['name'])
             if(!parameters['current_posteriors'][version['name']]) {
                 parameters['current_posteriors'][version['name']] = {"successes": 0, "failures": 0}
             }

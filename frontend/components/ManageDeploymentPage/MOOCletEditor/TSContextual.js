@@ -191,7 +191,22 @@ function TSContextual(props) {
     }
 
     const handleRegressionFormulaItemPickup = (option, index) => {
-        mooclet['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value)
+        mooclet['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
+
+        let parameters = mooclet['parameters'];
+        let deepCopy = JSON.parse(JSON.stringify(parameters));
+        for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
+            if(deepCopy.regressionFormulaItems[i].length === 0) {
+                
+                parameters['regressionFormulaItems'].splice(i, 1);
+
+                let coefIndex = deepCopy['include_intercept'] ? i + 1 : i;
+                parameters['coef_cov'].splice(coefIndex, 1);
+                parameters['coef_cov'].forEach(row => row.splice(coefIndex, 1));
+
+                parameters['coef_mean'].splice(coefIndex, 1);
+            }
+        }
         sMooclets(tree)
     };
 

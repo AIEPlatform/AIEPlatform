@@ -197,10 +197,12 @@ function StudyEditor(props) {
 
 
     // Call the helper function to validate the study.
+
     useEffect(() => {
+        console.log("Variables, versions, or factors length change")
         let modifiedStudy = validifyStudy(study);
         sStudy(modifiedStudy);
-    }, [study.variables.length, study.versions.length, study.factors.length]);
+    }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all mooclets
 
     useEffect(() => {
         handleOpen(1);
@@ -215,6 +217,7 @@ function StudyEditor(props) {
     }, [theStudy]);
 
     const handleModifyStudy = () => {
+        // validate the study
         fetch('/apis/experimentDesign/study', {
             method: 'PUT',
             headers: {
@@ -324,18 +327,18 @@ function StudyEditor(props) {
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleResetStudy} startIcon={<RestartAltIcon />}>Reset</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
-                        <Box>
-                            <FormGroup>
-                                <FormControlLabel control={<Checkbox checked={study['status'] === 'running'} onChange= {
-                                    (e) => {
-        
-                                        let temp = { ...study };
-                                        temp['status'] = e.target.checked ? 'running' : 'stopped';
-                                        sStudy(temp);
-                                    }
-                                } />} label="Start the study" />
-                            </FormGroup>
-                        </Box>
+                    <Box>
+                        <FormGroup>
+                            <FormControlLabel control={<Checkbox checked={study['status'] === 'running'} onChange={
+                                (e) => {
+
+                                    let temp = { ...study };
+                                    temp['status'] = e.target.checked ? 'running' : 'stopped';
+                                    sStudy(temp);
+                                }
+                            } />} label="Start the study" />
+                        </FormGroup>
+                    </Box>
                 </Box>
 
                 {status === 1 && <Accordion>
