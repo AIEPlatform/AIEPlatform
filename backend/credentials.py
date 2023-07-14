@@ -14,8 +14,7 @@ db = client[DB_NAME]
 Dataset = db['dataset']
 Deployment = db['deployment']
 Study = db['study']
-MOOClet = db['mooclet']
-MOOCletHistory = db['MOOCletHistory']
+Assigner = db['assigner']
 VariableValue = db['variableValue']
 Interaction = db['interaction']
 Variable = db['variable']
@@ -31,16 +30,16 @@ Study.create_index([('name', pymongo.ASCENDING), ('deploymentId', pymongo.ASCEND
 VariableValue.create_index([('variableName', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
 VariableValue.create_index("variableName")
 
-MOOClet.create_index([('name', pymongo.ASCENDING), ('studyId', pymongo.ASCENDING)], unique=True)
+Assigner.create_index([('name', pymongo.ASCENDING), ('studyId', pymongo.ASCENDING)], unique=True)
 
-Interaction.create_index([('moocletId', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
+Interaction.create_index([('assignerId', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
 
 Variable.create_index("name", unique=True)
-Lock.create_index("moocletId", unique=True)
+Lock.create_index("assignerId", unique=True)
 User.create_index("email", unique=True)
 
 
-MOOCletIndividualLevelInformation = db['MOOCletIndividualLevelInformation']
+AssignerIndividualLevelInformation = db['AssignerIndividualLevelInformation']
 
 def getDataset(datasetId):
     theDataset = Dataset.find_one({"_id": ObjectId(datasetId)}) # Only 

@@ -14,7 +14,7 @@ import time
 import threading
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.StudyModel import StudyModel
 from Models.DeploymentModel import DeploymentModel
 from Models.VariableModel import VariableModel
@@ -26,7 +26,7 @@ import json
 
 examples_apis = Blueprint('examples_apis', __name__)
 
-# this is an example of how other app may intergrate DataArrow.
+# this is an example of how other app may intergrate AIEPlatform.
 
 questions = [
     {
@@ -73,7 +73,7 @@ def giveReward():
     for question in questions:
         if question['topic'] == topic:
             reward = 0
-            # make an api to dataarrow to get reward.
+            # make an api to AIEPlatform to get reward.
             if choice == question['right_answer_index']:
                 reward = 1
             url = "http://localhost:3000/apis/reward"

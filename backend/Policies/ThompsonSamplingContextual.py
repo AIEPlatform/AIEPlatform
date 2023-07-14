@@ -15,7 +15,7 @@ import traceback
 import sys
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
 
 
@@ -32,22 +32,22 @@ class ThompsonSamplingContextual(Policy):
     # store normal-inverse-gamma parameters
     # 
     # 
-    def __init__(self, user, **mooclet_obj_from_db):
-        super().__init__(user, **mooclet_obj_from_db)
+    def __init__(self, user, **assigner_obj_from_db):
+        super().__init__(user, **assigner_obj_from_db)
         self.individualMode = False
         # TODO: check if num_rewards is strictly the same as the threshold when it's init.
-        if 'individualLevel' in self.parameters and self.parameters['individualLevel'] is True and InteractionModel.get_mooclet_num_feedback(moocletId = self._id) >= self.parameters['individualLevelThreshold']:
+        if 'individualLevel' in self.parameters and self.parameters['individualLevel'] is True and InteractionModel.get_assigner_num_feedback(assignerId = self._id) >= self.parameters['individualLevelThreshold']:
             # load or init.
             self.individualMode = True
-            theIndividualInformation = MOOCletIndividualLevelInformation.find_one({"moocletId": self._id, "user": user})
+            theIndividualInformation = AssignerIndividualLevelInformation.find_one({"assignerId": self._id, "user": user})
             if theIndividualInformation is not None:
                 self.parameters = theIndividualInformation['parameters']
             else:
                 # TODO: Do we need lock here? Is it possible that the concurrency issue happens for one user?
                 current_params = {key: value for key, value in self.parameters.items() if key not in  ["individualParameters", "individualLevel", "individualLevelThreshold", "individualLevelBatchSize", "batch_size"]}
                 current_params['batch_size'] = self.parameters["individualLevelBatchSize"]
-                response = MOOCletIndividualLevelInformation.insert_one({"moocletId": self._id, "user": user, "parameters": current_params})
-                the_info = MOOCletIndividualLevelInformation.find_one({"_id": response.inserted_id})
+                response = AssignerIndividualLevelInformation.insert_one({"assignerId": self._id, "user": user, "parameters": current_params})
+                the_info = AssignerIndividualLevelInformation.find_one({"_id": response.inserted_id})
                 self.parameters = the_info['parameters']
                 
 
@@ -82,7 +82,7 @@ class ThompsonSamplingContextual(Policy):
         if self.individualMode:
             return choose_arm_individual(self, user, where, other_information)
         
-        current_enrolled = InteractionModel.get_num_participants_for_assigner(moocletId = self._id) #TODO: is it number of learners or number of observations????
+        current_enrolled = InteractionModel.get_num_participants_for_assigner(assignerId = self._id) #TODO: is it number of learners or number of observations????
         
         if self.should_update_model(current_time) and current_enrolled % self.parameters['batch_size'] == 0:
             someone_is_updating = False
@@ -164,7 +164,7 @@ class ThompsonSamplingContextual(Policy):
                         "treatment": lucky_version,
                         "outcome": None,
                         "where": where,
-                        "moocletId": self._id,
+                        "assignerId": self._id,
                         "timestamp": datetime.datetime.now(),
                         "otherInformation": other_information, 
                         "contextuals": contextual_vars_dict,
@@ -206,7 +206,7 @@ class ThompsonSamplingContextual(Policy):
             # – treatment
             # – outcome
             # – where: like which page, which dialogue…
-            # – MOOClet
+            # – Assigner
             # – timestamp
             # – otherInformation
             
@@ -217,7 +217,7 @@ class ThompsonSamplingContextual(Policy):
                 "treatment": lucky_version,
                 "outcome": None,
                 "where": where,
-                "moocletId": self._id,
+                "assignerId": self._id,
                 "timestamp": datetime.datetime.now(),
                 "otherInformation": other_information, 
                 "contextuals": contextual_vars_dict,
@@ -323,7 +323,7 @@ class ThompsonSamplingContextual(Policy):
 
 
                 # Update parameters in DB.
-                MOOCletIndividualLevelInformation.update_one({"moocletId": self._id, "user": user}, {"$set": {"parameters": {
+                AssignerIndividualLevelInformation.update_one({"assignerId": self._id, "user": user}, {"$set": {"parameters": {
                     "coef_mean": posterior_vals['coef_mean'].tolist(),
                     "coef_cov": posterior_vals['coef_cov'].tolist(),
                     "variance_a": posterior_vals['variance_a'],
@@ -338,7 +338,7 @@ class ThompsonSamplingContextual(Policy):
                 # Release lock.
                 session.commit_transaction()
                 print(f'individual model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
-                self.paramters = MOOCletIndividualLevelInformation.find_one({"moocletId": self._id, "user": user})['parameters']
+                self.paramters = AssignerIndividualLevelInformation.find_one({"assignerId": self._id, "user": user})['parameters']
                 self.reinit()
                 LockModel.delete({"_id": new_lock_id})
                 return
@@ -435,7 +435,7 @@ class ThompsonSamplingContextual(Policy):
                 posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
 
                 # Update parameters in DB.
-                MOOCletModel.update_policy_parameters(self._id, {
+                AssignerModel.update_policy_parameters(self._id, {
                     "parameters.coef_mean": posterior_vals['coef_mean'].tolist(),
                     "parameters.coef_cov": posterior_vals['coef_cov'].tolist(),
                     "parameters.variance_a": posterior_vals['variance_a'],
@@ -445,7 +445,7 @@ class ThompsonSamplingContextual(Policy):
                 # Release lock.
                 session.commit_transaction()
                 print(f'group model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
-                self.paramters = MOOCletModel.find_mooclet({"_id": self._id})['parameters']
+                self.paramters = AssignerModel.find_assigner({"_id": self._id})['parameters']
                 self.reinit()
                 LockModel.delete({"_id": new_lock_id})
                 return
@@ -467,7 +467,7 @@ def choose_arm_individual(self, user, where, other_information):
     try:
         current_time = datetime.datetime.now()
         lucky_version = self.get_incomplete_consistent_assignment(user, where)
-        current_enrolled = InteractionModel.get_num_participants_for_assigner_individual(moocletId = self._id, user = user) #TODO: is it number of learners or number of observations????
+        current_enrolled = InteractionModel.get_num_participants_for_assigner_individual(assignerId = self._id, user = user) #TODO: is it number of learners or number of observations????
 
         if self.should_update_model_individual(current_time, user) and current_enrolled % self.parameters['batch_size'] == 0:
 
@@ -554,7 +554,7 @@ def choose_arm_individual(self, user, where, other_information):
                     "treatment": lucky_version,
                     "outcome": None,
                     "where": where,
-                    "moocletId": self._id,
+                    "assignerId": self._id,
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": other_information, 
                     "contextuals": contextual_vars_dict,
@@ -598,7 +598,7 @@ def choose_arm_individual(self, user, where, other_information):
         # – treatment
         # – outcome
         # – where: like which page, which dialogue…
-        # – MOOClet
+        # – Assigner
         # – timestamp
         # – otherInformation
         
@@ -609,7 +609,7 @@ def choose_arm_individual(self, user, where, other_information):
             "treatment": lucky_version,
             "outcome": None,
             "where": where,
-            "moocletId": self._id,
+            "assignerId": self._id,
             "timestamp": datetime.datetime.now(),
             "otherInformation": other_information, 
             "contextuals": contextual_vars_dict,
@@ -624,15 +624,15 @@ def choose_arm_individual(self, user, where, other_information):
 
 
 
-def check_lock_individual(moocletId, user):
+def check_lock_individual(assignerId, user):
     # Check if lock exists
     try:
-        lock_exists = LockModel.get_one({"moocletId": user + "@" + str(moocletId)})
+        lock_exists = LockModel.get_one({"assignerId": user + "@" + str(assignerId)})
         if lock_exists:
             return None
         else:
             # Create lock
-            response = LockModel.create({"moocletId": user + "@" + str(moocletId)})
+            response = LockModel.create({"assignerId": user + "@" + str(assignerId)})
             return response.inserted_id
     except Exception as e:
         print("Error In Creating lock")
@@ -700,15 +700,15 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
 
 
 
-def check_lock(moocletId):
+def check_lock(assignerId):
     # Check if lock exists
     try:
-        lock_exists = LockModel.get_one({"moocletId": moocletId})
+        lock_exists = LockModel.get_one({"assignerId": assignerId})
         if lock_exists:
             return None
         else:
             # Create lock
-            response = LockModel.create({"moocletId": moocletId})
+            response = LockModel.create({"assignerId": assignerId})
             return response.inserted_id
     except Exception as e:
         print(e)

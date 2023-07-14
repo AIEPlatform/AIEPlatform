@@ -4,7 +4,7 @@ from credentials import *
 from Policies.policy import Policy
 from Models.InteractionModel import InteractionModel
 from Models.VariableValueModel import VariableValueModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 import openai
 
 openai.api_key = OPEN_AI_KEY
@@ -31,7 +31,7 @@ class GPT(Policy):
 			if 'messages' not in self.parameters:
 				self.parameters['messages'] = []
 				self.parameters['messages'].append({"role": "system", "content": self.parameters['initialPrompt']})
-				MOOCletModel.update_policy_parameters(self._id, {'parameters': self.parameters})
+				AssignerModel.update_policy_parameters(self._id, {'parameters': self.parameters})
 
 			contextual_values = VariableValueModel.get_latest_variable_values(self.study['variables'], user)
 			contextual_vars_dict = {}
@@ -64,7 +64,7 @@ class GPT(Policy):
 				"treatment": lucky_version,
 				"outcome": None,
 				"where": where,
-				"moocletId": self._id,
+				"assignerId": self._id,
 				"timestamp": datetime.datetime.now(),
 				"otherInformation": other_information,
 				"contextuals": contextual_vars_dict,
@@ -82,7 +82,7 @@ class GPT(Policy):
 				"treatment": lucky_version,
 				"outcome": None,
 				"where": where,
-				"moocletId": self._id,
+				"assignerId": self._id,
 				"timestamp": datetime.datetime.now(),
 				"otherInformation": other_information,
 				"contextuals": contextual_vars_dict,
@@ -103,6 +103,6 @@ class GPT(Policy):
 			InteractionModel.append_reward(latest_interaction['_id'], value)
 			prompt_to_add = f'This is a new feedback: a person who has gender = {str(latest_interaction["contextuals"]["gender"]["value"])} gives reward {str(value)} on {latest_interaction["treatment"]["name"]}'
 			self.parameters['messages'].append({"role": "system", "content": prompt_to_add})
-			MOOCletModel.update_policy_parameters(self._id, {'parameters': self.parameters})
+			AssignerModel.update_policy_parameters(self._id, {'parameters': self.parameters})
 			lock.release()
 			return 200

@@ -54,7 +54,7 @@ function validifyStudy(study) {
     }
 
 
-    for (const element of modifiedStudy.mooclets) {
+    for (const element of modifiedStudy.assigners) {
         element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions);
     }
 

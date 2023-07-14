@@ -10,6 +10,6 @@ module.exports = {
     ]
   }, 
   publicRuntimeConfig: {
-    websiteName: 'Adaptive Experimentation Platform',
+    websiteName: 'Adaptive and Iterative Experimentation Platform',
   }
 };

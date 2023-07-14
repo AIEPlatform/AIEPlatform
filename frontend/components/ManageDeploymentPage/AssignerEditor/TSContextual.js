@@ -1,23 +1,23 @@
 import { React, useEffect } from 'react';
 import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '@mui/material';
 import Select from 'react-select';
-import CommonMOOCletAttribute from './CommonMOOCletAttribute';
+import CommonAssignerAttribute from './CommonAssignerAttribute';
 
 const CoefCovInput = (props) => {
-    let mooclet = props.mooclet;
+    let assigner = props.assigner;
     let tree = props.tree;
-    let sMooclets = props.sMooclets;
+    let sAssigners = props.sAssigners;
 
     const handleInputChange = (e, rowIndex, colIndex) => {
         const value = e.target.value;
-        mooclet['parameters']['coef_cov'][rowIndex][colIndex] = Number(value);
-        mooclet['parameters']['coef_cov'][colIndex][rowIndex] = Number(value);
-        sMooclets(tree);
+        assigner['parameters']['coef_cov'][rowIndex][colIndex] = Number(value);
+        assigner['parameters']['coef_cov'][colIndex][rowIndex] = Number(value);
+        sAssigners(tree);
     };
 
 
     const renderMatrix = () => {
-        return (mooclet['parameters']['coef_cov'] || []).map((row, rowIndex) => (
+        return (assigner['parameters']['coef_cov'] || []).map((row, rowIndex) => (
             <div key={rowIndex}>
                 {row.map((cell, colIndex) => (
                     <input
@@ -42,20 +42,20 @@ const CoefCovInput = (props) => {
 
 
 const CoefMeanInput = (props) => {
-    let mooclet = props.mooclet;
+    let assigner = props.assigner;
     let tree = props.tree;
-    let sMooclets = props.sMooclets;
+    let sAssigners = props.sAssigners;
 
     const handleInputChange = (e, index) => {
         const value = e.target.value;
-        mooclet['parameters']['coef_mean'][index] = Number(value);
-        sMooclets(tree);
+        assigner['parameters']['coef_mean'][index] = Number(value);
+        sAssigners(tree);
     };
 
 
     const renderMatrix = () => {
-        console.log(mooclet['parameters'])
-        return (mooclet['parameters']['coef_mean'] || []).map((cell, index) => (
+        console.log(assigner['parameters'])
+        return (assigner['parameters']['coef_mean'] || []).map((cell, index) => (
             <input
                 key={index}
                 value={cell}
@@ -80,120 +80,120 @@ const CoefMeanInput = (props) => {
 function TSContextual(props) {
     let factors = props.factors;
     let variables = props.variables;
-    let mooclets = props.mooclets;
-    let sMooclets = props.sMooclets;
+    let assigners = props.assigners;
+    let sAssigners = props.sAssigners;
     let myId = props.myId;
 
-    let tree = [...mooclets];
-    let mooclet = tree.find(mooclet => mooclet.id === myId);
+    let tree = [...assigners];
+    let assigner = tree.find(assigner => assigner.id === myId);
 
     let regressionFormulaVariables = variables.concat(factors);
 
     let handleWeightChange = (event, name) => {
-        mooclet['parameters'][name] = Number(event.target.value);
-        sMooclets(tree)
+        assigner['parameters'][name] = Number(event.target.value);
+        sAssigners(tree)
 
     }
 
     const coefCovAddNewItem = () => {
-        if (!mooclet['parameters']['coef_cov']) {
-            mooclet['parameters']['coef_cov'] = [];
+        if (!assigner['parameters']['coef_cov']) {
+            assigner['parameters']['coef_cov'] = [];
         }
 
-        const n = mooclet['parameters']['coef_cov'].length;
+        const n = assigner['parameters']['coef_cov'].length;
         const expandedArray = Array(n + 1)
             .fill(null)
             .map(() => Array(n + 1).fill(0));
         if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
         for (let i = 0; i < n; i++) {
             for (let j = 0; j < n; j++) {
-                expandedArray[i][j] = mooclet['parameters']['coef_cov'][i][j];
+                expandedArray[i][j] = assigner['parameters']['coef_cov'][i][j];
             }
         }
         expandedArray[n][n] = 1;
 
-        mooclet['parameters']['coef_cov'] = expandedArray;
-        sMooclets(tree);
+        assigner['parameters']['coef_cov'] = expandedArray;
+        sAssigners(tree);
     };
 
     const coefCovAddIntercept = () => {
-        if (!mooclet['parameters']['coef_cov']) {
-            mooclet['parameters']['coef_cov'] = [];
+        if (!assigner['parameters']['coef_cov']) {
+            assigner['parameters']['coef_cov'] = [];
         }
 
-        const n = mooclet['parameters']['coef_cov'].length;
+        const n = assigner['parameters']['coef_cov'].length;
         const expandedArray = Array(n + 1)
             .fill(null)
             .map(() => Array(n + 1).fill(0));
         if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
         for (let i = 0; i < n; i++) {
             for (let j = 0; j < n; j++) {
-                expandedArray[i + 1][j + 1] = mooclet['parameters']['coef_cov'][i][j];
+                expandedArray[i + 1][j + 1] = assigner['parameters']['coef_cov'][i][j];
             }
         }
 
         expandedArray[0][0] = 1;
 
-        mooclet['parameters']['coef_cov'] = expandedArray;
-        sMooclets(tree);
+        assigner['parameters']['coef_cov'] = expandedArray;
+        sAssigners(tree);
     };
 
 
     const coefCovRemoveItem = rowIndex => {
-        mooclet['parameters']['coef_cov'].splice(rowIndex, 1);
-        mooclet['parameters']['coef_cov'].forEach(row => row.splice(rowIndex, 1));
-        sMooclets(tree);
+        assigner['parameters']['coef_cov'].splice(rowIndex, 1);
+        assigner['parameters']['coef_cov'].forEach(row => row.splice(rowIndex, 1));
+        sAssigners(tree);
     };
 
     const coefMeanAddNewItem = () => {
-        if (!mooclet['parameters']['coef_mean']) {
-            mooclet['parameters']['coef_mean'] = [];
+        if (!assigner['parameters']['coef_mean']) {
+            assigner['parameters']['coef_mean'] = [];
         }
 
-        const expandedArray = mooclet['parameters']['coef_mean'].concat([0]);
+        const expandedArray = assigner['parameters']['coef_mean'].concat([0]);
 
-        mooclet['parameters']['coef_mean'] = expandedArray;
-        sMooclets(tree);
+        assigner['parameters']['coef_mean'] = expandedArray;
+        sAssigners(tree);
     };
 
     const coefMeanAddIntercept = () => {
-        if (!mooclet['parameters']['coef_mean']) {
-            mooclet['parameters']['coef_mean'] = [];
+        if (!assigner['parameters']['coef_mean']) {
+            assigner['parameters']['coef_mean'] = [];
         }
 
-        const expandedArray = [0].concat(mooclet['parameters']['coef_mean']);
+        const expandedArray = [0].concat(assigner['parameters']['coef_mean']);
 
-        mooclet['parameters']['coef_mean'] = expandedArray;
-        sMooclets(tree);
+        assigner['parameters']['coef_mean'] = expandedArray;
+        sAssigners(tree);
     };
 
 
     const coefMeanRemoveItem = index => {
-        mooclet['parameters']['coef_mean'].splice(index, 1);
-        sMooclets(tree);
+        assigner['parameters']['coef_mean'].splice(index, 1);
+        sAssigners(tree);
     };
 
     const addFields = () => {
         let newfield = []
         let temp = [[]]
-        if (mooclet['parameters']['regressionFormulaItems']) {
-            temp = [...mooclet['parameters']['regressionFormulaItems'], newfield]
+        if (assigner['parameters']['regressionFormulaItems']) {
+            temp = [...assigner['parameters']['regressionFormulaItems'], newfield]
         }
-        mooclet['parameters']['regressionFormulaItems'] = temp
+        assigner['parameters']['regressionFormulaItems'] = temp
 
 
-        sMooclets(tree);
+        sAssigners(tree);
     }
 
     const removeFields = (index) => {
-        mooclet['parameters']['regressionFormulaItems'].splice(index, 1);
-        sMooclets(tree);
+        assigner['parameters']['regressionFormulaItems'].splice(index, 1);
+        sAssigners(tree);
     }
 
     const handleRegressionFormulaItemPickup = (option, index) => {
-        mooclet['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
+        assigner['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
 
-        let parameters = mooclet['parameters'];
+        let parameters = assigner['parameters'];
         let deepCopy = JSON.parse(JSON.stringify(parameters));
         for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
             if(deepCopy.regressionFormulaItems[i].length === 0) {
@@ -207,13 +207,13 @@ function TSContextual(props) {
                 parameters['coef_mean'].splice(coefIndex, 1);
             }
         }
-        sMooclets(tree)
+        sAssigners(tree)
     };
 
     const writeRegressionFormula = () => {
         let formula = "reward ~ "
-        if (mooclet['parameters']['regressionFormulaItems']) {
-            formula += mooclet['parameters']['regressionFormulaItems'].map((item) => item.join(" * ")).join(" + ")
+        if (assigner['parameters']['regressionFormulaItems']) {
+            formula += assigner['parameters']['regressionFormulaItems'].map((item) => item.join(" * ")).join(" + ")
         }
         return formula
     }
@@ -221,14 +221,14 @@ function TSContextual(props) {
 
     useEffect(() => {
         // Initial parameters for TSContextual.
-        if (!mooclet['parameters']['batch_size']) mooclet['parameters']['batch_size'] = 4
-        if (!mooclet['parameters']['variance_a']) mooclet['parameters']['variance_a'] = 2
-        if (!mooclet['parameters']['variance_b']) mooclet['parameters']['variance_b'] = 1
-        if (!mooclet['parameters']['uniform_threshold']) mooclet['parameters']['uniform_threshold'] = 8
-        if (!mooclet['parameters']['updatedPerMinute']) mooclet['parameters']['updatedPerMinute'] = 0
-        if (!mooclet['parameters']['include_intercept']) mooclet['parameters']['include_intercept'] = false
-        if (!mooclet['parameters']['individualLevelBatchSize']) mooclet['parameters']['individualLevelBatchSize'] = 1
-        sMooclets(tree);
+        if (!assigner['parameters']['batch_size']) assigner['parameters']['batch_size'] = 4
+        if (!assigner['parameters']['variance_a']) assigner['parameters']['variance_a'] = 2
+        if (!assigner['parameters']['variance_b']) assigner['parameters']['variance_b'] = 1
+        if (!assigner['parameters']['uniform_threshold']) assigner['parameters']['uniform_threshold'] = 8
+        if (!assigner['parameters']['updatedPerMinute']) assigner['parameters']['updatedPerMinute'] = 0
+        if (!assigner['parameters']['include_intercept']) assigner['parameters']['include_intercept'] = false
+        if (!assigner['parameters']['individualLevelBatchSize']) assigner['parameters']['individualLevelBatchSize'] = 1
+        sAssigners(tree);
 
     }, []);
 
@@ -241,7 +241,7 @@ function TSContextual(props) {
                 required
                 label={`Batch size`}
                 type="number"
-                value={mooclet['parameters']['batch_size'] || ''}
+                value={assigner['parameters']['batch_size'] || ''}
                 onChange={(e) => handleWeightChange(e, 'batch_size')}
             />
             <TextField
@@ -249,7 +249,7 @@ function TSContextual(props) {
                 required
                 label={`Variance a`}
                 type="number"
-                value={mooclet['parameters']['variance_a'] || ''}
+                value={assigner['parameters']['variance_a'] || ''}
                 onChange={(e) => handleWeightChange(e, 'variance_a')}
             />
             <TextField
@@ -257,7 +257,7 @@ function TSContextual(props) {
                 required
                 label={`Variance b`}
                 type="number"
-                value={mooclet['parameters']['variance_b'] || ''}
+                value={assigner['parameters']['variance_b'] || ''}
                 onChange={(e) => handleWeightChange(e, 'variance_b')}
             />
             <TextField
@@ -265,7 +265,7 @@ function TSContextual(props) {
                 required
                 label={`Uniform Threshold`}
                 type="number"
-                value={mooclet['parameters']['uniform_threshold'] || ''}
+                value={assigner['parameters']['uniform_threshold'] || ''}
                 onChange={(e) => handleWeightChange(e, 'uniform_threshold')}
             />
 
@@ -274,14 +274,14 @@ function TSContextual(props) {
                 required
                 label={`Posterior Update Frequency (in min)`}
                 type="number"
-                value={mooclet['parameters']['updatedPerMinute'] || ''}
+                value={assigner['parameters']['updatedPerMinute'] || ''}
                 onChange={(e) => handleWeightChange(e, 'updatedPerMinute')}
             />
             <Box>
                 <FormControlLabel
-                    control={<Checkbox checked={mooclet['parameters']['include_intercept'] || false} onChange={(e) => {
-                        mooclet['parameters']['include_intercept'] = e.target.checked;
-                        sMooclets(tree);
+                    control={<Checkbox checked={assigner['parameters']['include_intercept'] || false} onChange={(e) => {
+                        assigner['parameters']['include_intercept'] = e.target.checked;
+                        sAssigners(tree);
                         if (e.target.checked) {
                             coefCovAddIntercept();
                             coefMeanAddIntercept();
@@ -293,38 +293,38 @@ function TSContextual(props) {
                     }} />}
                     label="Include Intercept"
                 />
-                <CommonMOOCletAttribute
-                    mooclets={mooclets}
+                <CommonAssignerAttribute
+                    assigners={assigners}
                     myId={myId}
-                    sMooclets={sMooclets}
+                    sAssigners={sAssigners}
                 />
 
                 <FormControlLabel
-                    control={<Checkbox checked={mooclet['parameters']['individualLevel'] || false} onChange={(e) => {
-                        if (!mooclet['parameters']['individualLevelThreshold']) mooclet['parameters']['individualLevelThreshold'] = 0;
-                        mooclet['parameters']['individualLevel'] = e.target.checked;
-                        sMooclets(tree);
+                    control={<Checkbox checked={assigner['parameters']['individualLevel'] || false} onChange={(e) => {
+                        if (!assigner['parameters']['individualLevelThreshold']) assigner['parameters']['individualLevelThreshold'] = 0;
+                        assigner['parameters']['individualLevel'] = e.target.checked;
+                        sAssigners(tree);
                     }} />}
                     label="Enable individual-level regression after receiving a certain number of feedbacks"
                 />
-                {mooclet['parameters']['individualLevel'] && <Box>
+                {assigner['parameters']['individualLevel'] && <Box>
                     <p><mark>The individual level regressions will be turned on after receiving the following number of user feedbacks.</mark></p>
                     <TextField
                         sx={{ m: 1 }}
-                        value={mooclet['parameters']['individualLevelThreshold']}
+                        value={assigner['parameters']['individualLevelThreshold']}
                         onChange={(e) => {
-                            mooclet['parameters']['individualLevelThreshold'] = parseFloat(e.target.value);
-                            sMooclets(tree);
+                            assigner['parameters']['individualLevelThreshold'] = parseFloat(e.target.value);
+                            sAssigners(tree);
                         }}
                         label={`Individual-level regression threshold`}
                         type="number"
                     />
                     <TextField
                         sx={{ m: 1 }}
-                        value={mooclet['parameters']['individualLevelBatchSize']}
+                        value={assigner['parameters']['individualLevelBatchSize']}
                         onChange={(e) => {
-                            mooclet['parameters']['individualLevelBatchSize'] = parseFloat(e.target.value);
-                            sMooclets(tree);
+                            assigner['parameters']['individualLevelBatchSize'] = parseFloat(e.target.value);
+                            sAssigners(tree);
                         }}
                         label={`Individual-level regression batch size`}
                         type="number"
@@ -333,8 +333,8 @@ function TSContextual(props) {
             </Box>
             <Box sx={{ m: 1 }}>
                 <Typography variant='h6'>Regression Formula Items</Typography>
-                {mooclet['parameters']['regressionFormulaItems'] && mooclet['parameters']['regressionFormulaItems'].length > 0 && <mark><small>Current regression formula: {writeRegressionFormula()}</small></mark>}
-                {mooclet['parameters']['regressionFormulaItems'] && mooclet['parameters']['regressionFormulaItems'].map((regressionFormulaItem, index) => {
+                {assigner['parameters']['regressionFormulaItems'] && assigner['parameters']['regressionFormulaItems'].length > 0 && <mark><small>Current regression formula: {writeRegressionFormula()}</small></mark>}
+                {assigner['parameters']['regressionFormulaItems'] && assigner['parameters']['regressionFormulaItems'].map((regressionFormulaItem, index) => {
                     return (
                         <Box key={index} margin="10px 0" style={{ position: "relative" }}>
                             <Select
@@ -375,13 +375,13 @@ function TSContextual(props) {
                 <Box>
                     <Typography variant='h6'>Coefficient Covariance</Typography>
                     <small>The first is for the intercept if you have checked to include intercept.</small>
-                    <CoefCovInput mooclet={mooclet} tree={tree} sMooclets={sMooclets} />
+                    <CoefCovInput assigner={assigner} tree={tree} sAssigners={sAssigners} />
                 </Box>
 
                 <Box>
                     <Typography variant='h6'>Coefficient mean</Typography>
                     <small>The first is for the intercept if you have checked to include intercept.</small>
-                    <CoefMeanInput mooclet={mooclet} tree={tree} sMooclets={sMooclets} />
+                    <CoefMeanInput assigner={assigner} tree={tree} sAssigners={sAssigners} />
                 </Box>
             </Box>
         </Box >

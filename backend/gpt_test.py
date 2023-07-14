@@ -13,7 +13,7 @@ Lock.delete_many({})
 RewardLog.delete_many({})
 TreatmentLog.delete_many({})
 VariableValue.delete_many({})
-MOOCletIndividualLevelInformation.delete_many({})
+AssignerIndividualLevelInformation.delete_many({})
 
 
 def two_var_strong_predictor(num_users = 100):

@@ -113,7 +113,7 @@ function VariableEditor(props) {
                     menu: provided => ({ ...provided, zIndex: 9999 })
                 }}
             />
-            <Typography>If you want to create a new variable, please create it below (and this variable will be automatically linked to this mooclet).</Typography>
+            <Typography>If you want to create a new variable, please create it below (and this variable will be automatically linked to this assigner).</Typography>
             <TextField
                 required
                 sx={{ mt: 1 }}

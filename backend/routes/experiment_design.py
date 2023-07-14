@@ -5,7 +5,7 @@ from bson import json_util
 from bson.objectid import ObjectId
 from helpers import *
 import datetime
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.StudyModel import StudyModel
 from Models.DeploymentModel import DeploymentModel
 from Models.DatasetModel import DatasetModel
@@ -20,49 +20,49 @@ from Analysis.AverageRewardByTime import AverageRewardByTime
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)
 
-def convert_front_list_mooclets_into_tree(mooclets):
+def convert_front_list_assigners_into_tree(assigners):
     # Create a study for a deployment.
 
     # convert it into a tree.
-    #TODO: tell us at least one mooclet is needed.
-    mooclets.sort(key=lambda x: x['id'], reverse=False)
+    #TODO: tell us at least one assigner is needed.
+    assigners.sort(key=lambda x: x['id'], reverse=False)
     nodes = {}
 
     # Step 2: Add each node to the dictionary
-    for mooclet in mooclets:
-        node_id = mooclet["id"]
-        nodes[node_id] = mooclet
+    for assigner in assigners:
+        node_id = assigner["id"]
+        nodes[node_id] = assigner
 
     # Step 3: Assign children to their respective parent nodes
-    for mooclet in mooclets:
-        parent_id = mooclet["parent"]
+    for assigner in assigners:
+        parent_id = assigner["parent"]
         if parent_id != 0:
             parent_node = nodes[parent_id]
             if "children" not in parent_node:
                 parent_node["children"] = []
-            parent_node["children"].append(mooclet)
+            parent_node["children"].append(assigner)
 
     # Step 4: Retrieve the root node(s) of the tree
     root_nodes = None
-    for mooclet in mooclets:
-        if mooclet["parent"] == 0:
-            root_nodes = mooclet
+    for assigner in assigners:
+        if assigner["parent"] == 0:
+            root_nodes = assigner
             break
 
-    #TODO: Need to manually make a root mooclet.
+    #TODO: Need to manually make a root assigner.
 
-    def clean_mooclet_object_helper(mooclet):
+    def clean_assigner_object_helper(assigner):
         for key in ['id', 'parent', 'droppable', 'isOpen', 'text']:
-            mooclet.pop(key, None)
-        if 'children' not in mooclet:
-            mooclet['children'] = []
-        if 'dbId' in mooclet:
-            mooclet['_id'] = mooclet['dbId']
-            del mooclet['dbId']
-        for child in mooclet['children']: 
-            clean_mooclet_object_helper(child)
+            assigner.pop(key, None)
+        if 'children' not in assigner:
+            assigner['children'] = []
+        if 'dbId' in assigner:
+            assigner['_id'] = assigner['dbId']
+            del assigner['dbId']
+        for child in assigner['children']: 
+            clean_assigner_object_helper(child)
 
-    clean_mooclet_object_helper(root_nodes)
+    clean_assigner_object_helper(root_nodes)
     
 
 
@@ -72,30 +72,30 @@ def convert_front_list_mooclets_into_tree(mooclets):
     return root_nodes
 
 
-def create_mooclet(mooclet, study_id, session):
+def create_assigner(assigner, study_id, session):
     time = datetime.datetime.now()
     my_children = []
-    for child in mooclet['children']:
-        child_mooclet_id = create_mooclet(child, study_id, session)
-        my_children.append(child_mooclet_id)
+    for child in assigner['children']:
+        child_assigner_id = create_assigner(child, study_id, session)
+        my_children.append(child_assigner_id)
 
-    doc = MOOCletModel.find_mooclet({'name': mooclet['name'], 'studyId': study_id})
+    doc = AssignerModel.find_assigner({'name': assigner['name'], 'studyId': study_id})
     if doc is not None: return doc['_id'] #TODO: check if it's correct.
 
-    new_mooclet = {
-        "name": mooclet['name'],
-        "policy": mooclet['policy'],
-        "parameters": mooclet['parameters'],
+    new_assigner = {
+        "name": assigner['name'],
+        "policy": assigner['policy'],
+        "parameters": assigner['parameters'],
         "studyId": study_id,
-        "reassignAfterReward": mooclet['reassignAfterReward'] if 'reassignAfterReward' in mooclet else False,
+        "reassignAfterReward": assigner['reassignAfterReward'] if 'reassignAfterReward' in assigner else False,
         "isConsistent": False, 
         "autoZeroPerMinute": False, 
         "children": my_children, 
-        "weight": float(mooclet['weight']), 
+        "weight": float(assigner['weight']), 
         "createdAt": time
     }
 
-    response = MOOCletModel.create(new_mooclet, session=session)
+    response = AssignerModel.create(new_assigner, session=session)
     return response.inserted_id
 
 # Create a study for a deployment.
@@ -121,7 +121,7 @@ def create_study():
     
 
     studyName = study['name'] if 'name' in study else None;
-    mooclets = study['mooclets'] if 'mooclets' in study else None;
+    assigners = study['assigners'] if 'assigners' in study else None;
     versions = study['versions'] if 'versions' in study else None;
     variables = study['variables'] if 'variables' in study else None;
     factors = study['factors'] if 'factors' in study else None;
@@ -149,7 +149,7 @@ def create_study():
             "message": "Deployment does not exist or you don't have access."
         }), 400
 
-    mooclet_trees = convert_front_list_mooclets_into_tree(mooclets)
+    assigner_trees = convert_front_list_assigners_into_tree(assigners)
 
     doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': studyName}, public = True)
     if doc is not None: 
@@ -171,11 +171,11 @@ def create_study():
                 'simulationSetting': simulationSetting,
                 "status": status
             }
-            # Induction to create mooclet
+            # Induction to create assigner
             response = StudyModel.create(the_study, session=session)
             study_id = response.inserted_id
-            root_mooclet = create_mooclet(mooclet_trees, study_id, session=session)
-            Study.update_one({'_id': study_id}, {'$set': {'rootMOOClet': root_mooclet}}, session=session)
+            root_assigner = create_assigner(assigner_trees, study_id, session=session)
+            Study.update_one({'_id': study_id}, {'$set': {'rootAssigner': root_assigner}}, session=session)
             session.commit_transaction()
 
             studies = Study.find({"deploymentId": ObjectId(the_deployment['_id'])})
@@ -247,34 +247,34 @@ def create_deployment():
             }), 200
         
 
-def convert_mooclet_tree_to_list(mooclet, parentId, mooclet_list):
-    the_id = len(mooclet_list) + 1
-    mooclet_list.append({
+def convert_assigner_tree_to_list(assigner, parentId, assigner_list):
+    the_id = len(assigner_list) + 1
+    assigner_list.append({
         "id": the_id,
-        "dbId": mooclet["_id"], # we need this to update mooclet.
+        "dbId": assigner["_id"], # we need this to update assigner.
         "parent": parentId,
         "droppable": True,
         "isOpen": True,
-        "text": mooclet["name"],
-        "name": mooclet["name"],
-        "policy": mooclet["policy"],
-        "parameters": mooclet["parameters"],
-        "weight": mooclet["weight"], 
-        "isConsistent": mooclet["isConsistent"] if "isConsistent" in mooclet else None,
-        "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
-        "autoZeroPerMinute": mooclet["autoZeroPerMinute"] if "autoZeroPerMinute" in mooclet else None
+        "text": assigner["name"],
+        "name": assigner["name"],
+        "policy": assigner["policy"],
+        "parameters": assigner["parameters"],
+        "weight": assigner["weight"], 
+        "isConsistent": assigner["isConsistent"] if "isConsistent" in assigner else None,
+        "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
+        "autoZeroPerMinute": assigner["autoZeroPerMinute"] if "autoZeroPerMinute" in assigner else None
     })
-    for child in mooclet["children"]:
-        child_mooclet = MOOCletModel.find_mooclet({"_id": child})
-        convert_mooclet_tree_to_list(child_mooclet, the_id, mooclet_list)
+    for child in assigner["children"]:
+        child_assigner = AssignerModel.find_assigner({"_id": child})
+        convert_assigner_tree_to_list(child_assigner, the_id, assigner_list)
 
 
 def build_json_for_study(studyId):
     the_study = StudyModel.get_one({"_id": studyId})
-    the_root_mooclet = MOOCletModel.find_mooclet({"_id": the_study["rootMOOClet"]})
-    mooclet_list = []
-    convert_mooclet_tree_to_list(the_root_mooclet, 0, mooclet_list)
-    return mooclet_list
+    the_root_assigner = AssignerModel.find_assigner({"_id": the_study["rootAssigner"]})
+    assigner_list = []
+    convert_assigner_tree_to_list(the_root_assigner, 0, assigner_list)
+    return assigner_list
 
 # TODO: Important: loading existing study.
 @experiment_design_apis.route("/apis/experimentDesign/study", methods = ["GET"])
@@ -284,8 +284,8 @@ def load_existing_study():
     study = request.args.get('study') # Name
     the_deployment = DeploymentModel.get_one({"name": deployment})
     theStudy = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
-    mooclets = build_json_for_study(theStudy['_id'])
-    theStudy['mooclets'] = mooclets # Note that in DB, we only save the root mooclet!
+    assigners = build_json_for_study(theStudy['_id'])
+    theStudy['assigners'] = assigners # Note that in DB, we only save the root assigner!
     return json_util.dumps(
         {
         "status_code": 200,
@@ -296,49 +296,49 @@ def load_existing_study():
 
 
 
-def isExistingMOOClet(mooclet):
-    return '_id' in mooclet
+def isExistingAssigner(assigner):
+    return '_id' in assigner
 
-def modify_mooclet(mooclet, study_id, session):
+def modify_assigner(assigner, study_id, session):
     # Modify or Create
     time = datetime.datetime.now()
     my_children = []
-    for child in mooclet['children']:
-        child_mooclet_id = modify_mooclet(child, study_id, session)
-        my_children.append(child_mooclet_id)
+    for child in assigner['children']:
+        child_assigner_id = modify_assigner(child, study_id, session)
+        my_children.append(child_assigner_id)
 
-    if isExistingMOOClet(mooclet):
+    if isExistingAssigner(assigner):
         # update
-        MOOCletModel.update({'_id': ObjectId(mooclet['_id']['$oid'])}, {
+        AssignerModel.update({'_id': ObjectId(assigner['_id']['$oid'])}, {
             "$set": {
-                "name": mooclet['name'],
-                "policy": mooclet['policy'],
-                "parameters": mooclet['parameters'],
+                "name": assigner['name'],
+                "policy": assigner['policy'],
+                "parameters": assigner['parameters'],
                 "studyId": study_id,
                 "isConsistent": False, 
-                "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
+                "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
                 "autoZeroPerMinute": False, 
                 "children": my_children, 
-                "weight": float(mooclet['weight']), 
+                "weight": float(assigner['weight']), 
                 "updatedAt": time
             }
         }, session=session)
-        return ObjectId(mooclet['_id']['$oid'])
+        return ObjectId(assigner['_id']['$oid'])
     else:
-        new_mooclet = {
-            "name": mooclet['name'],
-            "policy": mooclet['policy'],
-            "parameters": mooclet['parameters'],
+        new_assigner = {
+            "name": assigner['name'],
+            "policy": assigner['policy'],
+            "parameters": assigner['parameters'],
             "studyId": study_id,
             "isConsistent": False, 
-            "reassignAfterReward": mooclet['reassignAfterReward'] if "reassignAfterReward" in mooclet else None,
+            "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
             "autoZeroPerMinute": False, 
             "children": my_children, 
-            "weight": float(mooclet['weight']), 
+            "weight": float(assigner['weight']), 
             "createdAt": time, 
             "updatedAt": time
         }
-        response = MOOCletModel.create(new_mooclet, session=session)
+        response = AssignerModel.create(new_assigner, session=session)
         return response.inserted_id
 
 @experiment_design_apis.route("/apis/experimentDesign/study", methods = ["PUT"])
@@ -350,11 +350,11 @@ def modify_existing_study():
     if deployment is None or study is None:
         return json_util.dumps({
             "status_code": 400,
-            "message": "Please make sure the deployment, study, mooclets, versions, variables are provided."
+            "message": "Please make sure the deployment, study, assigners, versions, variables are provided."
         }), 400
 
     # TODO: check if the following exists (it's part of validate)
-    mooclets = study['mooclets']
+    assigners = study['assigners']
     versions = study['versions']
     variables = study['variables']
     studyName = study['name']
@@ -373,9 +373,9 @@ def modify_existing_study():
                 }}, session=session)
             
 
-            designer_tree = convert_front_list_mooclets_into_tree(mooclets)
+            designer_tree = convert_front_list_assigners_into_tree(assigners)
 
-            modify_mooclet(designer_tree, the_study['_id'], session=session)
+            modify_assigner(designer_tree, the_study['_id'], session=session)
 
             session.commit_transaction()
         except Exception as e:
@@ -467,22 +467,22 @@ def create_variable():
 def reset_study_helper(the_deployment, the_study, session):
     try:
         studyId = the_study['_id']
-        # get all mooclet ids
-        mooclets = MOOCletModel.find_mooclets({"studyId": ObjectId(studyId)})
-        mooclet_ids = [mooclet['_id'] for mooclet in mooclets]
-        # reset all mooclet parameters to the earliest one in the History collection.
-        for mooclet_id in mooclet_ids:
+        # get all assigner ids
+        assigners = AssignerModel.find_assigners({"studyId": ObjectId(studyId)})
+        assignerids = [assigner['_id'] for assigner in assigners]
+        # reset all assigner parameters to the earliest one in the History collection.
+        for assignerId in assignerids:
             # get the earliest history by timestamp
-            history_parameter = History.find_one({"moocletId": ObjectId(mooclet_id)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
+            history_parameter = History.find_one({"assignerId": ObjectId(assignerId)}, sort=[("timestamp", pymongo.ASCENDING)], session=session)
             if history_parameter is not None:
-                # update the mooclet
-                MOOCletModel.update_policy_parameters(ObjectId(mooclet_id),  {"parameters": history_parameter['parameters']}, session=session)
+                # update the assigner
+                AssignerModel.update_policy_parameters(ObjectId(assignerId),  {"parameters": history_parameter['parameters']}, session=session)
                 # remove all history
-                History.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+                History.delete_many({"assignerId": ObjectId(assignerId)}, session=session)
             # Remove all interactions.
-            Interaction.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            Interaction.delete_many({"assignerId": ObjectId(assignerId)}, session=session)
             # remove individualLevel history
-            MOOCletIndividualLevelInformation.delete_many({"moocletId": ObjectId(mooclet_id)}, session=session)
+            AssignerIndividualLevelInformation.delete_many({"assignerId": ObjectId(assignerId)}, session=session)
             DatasetModel.delete_study_datasets(the_deployment, the_study)
         return 200
     except Exception as e:
@@ -537,7 +537,7 @@ def delete_study_helper(the_deployment, the_study, session):
         else:
             # delete the study
             StudyModel.delete_one_by_id(the_study['_id'], session=session)
-            MOOCletModel.delete_study_mooclets(the_study['_id'], session=session)
+            AssignerModel.delete_study_assigners(the_study['_id'], session=session)
             return 200
     except Exception as e:
         print(traceback.format_exc())
@@ -706,10 +706,10 @@ def run_simulation():
         numDays = int(numDays)
         the_deployment = DeploymentModel.get_one({"name": deployment})
         the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
-        mooclet_ids = list(
-            MOOClet.find({"studyId": the_study['_id']}).distinct("_id")
+        assignerids = list(
+            Assigner.find({"studyId": the_study['_id']}).distinct("_id")
         )
-        the_interactions = list(InteractionModel.get_many({"moocletId": {"$in": mooclet_ids}}, public=True).sort("timestamp", pymongo.ASCENDING))
+        the_interactions = list(InteractionModel.get_many({"assignerId": {"$in": assignerids}}, public=True).sort("timestamp", pymongo.ASCENDING))
         # change the rewardTimestamp this way:
         # first 20% of the interactions, change the rewardTimestamp to four days ago.
         # second 20% of the interactions, change the rewardTimestamp to three days ago.
@@ -718,19 +718,19 @@ def run_simulation():
         # fifth 20% of the interactions, change the rewardTimestamp: no change.
 
         # create an array of 10 arrays
-        time_mooclet_lists = [[] for i in range(numDays)]
+        time_assigner_lists = [[] for i in range(numDays)]
         
         for i in range(0, len(the_interactions)):
             if the_interactions[i]['rewardTimestamp'] is None: continue
 
             for day in range(numDays):
                 if i < 1/numDays * day * len(list(the_interactions)):
-                    time_mooclet_lists[day].append(the_interactions[i]['_id'])
+                    time_assigner_lists[day].append(the_interactions[i]['_id'])
                     break
 
 
-        for i in range(0, len(time_mooclet_lists)):
-            Interaction.update_many({"_id": {"$in": time_mooclet_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
+        for i in range(0, len(time_assigner_lists)):
+            Interaction.update_many({"_id": {"$in": time_assigner_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
     def give_variable_value_helper(deployment, study, variableName, user, value, apiToken):

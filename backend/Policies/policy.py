@@ -5,12 +5,12 @@ from errors import *
 
 from Models.StudyModel import StudyModel
 class Policy(ABC):
-	def __init__(self, user, **mooclet_obj_from_db):
-		for key, value in mooclet_obj_from_db.items():
+	def __init__(self, user, **assigner_obj_from_db):
+		for key, value in assigner_obj_from_db.items():
 			setattr(self, key, value)
 
 		# TODO: we shouldn't make any attribute special
-		if 'reassignAfterReward' not in mooclet_obj_from_db:
+		if 'reassignAfterReward' not in assigner_obj_from_db:
 			self.reassignAfterReward = False
 
 		study = StudyModel.get_one(

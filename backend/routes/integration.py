@@ -5,7 +5,7 @@ from bson import json_util
 from bson.objectid import ObjectId
 from helpers import *
 import datetime
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.StudyModel import StudyModel
 from Models.DeploymentModel import DeploymentModel
 from Models.DatasetModel import DatasetModel
@@ -21,7 +21,7 @@ from Analysis.AverageRewardByTime import AverageRewardByTime
 
 integration_apis = Blueprint('integration_apis', __name__)
 
-# This has APIs the developers of other apps can use to integrate DataArrow into their apps.
+# This has APIs the developers of other apps can use to integrate AIEPlatform into their apps.
 # First example is the Pilot Study that happened in 2023-07.
 
 # TODO: we need to merge this file with user_interaction.py. Also, we need to make some sort of API tokens.
@@ -56,12 +56,12 @@ def find_user_interactions():
             "message": "study not found"
         })
     
-    # get all mooclet ids in the study.
-    moocletIds = MOOCletModel.find_study_mooclets(study_object, public = True)
-    moocletIds = [moocletId['_id'] for moocletId in moocletIds]
+    # get all assigner ids in the study.
+    assignerIds = AssignerModel.find_study_assigners(study_object, public = True)
+    assignerIds = [assignerId['_id'] for assignerId in assignerIds]
     # find the interactions
     filter = {
-        "moocletId": {"$in": moocletIds},
+        "assignerId": {"$in": assignerIds},
         "user": user
     }
 

@@ -11,7 +11,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import Modal from '@mui/material/Modal';
-import MOOCletEditor from './MOOCletEditor/MOOCletEditor';
+import AssignerEditor from './AssignerEditor/AssignerEditor';
 import RewardEditor from './RewardEditor';
 import validifyStudy from '../../helpers/validifyStudy';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
@@ -57,7 +57,7 @@ function StudyEditor(props) {
         "variables": [],
         "factors": [],
         "versions": [],
-        "mooclets": designGraph,
+        "assigners": designGraph,
         "rewardInformation": {
             "name": "reward",
             "min": 0,
@@ -84,16 +84,16 @@ function StudyEditor(props) {
             alert("You cannot have more than one root node!");
             return;
         }
-        sMooclets(newTreeData)
+        sAssigners(newTreeData)
     };
-    const [moocletModalOpen, sMoocletModalOpen] = useState(false);
+    const [assignerModalOpen, sAssignerModalOpen] = useState(false);
     const [idToEdit, sIdToEdit] = useState(null);
     const treeRef = useRef(null);
     const handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
-    const addMOOClet = () => {
-        let newId = study.mooclets.length + 1;
-        let newMOOClet = {
+    const addAssigner = () => {
+        let newId = study.assigners.length + 1;
+        let newAssigner = {
             "id": newId,
             "parent": 1,
             "droppable": true,
@@ -104,21 +104,21 @@ function StudyEditor(props) {
             "parameters": {},
             "weight": 1
         }
-        sMooclets([...study.mooclets, newMOOClet]);
+        sAssigners([...study.assigners, newAssigner]);
 
         handleOpen(newId);
     };
 
-    const handleMOOCletModalClose = () => {
-        sMoocletModalOpen(false);
+    const handleAssignerModalClose = () => {
+        sAssignerModalOpen(false);
         sIdToEdit(null);
     };
 
-    const handleMOOCletWeightChange = (event, myId) => {
-        let data = [...study.mooclets];
-        let mooclet = data.find(mooclet => mooclet.id === myId);
-        mooclet['weight'] = event.target.value;
-        sMooclets(data);
+    const handleAssignerWeightChange = (event, myId) => {
+        let data = [...study.assigners];
+        let assigner = data.find(assigner => assigner.id === myId);
+        assigner['weight'] = event.target.value;
+        sAssigners(data);
     }
 
     const handleAssignerRemove = (myId) => {
@@ -127,7 +127,7 @@ function StudyEditor(props) {
             alert("You cannot remove the root assigner!");
             return;
         }
-        let Tree = [...study.mooclets];
+        let Tree = [...study.assigners];
         function removeNode(id) {
             // Find the index of the node with the given id
             const nodeIndex = Tree.findIndex((node) => node.id === id);
@@ -152,7 +152,7 @@ function StudyEditor(props) {
 
         removeNode(myId);
 
-        sMooclets(Tree);
+        sAssigners(Tree);
 
     }
 
@@ -202,11 +202,11 @@ function StudyEditor(props) {
         console.log("Variables, versions, or factors length change")
         let modifiedStudy = validifyStudy(study);
         sStudy(modifiedStudy);
-    }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all mooclets
+    }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all assigners
 
     useEffect(() => {
         handleOpen(1);
-        // TODO: Think about how to open all the mooclets from cookies.
+        // TODO: Think about how to open all the assigners from cookies.
         if (theStudy['_id']['$oid'] != 1998) {
             loadCurrentStudy();
         }
@@ -265,7 +265,7 @@ function StudyEditor(props) {
 
     const getWeight = (node) => {
         // get all slibings.
-        let siblings = study.mooclets.filter(mooclet => mooclet.parent === node.parent);
+        let siblings = study.assigners.filter(assigner => assigner.parent === node.parent);
         // get total weights of siblings.
         let totalWeight = 0;
         for (const element of siblings) {
@@ -313,7 +313,7 @@ function StudyEditor(props) {
     const sFactors = setStudyAttributes.bind('factors');
     const sStudyName = setStudyAttributes.bind('name');
     const sRewardInformation = setStudyAttributes.bind('rewardInformation');
-    const sMooclets = setStudyAttributes.bind('mooclets');
+    const sAssigners = setStudyAttributes.bind('assigners');
     const sSimulationSetting = setStudyAttributes.bind('simulationSetting');
 
 
@@ -396,8 +396,8 @@ function StudyEditor(props) {
                 <Accordion>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
-                        aria-controls="mooclet-graph"
-                        id="mooclet-graph"
+                        aria-controls="assigner-graph"
+                        id="assigner-graph"
                     >
                         <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
                     </AccordionSummary>
@@ -406,7 +406,7 @@ function StudyEditor(props) {
                             {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
                             <Tree
                                 ref={treeRef}
-                                tree={study.mooclets}
+                                tree={study.assigners}
                                 rootId={0}
                                 onDrop={handleDrop}
                                 initialOpen={true}
@@ -418,11 +418,11 @@ function StudyEditor(props) {
                                         )}
                                         <Typography sx={{ m: 0.5 }} variant='span' component='strong'>{node.name}</Typography>
                                         <Typography sx={{ m: 0.5 }} variant='span'>Weight:</Typography>
-                                        <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleMOOCletWeightChange(event, node.id)} />
+                                        <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleAssignerWeightChange(event, node.id)} />
                                         <small>{getWeight(node)}</small>
                                         <Button onClick={() => {
                                             sIdToEdit(node.id);
-                                            sMoocletModalOpen(true);
+                                            sAssignerModalOpen(true);
                                         }} startIcon={<EditIcon />}>Edit</Button>
 
 
@@ -431,7 +431,7 @@ function StudyEditor(props) {
                                 )}
                             />
                         </DndProvider>
-                        <Button sx={{ m: 2 }} variant="contained" onClick={addMOOClet}>Add a new Assigner</Button>
+                        <Button sx={{ m: 2 }} variant="contained" onClick={addAssigner}>Add a new Assigner</Button>
                     </AccordionDetails>
                 </Accordion>
 
@@ -439,8 +439,8 @@ function StudyEditor(props) {
                 {status === 2 && <Accordion>
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon />}
-                        aria-controls="mooclet-graph"
-                        id="mooclet-graph"
+                        aria-controls="assigner-graph"
+                        id="assigner-graph"
                     >
                         <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AutoModeIcon sx={{ mr: 1 }}></AutoModeIcon>Simulations</Typography>
                     </AccordionSummary>
@@ -454,13 +454,13 @@ function StudyEditor(props) {
                 {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
             </Box>
             <Modal
-                open={moocletModalOpen}
-                onClose={handleMOOCletModalClose}
+                open={assignerModalOpen}
+                onClose={handleAssignerModalClose}
                 style={{ overflow: 'scroll', height: "80%", width: "80%", margin: "5% auto" }}
 
             >
                 <Box style={{ background: "white" }}>
-                    <MOOCletEditor mooclets={study.mooclets} sMooclets={sMooclets} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></MOOCletEditor>
+                    <AssignerEditor assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
                 </Box>
             </Modal>
         </Container >

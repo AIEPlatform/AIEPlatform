@@ -36,7 +36,7 @@ class WeightedRandom(Policy):
                 "treatment": lucky_version,
                 "outcome": None,
                 "where": where,
-                "moocletId": self._id,
+                "assignerId": self._id,
                 "timestamp": datetime.datetime.now(),
                 "otherInformation": other_information,
                 "contextuals": contextual_vars_dict,

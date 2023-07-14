@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the name of the task you want to check
-frontend_task="DataArrow-Frontend"
+frontend_task="AIEPlatform-Frontend"
 
 # Check if the task is in the list using PM2 list command
 pm2_list_output=$(pm2 list)
@@ -14,7 +14,7 @@ else
   echo "Task $frontend_task is not running in PM2."
 fi
 
-backend_task="DataArrow-Backend"
+backend_task="AIEPlatform-Backend"
 
 # Check if the task is in the list using PM2 list command
 pm2_list_output=$(pm2 list)
@@ -35,6 +35,6 @@ pm2 start npm --name $frontend_task -- start
 
 cd ../backend
 pip install -r requirements.txt
-pm2 start dataarrow.py --name $backend_task
+pm2 start app.py --name $backend_task
 
 pm2 save

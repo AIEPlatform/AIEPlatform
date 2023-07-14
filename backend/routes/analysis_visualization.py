@@ -334,8 +334,8 @@ def create_dataset():
             response = DatasetModel.create(document)
 
             if EMAIL_NOTIFICATION and is_valid_email(email):
-                subject = "Your MOOClets datasets are ready for download."
-                body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
+                subject = "Your Study datasets are ready for download."
+                body = f'Your Study datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
                 sender = EMAIL_USERNAME
                 recipients = [request.get_json()['email']]
                 password = EMAIL_PASSWORD
@@ -354,7 +354,7 @@ def create_dataset():
             print(traceback.format_exc())
             print(e)
             if EMAIL_NOTIFICATION and is_valid_email(email):
-                subject = "Sorry, downloading mooclet datasets failed. please try again."
+                subject = "Sorry, downloading study datasets failed. please try again."
                 body = subject
                 sender = EMAIL_USERNAME
                 recipients = [request.get_json()['email']]

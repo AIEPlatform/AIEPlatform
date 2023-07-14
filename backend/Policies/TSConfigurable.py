@@ -15,7 +15,7 @@ import traceback
 import sys
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
 
 
@@ -88,7 +88,7 @@ class TSConfigurable(Policy):
                     "treatment": lucky_version,
                     "outcome": None,
                     "where": where,
-                    "moocletId": self._id,
+                    "assignerId": self._id,
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": {'sampleMethod': 'uniform_random_cold_start'}, 
                     "contextuals": contextual_vars_dict,
@@ -108,7 +108,7 @@ class TSConfigurable(Policy):
                     "treatment": lucky_version,
                     "outcome": None,
                     "where": where,
-                    "moocletId": self._id,
+                    "assignerId": self._id,
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": {'sampleMethod': 'epsilon_exploration'}, 
                     "contextuals": contextual_vars_dict,
@@ -124,7 +124,7 @@ class TSConfigurable(Policy):
                     "treatment": lucky_version,
                     "outcome": None,
                     "where": where,
-                    "moocletId": self._id,
+                    "assignerId": self._id,
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": {"sampleMethod": "non-tspostdiff"}, 
                     "contextuals": contextual_vars_dict,
@@ -140,7 +140,7 @@ class TSConfigurable(Policy):
                     "treatment": lucky_version,
                     "outcome": None,
                     "where": where,
-                    "moocletId": self._id,
+                    "assignerId": self._id,
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": {"sampleMethod": "tspostdiff"}, 
                     "contextuals": contextual_vars_dict,
@@ -187,10 +187,10 @@ class TSConfigurable(Policy):
                 current_posteriors = {}
                 min_rating, max_rating = self.parameters["min_rating"] if "min_rating" in self.parameters else 0, self.parameters['max_rating']
                 for version in self.study['versions']:
-                    # TODO: Verify Pan's guess on used_choose_group: this is to filter out the ratings that are from this MOOClet (policy), or from all policies of this study.
+                    # TODO: Verify Pan's guess on used_choose_group: this is to filter out the ratings that are from this Assigner (policy), or from all policies of this study.
 
                     if "used_choose_group" in self.parameters and self.parameters["used_choose_group"] == True:
-                        student_ratings = InteractionModel.get_mooclet_outcome_by_version(self._id, version)
+                        student_ratings = InteractionModel.get_assigner_outcome_by_version(self._id, version)
                     else:
                         student_ratings = list(InteractionModel.get_study_outcome_by_version(self.study["_id"], version))
 
@@ -205,7 +205,7 @@ class TSConfigurable(Policy):
                     successes = success_update
                     failures = rating_count - success_update
                     current_posteriors[version['name']] = {"successes":successes, "failures": failures}
-                MOOCletModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
+                AssignerModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
                 self.parameters["current_posteriors"] = current_posteriors
                 session.commit_transaction()
                 LockModel.delete({"_id": new_lock_id})
@@ -217,15 +217,15 @@ class TSConfigurable(Policy):
             return
         
 
-def check_lock(moocletId):
+def check_lock(assignerId):
     # Check if lock exists
     try:
-        lock_exists = LockModel.get_one({"moocletId": moocletId})
+        lock_exists = LockModel.get_one({"assignerId": assignerId})
         if lock_exists:
             return None
         else:
             # Create lock
-            response = LockModel.create({"moocletId": moocletId})
+            response = LockModel.create({"assignerId": assignerId})
             return response.inserted_id
     except Exception as e:
         print(e)

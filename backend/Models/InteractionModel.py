@@ -1,7 +1,7 @@
 from credentials import *
 import datetime
 
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 class InteractionModel:
     @staticmethod
     def get_many(filter, public = False, session = None):
@@ -12,12 +12,12 @@ class InteractionModel:
     # Get the last interaction for the given user at a study.
     @staticmethod
     def find_last_interaction(study, user, public = False, session = None):
-        mooclets = MOOCletModel.find_study_mooclets(study, public, session)
+        assigners = AssignerModel.find_study_assigners(study, public, session)
 
         # Find the latest interaction.
         the_interaction = Interaction.find_one({
             'user': user,
-            'moocletId': {'$in': [mooclet['_id'] for mooclet in mooclets]}
+            'assignerId': {'$in': [assigner['_id'] for assigner in assigners]}
         })
         return the_interaction
     
@@ -26,20 +26,20 @@ class InteractionModel:
     @staticmethod
     def get_interactions(study, session = None):
         try:
-            the_mooclets = list(MOOClet.find({"studyId": study['_id']}, {"_id": 1}))
+            theassigners = list(Assigner.find({"studyId": study['_id']}, {"_id": 1}))
 
-            the_mooclets = [r['_id'] for r in the_mooclets]
+            theassigners = [r['_id'] for r in theassigners]
 
             result = Interaction.aggregate([
                 {
                     '$match': {
-                        'moocletId': {"$in": the_mooclets}  # Specify the filter condition for collection1
+                        'assignerId': {"$in": theassigners}  # Specify the filter condition for collection1
                     }
                 },
                 {
                     '$lookup': {
-                        'from': 'mooclet',
-                        'localField': 'moocletId',  # The field in collection1 to match
+                        'from': 'assigner',
+                        'localField': 'assignerId',  # The field in collection1 to match
                         'foreignField': '_id',  # The field in collection2 to match
                         'as': 'joined_data',  # The name of the field in the output documents
                     }
@@ -58,15 +58,15 @@ class InteractionModel:
             return None
     
     # Get the latest interaction for a given user at a study at a specific location.
-    # TODO: We need to think about what happens if a user has been assigned to more than one MOOClet. This's not supposed to happen, but what if a user was assigned to a mooclet, and the mooclet was deleted, and we have to assign them a different mooclet?
+    # TODO: We need to think about what happens if a user has been assigned to more than one Assigners. This's not supposed to happen, but what if a user was assigned to a assigner, and the assigner was deleted, and we have to assign them a different assigner?
     @staticmethod
-    def get_latest_interaction_for_where(moocletId, user, where = None):
+    def get_latest_interaction_for_where(assignerId, user, where = None):
         try:
             if where is None:
-                return Interaction.find_one({"user": user, "moocletId": moocletId}, sort=[("timestamp", -1)])
+                return Interaction.find_one({"user": user, "assignerId": assignerId}, sort=[("timestamp", -1)])
             else:
-                print({"user": user, "moocletId": moocletId, "where": where})
-                return Interaction.find_one({"user": user, "moocletId": moocletId, "where": where}, sort=[("timestamp", -1)])
+                print({"user": user, "assignerId": assignerId, "where": where})
+                return Interaction.find_one({"user": user, "assignerId": assignerId, "where": where}, sort=[("timestamp", -1)])
         except Exception as e:
             print(e)
             return None
@@ -75,16 +75,16 @@ class InteractionModel:
     # Get number of participants for an assigner.
     # TODO: should it be unique?
     @staticmethod
-    def get_num_participants_for_assigner(moocletId):
+    def get_num_participants_for_assigner(assignerId):
         try:
-            return len(list(Interaction.find({"moocletId": moocletId})))
+            return len(list(Interaction.find({"assignerId": assignerId})))
         except:
             return 0
         
     @staticmethod
-    def get_num_participants_for_assigner_individual(moocletId, user):
+    def get_num_participants_for_assigner_individual(assignerId, user):
         try:
-            return len(list(Interaction.find({"moocletId": moocletId, "user": user})))
+            return len(list(Interaction.find({"assignerId": assignerId, "user": user})))
         except:
             return 0
 
@@ -105,31 +105,31 @@ class InteractionModel:
             return 500
         
 
-    # Find all unused interactions for a given mooclet
+    # Find all unused interactions for a given assigner
     @staticmethod
-    def find_earliest_unused(moocletId, user = None, session = None):
+    def find_earliest_unused(assignerId, user = None, session = None):
         earliest_unused = None
         if user is None:
             earliest_unused = Interaction.find_one(
-                            {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}
+                            {"assignerId": assignerId, "outcome": {"$ne": None}, "used": {"$ne": True}}
                             ) # TODO: Shall we exclute those from uniform (I don't think so?)
         else:
             earliest_unused = Interaction.find_one(
-                            {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}
+                            {"assignerId": assignerId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}
                             ) # TODO: Shall we exclute those from uniform (I don't think so?)
         return earliest_unused
     
 
     # use_unused_interactions
     @staticmethod
-    def use_unused_interactions(moocletId, user = None, session = None):
+    def use_unused_interactions(assignerId, user = None, session = None):
         if user is None:
             interactions_for_posterior = list(Interaction.find(
-                {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
+                {"assignerId": assignerId, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
                 )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
             
             Interaction.update_many(
-                {"moocletId": moocletId, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
+                {"assignerId": assignerId, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
                 )
             
             # TODO: Verify that when this function is called, there should never be overlapping in two different calls.
@@ -142,19 +142,19 @@ class InteractionModel:
             return interactions_for_posterior
         else:
             interactions_for_posterior = list(Interaction.find(
-                {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
+                {"assignerId": assignerId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, session=session
                 )) # TODO: Need to somehow tag interactions as having been used for posterior already or by time.
             
             Interaction.update_many(
-                {"moocletId": moocletId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
+                {"assignerId": assignerId, "user": user, "outcome": {"$ne": None}, "used": {"$ne": True}}, {"$set": {"used": True}}, session=session
                 )
         
             return interactions_for_posterior
     
-    # get mooclet number of feedback
+    # get assigner number of feedback
     @staticmethod
-    def get_mooclet_num_feedback(moocletId, session = None):
-        return Interaction.count_documents({"moocletId": moocletId, "outcome": {"$ne": None}}, session=session)
+    def get_assigner_num_feedback(assignerId, session = None):
+        return Interaction.count_documents({"assignerId": assignerId, "outcome": {"$ne": None}}, session=session)
     
 
 
@@ -163,18 +163,14 @@ class InteractionModel:
 
 
 
-    # return a list of all NON-NAN outcome for the given version from the given mooclet.
+    # return a list of all NON-NAN outcome for the given version from the given assigner.
     @staticmethod
-    def get_mooclet_outcome_by_version(moocletId, version, session = None):
+    def get_assigner_outcome_by_version(assignerId, version, session = None):
         try:
-            # the_mooclets = list(MOOClet.find({"studyId": study['_id']}, {"_id": 1}))
-
-            # the_mooclets = [r['_id'] for r in the_mooclets]
-
             result = Interaction.aggregate([
                 {
                     '$match': {
-                        'moocletId': moocletId,  # Specify the filter condition for collection1
+                        'assignerId': assignerId,  # Specify the filter condition for collection1
                         'outcome': {'$ne': None},
                         'treatment': version
                     }
@@ -190,18 +186,18 @@ class InteractionModel:
             print(e)
             return None
         
-    # return a list of all NON-NAN outcome for the given version from the given mooclet.
+    # return a list of all NON-NAN outcome for the given version from the given assignerId.
     @staticmethod
     def get_study_outcome_by_version(studyId, version, session = None):
         try:
-            the_mooclets = list(MOOClet.find({"studyId": studyId}, {"_id": 1}))
+            theAssigners = list(Assigner.find({"studyId": studyId}, {"_id": 1}))
 
-            the_mooclets = [r['_id'] for r in the_mooclets]
+            theAssigners = [r['_id'] for r in theAssigners]
 
             result = Interaction.aggregate([
                 {
                     '$match': {
-                        'moocletId': {"$in": the_mooclets},  # Specify the filter condition for collection1
+                        'assignerId': {"$in": theAssigners},  # Specify the filter condition for collection1
                         'outcome': {'$ne': None},
                         'treatment': version
                     }

@@ -3,19 +3,17 @@ import { Typography, Paper, TextField, Bo, Button, Box } from '@mui/material';
 
 function WeightedRandom(props) {
     let versions = props.versions;
-    let mooclets = props.mooclets;
+    let assigners = props.assigners;
     let myId = props.myId;
-    let sMooclets = props.sMooclets;
-    let tree = [...mooclets];
-    let mooclet = tree.find(mooclet => mooclet.id === myId);
-
-    console.log(mooclet)
+    let sAssigners = props.sAssigners;
+    let tree = [...assigners];
+    let assigner = tree.find(assigner => assigner.id === myId);
 
     let handleWeightChange =(index, event) => {
-        let data = [...mooclets];
-        let mooclet = data.find(mooclet => mooclet.id === myId);
-        mooclet['parameters'][versions[index]['name']] = Number(event.target.value);
-        sMooclets(data);
+        let data = [...assigners];
+        let assigner = data.find(assigner => assigner.id === myId);
+        assigner['parameters'][versions[index]['name']] = Number(event.target.value);
+        sAssigners(data);
     }
     return (
         <Box>
@@ -27,7 +25,7 @@ function WeightedRandom(props) {
                         <Box key = {index} sx={{mt: 2}}>
                             <TextField
                                 required
-                                value={mooclet['parameters'][versions[index]['name']] ? mooclet['parameters'][versions[index]['name']] : ""}
+                                value={assigner['parameters'][versions[index]['name']] ? assigner['parameters'][versions[index]['name']] : ""}
                                 label={`Version(${index+1}) weight`}
                                 onChange={(e) => handleWeightChange(index, e)}
                                 type="number"

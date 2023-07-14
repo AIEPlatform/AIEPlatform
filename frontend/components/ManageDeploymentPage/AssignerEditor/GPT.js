@@ -2,23 +2,23 @@ import { React, useEffect, useState } from 'react';
 import { Typography, Paper, TextField, Bo, Button, Box, useForkRef } from '@mui/material';
 
 function GPT(props) {
-    let mooclets = props.mooclets;
+    let assigners = props.assigners;
     let myId = props.myId;
-    let sMooclets = props.sMooclets;
-    let tree = [...mooclets];
-    let mooclet = tree.find(mooclet => mooclet.id === myId);
+    let sAssigners = props.sAssigners;
+    let tree = [...assigners];
+    let assigner = tree.find(assigner => assigner.id === myId);
 
     // Initial policy parameter
     useEffect(() => {
-        if (!mooclet['parameters']['prompt']) {
-            mooclet['parameters']['prompt'] = '';
+        if (!assigner['parameters']['prompt']) {
+            assigner['parameters']['prompt'] = '';
         }
-        if (!mooclet['parameters']['initialPrompt']) {
-            mooclet['parameters']['initialPrompt'] = '';
+        if (!assigner['parameters']['initialPrompt']) {
+            assigner['parameters']['initialPrompt'] = '';
         }
-        sMooclets(tree);
+        sAssigners(tree);
 
-        console.log(mooclet)
+        console.log(assigner)
     }, []);
     return (
         <Box>
@@ -29,10 +29,10 @@ function GPT(props) {
                 multiline
                 rows={4}
                 fullWidth={true}
-                defaultValue={mooclet['parameters']['initialPrompt']}
+                defaultValue={assigner['parameters']['initialPrompt']}
                 onChange={(e) => {
-                    mooclet['parameters']['initialPrompt'] = e.target.value;
-                    sMooclets(tree);
+                    assigner['parameters']['initialPrompt'] = e.target.value;
+                    sAssigners(tree);
                 }}
             />
 
@@ -43,10 +43,10 @@ function GPT(props) {
                 multiline
                 rows={4}
                 fullWidth={true}
-                defaultValue={mooclet['parameters']['prompt']}
+                defaultValue={assigner['parameters']['prompt']}
                 onChange={(e) => {
-                    mooclet['parameters']['prompt'] = e.target.value;
-                    sMooclets(tree);
+                    assigner['parameters']['prompt'] = e.target.value;
+                    sAssigners(tree);
                 }}
             />
         </Box>

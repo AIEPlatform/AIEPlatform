@@ -37,7 +37,7 @@ The Backend is in Python. So there are some Python libraries need to be installe
 ```
 pip install -r requirements.txt
 ```
-Now, you can start the backend by running `python3 dataarrow.py`
+Now, you can start the backend by running `python3 app.py`
 
 Notes:
 
@@ -83,7 +83,7 @@ You can start the MongoDB software by `sudo systemctl start mongod`.
 You can start the MongoDB on system boot by `sudo systemctl enable mongod`.
 You can check the MongoDB status by `sudo systemctl status mongod`.
 
-##### Create User for DataArrow
+##### Create User for AIEPlatform
 When you make sure that MongoDB is running, type `mongosh`.
 Switch to the admin collection by `use admin`;
 
@@ -93,7 +93,7 @@ Let's create an admin user first before we turn on authedication.
 Give a secure password.
 
 Now, let's create the user for our DB.
-`db.createUser({user: "dataarrow", "pwd": passwordPrompt(), roles: [{ role: 'readWrite', db: 'dataarrow' }]});`
+`db.createUser({user: "aieplatform", "pwd": passwordPrompt(), roles: [{ role: 'readWrite', db: 'aieplatform' }]});`
 
 Type `ctrl+c` to exit the mongosh.
 
@@ -154,7 +154,7 @@ Please read this to install MongoDB on your local machine: https://www.mongodb.c
 
 You can verify if MongoDB is installed and running by `mongosh`.
 
-##### Create User for DataArrow
+##### Create User for AIEPlatform
 When you make sure that MongoDB is running, type `mongosh`.
 Switch to the admin collection by `use admin`;
 
@@ -164,7 +164,7 @@ Let's create an admin user first before we turn on authedication.
 Give a secure password.
 
 Now, let's create the user for our DB.
-`db.createUser({user: "dataarrow", "pwd": passwordPrompt(), roles: [{ role: 'readWrite', db: 'dataarrow' }]});`
+`db.createUser({user: "aieplatform", "pwd": passwordPrompt(), roles: [{ role: 'readWrite', db: 'aieplatform' }]});`
 
 Type `ctrl+c` to exit the mongosh.
 

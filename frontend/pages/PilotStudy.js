@@ -170,7 +170,7 @@ export default function PilotStudy() {
         // load question
         // get username from local storage
         if(router.query.topic == null) return;
-        let username = localStorage.getItem("dataarrowPilotStudyUsername") // null
+        let username = localStorage.getItem("AIEPlatformPilotStudyUsername") // null
         if (username !== null) {
             sUsername(username);
             loadWhichStudy(username);
@@ -221,7 +221,7 @@ export default function PilotStudy() {
                         <Box><TextField id="outlined-basic" label="Name" variant="outlined" onChange={(event) => { sUsernameInput(event.target.value) }} /></Box>
                         <Button sx={{ mt: 2 }} onClick={() => {
                             sUsername(usernameInput);
-                            localStorage.setItem('dataarrowPilotStudyUsername', usernameInput);
+                            localStorage.setItem('AIEPlatformPilotStudyUsername', usernameInput);
                             loadWhichStudy(usernameInput);
                         }} variant='contained'>Submit</Button>
                     </Box>

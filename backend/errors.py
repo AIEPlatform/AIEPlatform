@@ -9,7 +9,7 @@ status_codes = {
     "DOWNLOAD_DATASET_FAILURE": {
         "status": 500, 
         "code": "5401", 
-        "message": "Sorry, downloading mooclet datasets failed. please try again."
+        "message": "Sorry, downloading study datasets failed. please try again."
     }, 
     "DOWNLOAD_DATASET_SUCCESSFUL": {
         "status": 200, 

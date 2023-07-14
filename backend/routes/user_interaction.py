@@ -14,7 +14,7 @@ import time
 import threading
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.StudyModel import StudyModel
 from Models.DeploymentModel import DeploymentModel
 from Models.VariableModel import VariableModel
@@ -24,37 +24,37 @@ from bson.objectid import ObjectId
 
 user_interaction_apis = Blueprint('user_interaction_apis', __name__)
 
-def create_mooclet_instance(user, the_mooclet):
-    cls = globals().get(the_mooclet['policy'])
+def create_assigner_instance(user, the_assigner):
+    cls = globals().get(the_assigner['policy'])
     if cls:
-        return cls(user, **the_mooclet)
+        return cls(user, **the_assigner)
     else:
         raise ValueError(f"Invalid policy name")
     
-def inductive_get_mooclet(mooclet, user):
-    if len(mooclet['children']) > 0:
-        children = MOOCletModel.find_mooclets({"_id": {"$in": mooclet['children']}}, {"_id": 1, "weight": 1})
-        # TODO: Check previous assignment. Choose MOOClet should be consistent with previous assignment.
-        next_mooclet_id = random_by_weight(list(children))['_id']
-        next_mooclet = MOOCletModel.find_mooclet({'_id': next_mooclet_id})
-        return inductive_get_mooclet(next_mooclet, user)
+def inductive_get_assigner(assigner, user):
+    if len(assigner['children']) > 0:
+        children = AssignerModel.find_assigners({"_id": {"$in": assigner['children']}}, {"_id": 1, "weight": 1})
+        # TODO: Check previous assignment. Choose Assigner should be consistent with previous assignment.
+        next_assigner_id = random_by_weight(list(children))['_id']
+        next_assigner = AssignerModel.find_assigner({'_id': next_assigner_id})
+        return inductive_get_assigner(next_assigner, user)
     else:
         # this is a leaf node. return it!
-        return mooclet
+        return assigner
 
-def get_mooclet_for_user(study, user):
-    # Note that, a deployment + study_name + user uniquely identify a mooclet.
+def get_assigner_for_user(study, user):
+    # Note that, a deployment + study_name + user uniquely identify a assigner.
     # OR, this function will decide one and return.
-    # TODO: Check if re-assignment is needed. For example, the mooclet is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
+    # TODO: Check if re-assignment is needed. For example, the assigner is deleted (not yet implemented), or the experiment requires re-assignment at a certain time point.
     # Find the latest interaction.
     the_interaction = InteractionModel.find_last_interaction(study, user, public = True)
 
     if the_interaction is not None:
-        the_mooclet = MOOCletModel.find_mooclet({'_id': the_interaction['moocletId']})
-        return (the_mooclet)
+        the_assigner = AssignerModel.find_assigner({'_id': the_interaction['assignerId']})
+        return (the_assigner)
     else:
-        root_mooclet = MOOCletModel.find_mooclet({"_id": study['rootMOOClet']})
-        return inductive_get_mooclet(root_mooclet, user)
+        root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
+        return inductive_get_assigner(root_assigner, user)
 
 def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None):
 
@@ -74,15 +74,15 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
         raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
     
     start_time = time.time()
-    the_mooclet = get_mooclet_for_user(study, user)
+    the_assigner = get_assigner_for_user(study, user)
     try:
-        mooclet = create_mooclet_instance(user, the_mooclet)
-        version_to_show = mooclet.choose_arm(user, where, other_information)
+        assigner = create_assigner_instance(user, the_assigner)
+        version_to_show = assigner.choose_arm(user, where, other_information)
         if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
             the_log = {
-                "policy": the_mooclet['policy'],
+                "policy": the_assigner['policy'],
                 "execution_time": execution_time, 
                 "threads": threading.active_count(), 
                 "timestamp": datetime.datetime.now()
@@ -92,7 +92,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
     except Exception as e:
         if DEV_MODE:
             the_log = {
-                "policy": the_mooclet['policy'],
+                "policy": the_assigner['policy'],
                 "error": True,
                 "error_message": str(e),
                 "traceback": traceback.format_exc(),
@@ -103,7 +103,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
         return None
 
 def get_reward(deployment_name, study_name, user, value, where = None, apiToken = None,  other_information = None):
-    # Get MOOClet!
+    # Get Assigner!
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
 
@@ -119,17 +119,17 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
     if study['status'] == 'stopped':
         raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
     start_time = time.time()
-    the_mooclet = get_mooclet_for_user(study, user)
+    the_assigner = get_assigner_for_user(study, user)
 
-    mooclet = create_mooclet_instance(user, the_mooclet)
-    response = mooclet.get_reward(user, value, where, other_information)
+    assigner = create_assigner_instance(user, the_assigner)
+    response = assigner.get_reward(user, value, where, other_information)
 
     if DEV_MODE:
         end_time = time.time()
         execution_time = end_time - start_time
 
         the_log = {
-            "policy": the_mooclet['policy'],
+            "policy": the_assigner['policy'],
             "execution_time": execution_time, 
             "threads": threading.active_count(), 
             "timestamp": datetime.datetime.now()

@@ -30,30 +30,30 @@ const availablePolicies = [
 ];
 
 
-function MOOCletEditor(props) {
-    let mooclets = props.mooclets;
+function AssignerEditor(props) {
+    let assigners = props.assigners;
     let myId = props.idToEdit;
-    let sMooclets = props.sMooclets;
+    let sAssigners = props.sAssigners;
     let versions = props.versions;
     let factors = props.factors;
     let variables = props.variables;
 
-    let mooclet = mooclets.find(mooclet => mooclet.id === myId);
-    const handleMOOCletNameChange = (event) => {
-        let data = [...mooclets];
-        mooclet = data.find(mooclet => mooclet.id === myId);
-        mooclet['name'] = event.target.value;
-        mooclet['text'] = event.target.value;
-        sMooclets(data);
+    let assigner = assigners.find(assigner => assigner.id === myId);
+    const handleAssignerNameChange = (event) => {
+        let data = [...assigners];
+        assigner = data.find(assigner => assigner.id === myId);
+        assigner['name'] = event.target.value;
+        assigner['text'] = event.target.value;
+        sAssigners(data);
     }
 
 
     let handlePolicyChange = (option) => {
-        let data = [...mooclets];
-        mooclet = data.find(mooclet => mooclet.id === myId);
-        mooclet['policy'] = option.value;
-        mooclet['parameters'] = {};
-        sMooclets(data);
+        let data = [...assigners];
+        assigner = data.find(assigner => assigner.id === myId);
+        assigner['policy'] = option.value;
+        assigner['parameters'] = {};
+        sAssigners(data);
     }
 
     return (
@@ -65,34 +65,34 @@ function MOOCletEditor(props) {
         }}>
             <Box sx={{ mt: 2 }}>
                 Editing:
-                <input type="text" name="name" value={mooclet.name} onChange={handleMOOCletNameChange} />
+                <input type="text" name="name" value={assigner.name} onChange={handleAssignerNameChange} />
             </Box>
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy</Typography>
-                {mooclet.dbId == undefined && <Select
+                {assigner.dbId == undefined && <Select
                     name="policies"
                     options={availablePolicies}
                     className="basic-multi-select"
                     classNamePrefix="select"
                     onChange={(option) => handlePolicyChange(option)}
-                    value={availablePolicies.find(policy => policy.value === mooclet.policy)}
+                    value={availablePolicies.find(policy => policy.value === assigner.policy)}
                     styles={{
                         // Fixes the overlapping problem of the component
                         menu: provided => ({ ...provided, zIndex: 9999 })
                     }}
                 />}
 
-                {mooclet.dbId !== undefined && <Typography>{mooclet.policy}</Typography>}
+                {assigner.dbId !== undefined && <Typography>{assigner.policy}</Typography>}
             </Box>
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy Parameters</Typography>
-                {mooclet.policy === 'UniformRandom' && <UniformRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}>Uniform doesn't require a policy parameter!</UniformRandom>}
-                {mooclet.policy === 'WeightedRandom' && <WeightedRandom versions={versions} mooclets={mooclets} sMooclets={sMooclets} myId={myId}></WeightedRandom>}
-                {mooclet.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSConfigurable>}
-                {mooclet.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></TSContextual>}
-                {mooclet.policy === 'GPT' && <GPT factors={factors} mooclets={mooclets} sMooclets={sMooclets} myId={myId} variables={variables}></GPT>}
+                {assigner.policy === 'UniformRandom' && <UniformRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}>Uniform doesn't require a policy parameter!</UniformRandom>}
+                {assigner.policy === 'WeightedRandom' && <WeightedRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}></WeightedRandom>}
+                {assigner.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSConfigurable>}
+                {assigner.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSContextual>}
+                {assigner.policy === 'GPT' && <GPT factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></GPT>}
 
                 
             </Box>
@@ -101,4 +101,4 @@ function MOOCletEditor(props) {
 }
 
 
-export default MOOCletEditor;
+export default AssignerEditor;
