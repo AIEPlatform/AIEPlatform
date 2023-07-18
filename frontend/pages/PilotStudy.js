@@ -52,7 +52,10 @@ export default function PilotStudy() {
     const [done, sDone] = useState(false);
     const [quizAnswer, sQuizAnswer] = useState(null);
     const [score, sScore] = useState(null);
+
+
     const loadQuestion = () => {
+        
         if (router.query.topic === null || username === null) return;
         fetch(`/apis/pilotStudy/loadQuestion/${router.query.topic}`)
             .then(res => res.json())
@@ -115,7 +118,11 @@ export default function PilotStudy() {
 
         fetch("/apis/treatment", requestOptions)
             .then(response => response.json())
-            .then(result => sTreatment(result['treatment']['content']))
+            .then(result => 
+                {
+                    sTreatment(result['treatment']['content']);
+                    console.log(result['treatment'])
+                })
             .catch(error => console.log('error', error));
     }
 
@@ -154,7 +161,7 @@ export default function PilotStudy() {
                         .then(response => response.json())
                         .then(result => {
                             if(result['status_code'] == 200) {
-                                sDone(result['done'])
+                                sDone(result['done']);
                             }
                             else {
                                 alert("Something is wrong. Please try again later.")
@@ -176,6 +183,17 @@ export default function PilotStudy() {
             loadWhichStudy(username);
         }
     }, [router.query.topic]);
+
+    useEffect(() => {
+        console.log(username);
+        console.log(whichStudy);
+        let contextualValueDoneOrNot = localStorage.getItem(`AIEPlatformPilotStudy${router.query.topic}${whichStudy}${username}`);
+        if (username !== null && whichStudy !== null && contextualValueDoneOrNot !== null) {
+            loadQuestion();
+            loadTreatment();
+            sContextualValue(contextualValueDoneOrNot);
+        }
+    }, [whichStudy]);
 
     const submitContextual = () => {
         if (contextualValue == null) {
@@ -205,6 +223,8 @@ export default function PilotStudy() {
             .then(result => {
                 if (result['status_code'] == 200) {
                     // display the quiz.
+                    // set the localstorage to record people have submitted understanding for this topic.
+                    localStorage.setItem(`AIEPlatformPilotStudy${router.query.topic}${whichStudy}${username}`, true);
                     loadQuestion();
                     loadTreatment();
                 }
