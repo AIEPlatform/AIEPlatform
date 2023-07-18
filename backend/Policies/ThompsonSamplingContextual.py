@@ -77,6 +77,7 @@ class ThompsonSamplingContextual(Policy):
     def choose_arm(self, user, where, other_information):
         current_time = datetime.datetime.now()
         lucky_version = self.get_incomplete_consistent_assignment(user, where)
+        
 
         # check if we should switch to individual
         if self.individualMode:
@@ -212,19 +213,19 @@ class ThompsonSamplingContextual(Policy):
             
             # Insert a record for the interaction.
 
-            new_interaction = {
-                "user": user,
-                "treatment": lucky_version,
-                "outcome": None,
-                "where": where,
-                "assignerId": self._id,
-                "timestamp": datetime.datetime.now(),
-                "otherInformation": other_information, 
-                "contextuals": contextual_vars_dict,
-                "contextualIds": contextual_vars_id_dict
-            }
+                new_interaction = {
+                    "user": user,
+                    "treatment": lucky_version,
+                    "outcome": None,
+                    "where": where,
+                    "assignerId": self._id,
+                    "timestamp": datetime.datetime.now(),
+                    "otherInformation": other_information, 
+                    "contextuals": contextual_vars_dict,
+                    "contextualIds": contextual_vars_id_dict
+                }
 
-            InteractionModel.insert_one(new_interaction)
+                InteractionModel.insert_one(new_interaction)
             return lucky_version
         except Exception as e:
             print(traceback.format_exc())
