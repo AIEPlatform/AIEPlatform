@@ -61,7 +61,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
     if deployment is None:
         raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
-    if deployment['apiToken'] != None and deployment['apiToken'] != apiToken:
+    if 'apiToken' in deployment != None and deployment['apiToken'] != apiToken:
         raise InvalidDeploymentToken(f"Invalid token for deployment {deployment_name}.")
     
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
@@ -192,6 +192,7 @@ def get_treatment():
         }), 409
 
     except Exception as e:
+        print(traceback.format_exc())
         return json_util.dumps({
             "status_code": 500,
             "message": "Server is down please try again later."

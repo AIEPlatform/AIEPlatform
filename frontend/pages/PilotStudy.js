@@ -240,6 +240,7 @@ export default function PilotStudy() {
                         />}
                         {whichStudy === "numeric" &&
                             <Select
+                                placeholder="Please rate your understanding of the topic."
                                 className="basic-single"
                                 classNamePrefix="select"
                                 name="understanding"
@@ -252,13 +253,18 @@ export default function PilotStudy() {
                     </Box>}
                 {treatment === "concept_first" &&
                     <Box>
+                        <Typography variant='h6'>Something useful. Please have a read: </Typography>
                         <mark><a href = {question['concept']}> Material To Read</a></mark>
+                        <iframe src="https://statisticsbyjim.com/hypothesis-testing/confidence-interval/" width={"100%"} height={"500px"}></iframe>
                     </Box>}
+                
                 {question !== null && username !== null && contextualValue !== null &&
                     <FormControl>
+                        <Typography variant='h6'>Please answer the following question: </Typography>
                         <FormLabel id="demo-radio-buttons-group-label">{question['question']}</FormLabel>
                         <RadioGroup
                             aria-labelledby="demo-radio-buttons-group-label"
+                            label="Please rate your understanding of the topic."
                             name="radio-buttons-group"
                             onChange={(event) => { sQuizAnswer(event.target.value) }}
 
@@ -277,10 +283,12 @@ export default function PilotStudy() {
                         <Button sx={{ m: 2 }} variant="contained" onClick={submitQuizAnswer} disabled={score !== null}>Submit</Button>
                     </FormControl>
                 }
-                {score !== null && <Box>Your answer got a score {score}</Box>}
+                {score !== null && <Box><mark>Your answer got a score {score}</mark></Box>}
                 {score != null && treatment === "concept_later" &&
                     <Box>
+                        <Typography variant='h6'>Something useful. Please have a read: </Typography>
                         <mark><a href = {question['concept']}> Material To Read</a></mark>
+                        <iframe src="https://statisticsbyjim.com/hypothesis-testing/confidence-interval/" width={"100%"} height={"500px"}></iframe>
                     </Box>}
             </Box>
         )
