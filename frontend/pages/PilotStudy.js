@@ -255,7 +255,7 @@ export default function PilotStudy() {
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
                         <mark><a href = {question['concept']}> Material To Read</a></mark>
-                        <iframe src="https://statisticsbyjim.com/hypothesis-testing/confidence-interval/" width={"100%"} height={"500px"}></iframe>
+                        <iframe src={question['concept']} width={"100%"} height={"500px"}></iframe>
                     </Box>}
                 
                 {question !== null && username !== null && contextualValue !== null &&
@@ -288,7 +288,7 @@ export default function PilotStudy() {
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
                         <mark><a href = {question['concept']}> Material To Read</a></mark>
-                        <iframe src="https://statisticsbyjim.com/hypothesis-testing/confidence-interval/" width={"100%"} height={"500px"}></iframe>
+                        <iframe src={question['concept']} width={"100%"} height={"500px"}></iframe>
                     </Box>}
             </Box>
         )

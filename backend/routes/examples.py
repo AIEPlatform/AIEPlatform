@@ -38,16 +38,17 @@ questions = [
     },
     {
         "topic": "Hypothesis Testing with Student-t Distribution",
-        "concept": "Student's t-test, in statistics, a method of testing hypotheses about the mean of a small sample drawn from a normally distributed population when the population standard deviation is unknown. In 1908 William Sealy Gosset, an Englishman publishing under the pseudonym Student, developed the t-test and t distribution.", 
+        "concept": "https://www.britannica.com/science/Students-t-test", 
         "question": "A researcher wants to test the claim that the mean weight of a certain product is 500 grams. A sample of 25 products has a mean weight of 495 grams and a sample standard deviation of 12 grams. What is the calculated t-value for this hypothesis test?", 
         "choices": ["-2.08", "-1.67", "2.08", "1.67"], 
-        "right_answer_index": 2
+        "right_answer_index": 0
     }
 ]
 
 
 @examples_apis.route('/apis/pilotStudy/loadQuestion/<topic>', methods=['GET'])
 def loadQuestion(topic):
+    print(topic)
     # find the question object from questions with the topic like the given one.
     for question in questions:
         if question['topic'] == topic:
