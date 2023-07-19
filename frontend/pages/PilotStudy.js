@@ -53,9 +53,11 @@ export default function PilotStudy() {
     const [quizAnswer, sQuizAnswer] = useState(null);
     const [score, sScore] = useState(null);
 
+    const topicsToInverted = ["Mann-Whitney U Test"];
+
 
     const loadQuestion = () => {
-        
+
         if (router.query.topic === null || username === null) return;
         fetch(`/apis/pilotStudy/loadQuestion/${router.query.topic}`)
             .then(res => res.json())
@@ -118,11 +120,10 @@ export default function PilotStudy() {
 
         fetch("/apis/treatment", requestOptions)
             .then(response => response.json())
-            .then(result => 
-                {
-                    sTreatment(result['treatment']['content']);
-                    console.log(result['treatment'])
-                })
+            .then(result => {
+                sTreatment(result['treatment']['content']);
+                console.log(result['treatment'])
+            })
             .catch(error => console.log('error', error));
     }
 
@@ -146,6 +147,12 @@ export default function PilotStudy() {
             .then(response => response.json())
             .then(result => {
                 if (result["status_code"] === 200) {
+
+                    // check if topic is in the inverted list
+                    if (topicsToInverted.includes(router.query.topic)) {
+                        if(result["treatment"]["content"] === "numeric") result["treatment"]["content"] = "text";
+                        else result["treatment"]["content"] = "text";
+                    }
                     sWhichStudy(result["treatment"]["content"]);
                     if (result["treatment"]["content"] === "numeric") sVariableName("understanding_rating");
                     else sVariableName("understanding");
@@ -160,7 +167,7 @@ export default function PilotStudy() {
                     fetch(`/apis/pilotStudy/checkDoneOrNot?topic=${router.query.topic}&study=${result["treatment"]["content"]}&username=${username}`, requestOptions)
                         .then(response => response.json())
                         .then(result => {
-                            if(result['status_code'] == 200) {
+                            if (result['status_code'] == 200) {
                                 sDone(result['done']);
                             }
                             else {
@@ -176,7 +183,7 @@ export default function PilotStudy() {
     useEffect(() => {
         // load question
         // get username from local storage
-        if(router.query.topic == null) return;
+        if (router.query.topic == null) return;
         let username = localStorage.getItem("AIEPlatformPilotStudyUsername") // null
         if (username !== null) {
             sUsername(username);
@@ -274,14 +281,18 @@ export default function PilotStudy() {
                 {treatment === "concept_first" &&
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
-                        <mark><a href = {question['concept']}> Material To Read</a></mark>
-                        <iframe src={question['concept']} width={"100%"} height={"500px"}></iframe>
+                        <Box><mark><a href={question['concept']}> Material To Read</a></mark></Box>
+                        <iframe src={question['concept']} sandbox="" width={"80%"} height={"500px"}></iframe>
                     </Box>}
-                
+
                 {question !== null && username !== null && contextualValue !== null &&
                     <FormControl>
                         <Typography variant='h6'>Please answer the following question: </Typography>
-                        <FormLabel id="demo-radio-buttons-group-label">{question['question']}</FormLabel>
+                        <FormLabel id="demo-radio-buttons-group-label">{question['question'].split('\n').map((line, index) => (
+                            <Box key={index}>
+                                {line}
+                            </Box>
+                        ))}</FormLabel>
                         <RadioGroup
                             aria-labelledby="demo-radio-buttons-group-label"
                             label="Please rate your understanding of the topic."
@@ -307,13 +318,13 @@ export default function PilotStudy() {
                 {score != null && treatment === "concept_later" &&
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
-                        <mark><a href = {question['concept']}> Material To Read</a></mark>
-                        <iframe src={question['concept']} width={"100%"} height={"500px"}></iframe>
+                        <Box><mark><a href={question['concept']}> Material To Read</a></mark></Box>
+                        <iframe src={question['concept']} sandbox="" width={"80%"} height={"500px"}></iframe>
                     </Box>}
             </Box>
         )
     }
-    else if(done === true) {
+    else if (done === true) {
         return (
             <Box sx={{ m: 3 }}>
                 Your are done for this topic ({router.query.topic}). Thanks for your participation!
