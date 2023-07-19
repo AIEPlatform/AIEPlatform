@@ -42,6 +42,13 @@ questions = [
         "question": "A researcher wants to test the claim that the mean weight of a certain product is 500 grams. A sample of 25 products has a mean weight of 495 grams and a sample standard deviation of 12 grams. What is the calculated t-value for this hypothesis test?", 
         "choices": ["-2.08", "-1.67", "2.08", "1.67"], 
         "right_answer_index": 0
+    },
+    {
+        "topic": "Mann-Whitney U Test",
+        "concept": "https://datatab.net/tutorial/mann-whitney-u-test", 
+        "question": "Two independent groups of students were given a test, and their scores are as follows:\n Group A: 78, 80, 82, 85, 88  \n Group B: 75, 77, 79, 81, 84 \n What is the calculated Mann-Whitney U statistic for comparing the distributions of these two groups?", 
+        "choices": ["6", "12", "14", "21"], 
+        "right_answer_index": 0
     }
 ]
 
