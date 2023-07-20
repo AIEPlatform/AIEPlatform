@@ -53,7 +53,7 @@ export default function PilotStudy() {
     const [quizAnswer, sQuizAnswer] = useState(null);
     const [score, sScore] = useState(null);
 
-    const topicsToInverted = ["Mann-Whitney U Test"];
+    const topicsToInverted = ["Mann-Whitney U Test", "Deriving Cumulative Distribution Function"];
 
 
     const loadQuestion = () => {
@@ -151,7 +151,7 @@ export default function PilotStudy() {
                     // check if topic is in the inverted list
                     if (topicsToInverted.includes(router.query.topic)) {
                         if(result["treatment"]["content"] === "numeric") result["treatment"]["content"] = "text";
-                        else result["treatment"]["content"] = "text";
+                        else result["treatment"]["content"] = "numeric";
                     }
                     sWhichStudy(result["treatment"]["content"]);
                     if (result["treatment"]["content"] === "numeric") sVariableName("understanding_rating");

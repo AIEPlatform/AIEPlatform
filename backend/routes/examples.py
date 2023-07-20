@@ -49,6 +49,13 @@ questions = [
         "question": "Two independent groups of students were given a test, and their scores are as follows:\n Group A: 78, 80, 82, 85, 88  \n Group B: 75, 77, 79, 81, 84 \n What is the calculated Mann-Whitney U statistic for comparing the distributions of these two groups?", 
         "choices": ["6", "12", "14", "21"], 
         "right_answer_index": 0
+    },
+    {
+        "topic": "Deriving Cumulative Distribution Function",
+        "concept": "https://stats.libretexts.org/Courses/Saint_Mary's_College_Notre_Dame/MATH_345__-_Probability_(Kuter)/4%3A_Continuous_Random_Variables/4.1%3A_Probability_Density_Functions_(PDFs)_and_Cumulative_Distribution_Functions_(CDFs)_for_Continuous_Random_Variables",
+        "question": "Consider a probability density function (PDF) given by f(x) = 2x, where 0 ≤ x ≤ 1. Calculate the cumulative distribution function (CDF) F(x) for the given PDF.",
+        "choices": ["F(x) = x^2", "F(x) = x^3", "F(x) = x^4", "F(x) = x^5"],
+        "right_answer_index": 2
     }
 ]
 
