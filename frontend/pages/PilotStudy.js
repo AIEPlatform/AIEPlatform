@@ -258,7 +258,7 @@ export default function PilotStudy() {
                     <Box>
                         {whichStudy === "text" && <TextField
                             id="outlined-multiline-flexible"
-                            label="Please write your understanding of the topic."
+                            label="Please explain the topic in your words."
                             multiline
                             maxRows={4}
                             fullWidth={true}
