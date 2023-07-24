@@ -9,7 +9,8 @@ import Paper from '@mui/material/Paper';
 import Container from '@mui/material/Container';
 import Select from 'react-select';
 import { useEffect, useState } from 'react';
-import { Typography } from '@mui/material';
+import { Stack, Typography, IconButton } from '@mui/material';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 
 
 export default function BasicTable(props) {
@@ -18,6 +19,7 @@ export default function BasicTable(props) {
   const analysis = props.analysis;
   const analysises = props.analysises;
   const sAnalysises = props.sAnalysises;
+  const closeButtonClickHandler = props.closeButtonClickHandler;
 
   const [columns, sColumns] = useState([]);
   const [rows, sRows] = useState([]);
@@ -64,8 +66,13 @@ export default function BasicTable(props) {
   }, [theDataset, props.datasetTime, analysis['selectedVariables'], analysis['selectedAssigners']]);
 
   return (
-    <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6">Basic Reward Summary Table</Typography>
+    <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column'}}>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="h6">Basic Reward Summary Table</Typography>
+        <IconButton onClick={() => closeButtonClickHandler(analysis)}>
+          <CloseOutlinedIcon />
+        </IconButton>
+      </Stack>
       <Typography variant="p">Choose a policy</Typography>
       <Select
         isMulti
