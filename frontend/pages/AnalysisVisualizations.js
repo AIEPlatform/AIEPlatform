@@ -1,5 +1,9 @@
+// Bugs with this version:
+// The line graphs don't load due to the div tag that I wrapped the paper component with 
+// the drag and drop is super janky
+
 import { React, useContext, useState, useEffect } from 'react';
-import { Container, Typography, Box, Button, Paper } from '@mui/material';
+import { Container, Typography, Box, Button, Paper, Icon } from '@mui/material';
 import Layout from '../components/layout';
 import Select from 'react-select';
 import Head from 'next/head';
@@ -9,6 +13,7 @@ import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UpgradeIcon from '@mui/icons-material/Upgrade';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import { UserContext } from "../contexts/UserContextWrapper";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -39,6 +44,19 @@ const availableAnalysises = [
   }
 ];
 
+const formatDate = (dateString) => {
+  const formattedDate = new Date(dateString);
+  const options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  };
+
+  return formattedDate.toLocaleString("en-US", options);
+};
 
 export default function DataAnalysis(props) {
 
@@ -241,12 +259,11 @@ export default function DataAnalysis(props) {
             id="reward-editor"
             style={{ display: 'flex', justifyContent: 'space-between' }}
           >
-            <Typography variant='h6'>Customize your analysis and visualizations</Typography>
-            <Button onClick={(event) => handleDatasetUpdate(event)}><UpgradeIcon></UpgradeIcon>Update</Button>
+            <Typography variant='h6'>Customize your Analyses and Visualizations</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Container maxWidth="md">
-              <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: the analysis & visualizations are for insights only. Please conduct a more rigor analysis to get a better understanding of your data.</strong></Typography>
+              <Typography variant="p" align="center" sx={{ mb: 3 }}><strong>Disclaimer: The analyses & visualizations are for insights only. Please conduct more rigorous analysis to gain a better understanding of your data.</strong></Typography>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="p">Deployment: </Typography>
                 <Select
@@ -280,8 +297,9 @@ export default function DataAnalysis(props) {
                 <Button sx={{ m: 2, ml: 0 }} variant="contained" href={`/apis/analysis/downloadArrowDataset/${theDataset['_id']['$oid']}`}><DownloadIcon></DownloadIcon>Download</Button>
                 <Button sx={{ m: 2, ml: 0 }} variant="contained" color="error" onClick={handleDatasetDelete}><DeleteIcon></DeleteIcon>Delete</Button>
                 {theDataset && <Box>
-                  <Typography>ADVANCED: you can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
-                  <label htmlFor="csv-upload">Upload CSV file:</label>
+                  <Typography color="primary" variant="h6">Advanced:</Typography>
+                  <Typography>You can choose to work on the dataset locally, and re-upload the updated dataset, which will then replace the dataset in the cloud. KEEP IN MIND that this operation is not undoable!</Typography>
+                  <label htmlFor="csv-upload">Upload CSV file: </label>
                   <input
                     id="csv-upload"
                     type="file"
@@ -294,6 +312,7 @@ export default function DataAnalysis(props) {
               </Box>}
 
               <Box sx={{ m: 3, ml: 0 }}>
+                <Typography color="primary" variant="h6">Current Visualizations:</Typography>
                 <DragDropContext onDragEnd={handleDrop}>
                   <Droppable droppableId="list-container">
                     {(provided) => (
@@ -311,8 +330,10 @@ export default function DataAnalysis(props) {
                                 {...provided.dragHandleProps}
                                 {...provided.draggableProps}
                               >
-                                {item['label']}
-                                <Button onClick={() => handleDeleteAnalysis(item)}>X</Button>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  <Button onClick={() => handleDeleteAnalysis(item)}>X</Button>
+                                  <Typography variant="body1">{item['label']}</Typography>
+                                </div>
                               </div>
                             )}
                           </Draggable>
@@ -322,14 +343,14 @@ export default function DataAnalysis(props) {
                     )}
                   </Droppable>
                 </DragDropContext>
-                <Typography variant="p">New Analysis: </Typography>
+                <Typography color="primary" variant="h6">Add New Analysis: </Typography>
                 <Select
                   options={availableAnalysises}
                   onChange={(option) => {
                     sNewAnalysis(option);
                   }}
                 />
-                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="success" onClick={() => handleAddNewAnalysis()}>Add</Button>
+                <Button sx={{ m: 2, ml: 0 }} variant="contained" color="success" onClick={() => handleAddNewAnalysis()}>+ Add</Button>
               </Box>
 
             </Container>
@@ -338,22 +359,75 @@ export default function DataAnalysis(props) {
         </Accordion>
 
 
-        {theDataset && <ResponsiveMasonry
-          columnsCountBreakPoints={{ 350: 1, 750: 2 }}
-        >
-          <Box><mark variant='small'>Last updated at: {theDataset['updatedAt']['$date']}</mark></Box>
-          <Masonry>
-            {analysises.map((item, index) => (
-              <Paper key={item['value']} sx={{ m: 2, p: 4 }} style={{ maxWidth: '100%', maxHeight: '500px' }}>
-                {item['label'] == 'Basic Reward Table' && <Table theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
-                {item['label'] == 'Average Reward By Time' && <AverageRewardByTime theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
-                {item['label'] == 'Average Reward By Time For One Version (with error bar)' && <AverageRewardByTimeForOneVersion theDataset={theDataset} analysis={item} sAnalysises={sAnalysises} analysises={analysises} />}
-                {/* pretty bad */}
-              </Paper>
-            ))}
-          </Masonry>
-        </ResponsiveMasonry>
-        }
+        {theDataset && (
+          <DragDropContext onDragEnd={handleDrop}>
+            <Droppable droppableId="analysises">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2 }} background="red">
+                    <Box pt={3} pl={3} style={{ justifyContent: 'space-between', display: "flex" }}>
+                      <Typography color="primary" variant="h6">
+                        Last updated: {formatDate(theDataset['updatedAt']['$date'])}
+                      </Typography>
+                      <Button size="medium" variant="contained" startIcon={<UpgradeIcon />} onClick={(event) => handleDatasetUpdate(event)}>
+                        Update Dataset
+                      </Button>
+                    </Box>
+
+                    <Masonry>
+                      {analysises.map((item, index) => (
+                        <Draggable
+                          key={item['value']}
+                          draggableId={item['value']}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
+                              <Paper
+                                sx={{ m: 2, p: 4, borderRadius: 4 }}
+                                style={{ maxWidth: '100%' }}
+                                elevation={7}
+                              >
+                                {item['label'] === 'Average Reward By Time For One Version (with error bar)' && (
+                                  <AverageRewardByTimeForOneVersion
+                                    theDataset={theDataset}
+                                    analysis={item}
+                                    sAnalysises={sAnalysises}
+                                    analysises={analysises}
+                                    closeButtonClickHandler={handleDeleteAnalysis}
+                                  />
+                                )}
+                                {item['label'] === 'Average Reward By Time' && (
+                                  <AverageRewardByTime
+                                    theDataset={theDataset}
+                                    analysis={item}
+                                    sAnalysises={sAnalysises}
+                                    analysises={analysises}
+                                    closeButtonClickHandler={handleDeleteAnalysis}
+                                  />
+                                )}
+                                {item['label'] === 'Basic Reward Table' && (
+                                  <Table
+                                    theDataset={theDataset}
+                                    analysis={item}
+                                    sAnalysises={sAnalysises}
+                                    analysises={analysises}
+                                    closeButtonClickHandler={handleDeleteAnalysis}
+                                  />
+                                )}
+                              </Paper>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </Masonry>
+                  </ResponsiveMasonry>
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        )}
 
       </Layout>
     );

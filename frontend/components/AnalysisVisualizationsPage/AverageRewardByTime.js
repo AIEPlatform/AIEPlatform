@@ -1,7 +1,8 @@
 // load useEffect
 import React, { useEffect, useState } from 'react';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
+import { Stack, Typography, IconButton } from '@mui/material';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ErrorBar } from 'recharts';
 import Select from 'react-select';
 
@@ -15,6 +16,7 @@ export default function AverageRewardByTime(props) {
   const analysis = props.analysis;
   const analysises = props.analysises;
   const sAnalysises = props.sAnalysises;
+  const closeButtonClickHandler = props.closeButtonClickHandler;
 
   const [resultDf, sResultDf] = useState([]);
   const [groups, sGroups] = useState([]);
@@ -67,7 +69,12 @@ export default function AverageRewardByTime(props) {
   return (
     <>
       <Container style={{ maxHeight: "100%", display: 'flex', flexDirection: 'column' }}>
-        <Typography variant='h6'>Average Reward as a function of time</Typography>
+        <Stack direction="row" justifyContent="space-between">
+          <Typography variant='h6'>Average Reward as a function of time</Typography>
+          <IconButton onClick={() => closeButtonClickHandler(analysis)}>
+            <CloseOutlinedIcon />
+          </IconButton>
+        </Stack>
 
         <Typography variant="p">Choose a policy</Typography>
         <Select
@@ -96,30 +103,31 @@ export default function AverageRewardByTime(props) {
           }}
         />
       </Container>
-      <ResponsiveContainer>
-        <LineChart
-          width={500}
-          height={300}
-          data={resultDf}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="x" />
-          <YAxis label={{ value: "Reward", position: "insideLeft", angle: -90 }} />
 
-          <Tooltip />
-          <Legend />
-          {
-            groups.map((group, index) => {
-              if (group.includes('errorBar')) return;
-              return (
-                <Line key={group} type="monotone" dataKey={group} stroke={distinctColors[index % 9]} activeDot={{ r: 8 }}>
-                  <ErrorBar dataKey={`${group}-errorBar`} width={4} strokeWidth={2} stroke={distinctColors[index % 9]} direction="y" />
-                </Line>
-              )
-            })
-          }
-        </LineChart>
-      </ResponsiveContainer>
+      <div style={{ maxWidth: '100%', height: '500px' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={resultDf}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="x" />
+            <YAxis label={{ value: "Reward", position: "insideLeft", angle: -90 }} />
+
+            <Tooltip />
+            <Legend />
+            {
+              groups.map((group, index) => {
+                if (group.includes('errorBar')) return;
+                return (
+                  <Line key={group} type="monotone" dataKey={group} stroke={distinctColors[index % 9]} activeDot={{ r: 8 }}>
+                    <ErrorBar dataKey={`${group}-errorBar`} width={4} strokeWidth={2} stroke={distinctColors[index % 9]} direction="y" />
+                  </Line>
+                )
+              })
+            }
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </>
   );
 }
