@@ -71,6 +71,17 @@ class InteractionModel:
             print(e)
             return None
 
+    @staticmethod
+    def get_interactions_for_where(assignerId, user, where = None):
+        try:
+            if where is None:
+                return list(Interaction.find({"user": user, "assignerId": assignerId}))
+            else:
+                return list(Interaction.find({"user": user, "assignerId": assignerId, "where": where}))
+        except Exception as e:
+            print(e)
+            return None
+
 
     # Get number of participants for an assigner.
     # TODO: should it be unique?
@@ -211,3 +222,12 @@ class InteractionModel:
         except Exception as e:
             print(e)
             return None
+
+
+    @staticmethod
+    def auto_zero(filter_query, update_query, session = None):
+        try:
+            Interaction.update_many(filter_query, update_query, session=session)
+            return 200
+        except:
+            return 500

@@ -88,6 +88,7 @@ def create_assigner(assigner, study_id, session):
         "parameters": assigner['parameters'],
         "studyId": study_id,
         "reassignAfterReward": assigner['reassignAfterReward'] if 'reassignAfterReward' in assigner else False,
+        "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
         "isConsistent": False, 
         "autoZeroPerMinute": False, 
         "children": my_children, 
@@ -262,7 +263,8 @@ def convert_assigner_tree_to_list(assigner, parentId, assigner_list):
         "weight": assigner["weight"], 
         "isConsistent": assigner["isConsistent"] if "isConsistent" in assigner else None,
         "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
-        "autoZeroPerMinute": assigner["autoZeroPerMinute"] if "autoZeroPerMinute" in assigner else None
+        "autoZeroPerMinute": assigner["autoZeroPerMinute"] if "autoZeroPerMinute" in assigner else None, 
+        "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0
     })
     for child in assigner["children"]:
         child_assigner = AssignerModel.find_assigner({"_id": child})
@@ -317,6 +319,7 @@ def modify_assigner(assigner, study_id, session):
                 "studyId": study_id,
                 "isConsistent": False, 
                 "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
+                "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
                 "autoZeroPerMinute": False, 
                 "children": my_children, 
                 "weight": float(assigner['weight']), 
@@ -332,6 +335,7 @@ def modify_assigner(assigner, study_id, session):
             "studyId": study_id,
             "isConsistent": False, 
             "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
+            "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
             "autoZeroPerMinute": False, 
             "children": my_children, 
             "weight": float(assigner['weight']), 

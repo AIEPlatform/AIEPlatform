@@ -56,6 +56,13 @@ questions = [
         "question": "Consider a probability density function (PDF) given by f(x) = 2x, where 0 ≤ x ≤ 1. Calculate the cumulative distribution function (CDF) F(x) for the given PDF.",
         "choices": ["F(x) = x^2", "F(x) = x^3", "F(x) = x^4", "F(x) = x^5"],
         "right_answer_index": 2
+    },
+    {
+        "topic": "Understanding Beta-Bernoulli Posterior in Bandit Algorithm",
+        "concept": "https://www.chrisstucchio.com/blog/2013/bayesian_bandit.html",
+        "question": "In a bandit algorithm, a slot machine was played 100 times, resulting in 20 successes and 80 failures. What is the posterior distribution of the success probability using a Beta-Bernoulli model?",
+        "choices": ["Beta(21, 81)", "Beta(25, 75)", "Beta(20, 80)", "Beta(30, 70)"],
+        "right_answer_index": 0
     }
 ]
 

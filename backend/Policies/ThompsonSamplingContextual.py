@@ -74,7 +74,7 @@ class ThompsonSamplingContextual(Policy):
         self.parameters['regression_formula'] = regression_formula
 
 
-    def choose_arm(self, user, where, other_information):
+    def choose_arm(self, user, where, other_information, request_different_arm = False):
         current_time = datetime.datetime.now()
         lucky_version = self.get_incomplete_consistent_assignment(user, where)
         
@@ -107,112 +107,62 @@ class ThompsonSamplingContextual(Policy):
                         # Timeout reached, proceed without waiting
                         break
                     time.sleep(0.5)  # Adjust the sleep interval if needed
-        try:
-            # because it's TS Contextual, 
-            if lucky_version is None:
-                all_versions = self.study['versions']
-                parameters = self.parameters
-                # Store regression equation string
-                regression_formula = parameters['regression_formula']
-                # Include intercept can be true or false
-
-                include_intercept = parameters['include_intercept']
-                # Store contextual variables
-                
-                contextual_vars = self.study['variables']
-                # Get the contextual variables for the learner (most recent ones), or auto init ones.
-                
-                result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
-                
-                # Iterate over the array list
-                for value in contextual_vars:
-                    has_document = False
-
-                    # Check if a document exists for the current value
-                    for document in result:
-                        if document['variableName'] == value:
-                            has_document = True
-                            break
-
                     
-                    imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
+        # because it's TS Contextual, 
+        if lucky_version is None:
+            all_versions = self.get_all_versions(user, where, request_different_arm)
+            if len(all_versions) == 0:
+                print(12346789)
+                raise NoDifferentTreatmentAvailable("There is no unassigned version left.")
+            parameters = self.parameters
+            # Store regression equation string
+            regression_formula = parameters['regression_formula']
+            # Include intercept can be true or false
 
-                    # Insert a document into the other collection if no document exists
-                    if not has_document:
-                        document_to_insert = {
-                            "variableName": value, 
-                            'value': imputed_value,   # TODO: impute based on a better rule.
-                            'user': user,
-                            'where': 'auto init', 
-                            'timestamp': current_time
-                        }
-                        VariableValueModel.insert_variable_value(document_to_insert)
-                    
-                contextual_values = VariableValueModel.get_latest_variable_values(contextual_vars, user)
-
-                contextual_vars_dict = {}
-                contextual_vars_id_dict = {}
-
-                for contextual_value in contextual_values:
-                    contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                    contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
-
-                if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
-                    lucky_version = random.choice(self.study['versions'])
-                    # # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": other_information, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict, 
-                        'isUniform': True
-                    }
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
-                
-                mean = parameters['coef_mean']
-                cov = parameters['coef_cov']
-                variance_a = float(parameters['variance_a'])
-                variance_b = float(parameters['variance_b'])
-                
-                
-                precesion_draw = invgamma.rvs(variance_a, 0, variance_b, size=1)
-                coef_draw = np.random.multivariate_normal(mean, precesion_draw * cov)
-                
-                # Compute outcome for each action
-                best_outcome = -np.inf
-                best_action = None
-
-
-                
-                for version in all_versions:
-                    independent_vars = {}
-                    for contextual_var in contextual_vars_dict:
-                        independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
-                    independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
-                    outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
-                    if best_action is None or outcome > best_outcome:
-                        best_outcome = outcome
-                        best_action = version
-
-                lucky_version = best_action
-
-            # Interaction
-            # – learner
-            # – treatment
-            # – outcome
-            # – where: like which page, which dialogue…
-            # – Assigner
-            # – timestamp
-            # – otherInformation
+            include_intercept = parameters['include_intercept']
+            # Store contextual variables
             
-            # Insert a record for the interaction.
+            contextual_vars = self.study['variables']
+            # Get the contextual variables for the learner (most recent ones), or auto init ones.
+            
+            result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
+            
+            # Iterate over the array list
+            for value in contextual_vars:
+                has_document = False
 
+                # Check if a document exists for the current value
+                for document in result:
+                    if document['variableName'] == value:
+                        has_document = True
+                        break
+
+                
+                imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
+
+                # Insert a document into the other collection if no document exists
+                if not has_document:
+                    document_to_insert = {
+                        "variableName": value, 
+                        'value': imputed_value,   # TODO: impute based on a better rule.
+                        'user': user,
+                        'where': 'auto init', 
+                        'timestamp': current_time
+                    }
+                    VariableValueModel.insert_variable_value(document_to_insert)
+                
+            contextual_values = VariableValueModel.get_latest_variable_values(contextual_vars, user)
+
+            contextual_vars_dict = {}
+            contextual_vars_id_dict = {}
+
+            for contextual_value in contextual_values:
+                contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+                contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+
+            if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
+                lucky_version = random.choice(all_versions)
+                # # TODO: Make a new interaction. Remember to indicate this is from uniform.
                 new_interaction = {
                     "user": user,
                     "treatment": lucky_version,
@@ -222,14 +172,64 @@ class ThompsonSamplingContextual(Policy):
                     "timestamp": datetime.datetime.now(),
                     "otherInformation": other_information, 
                     "contextuals": contextual_vars_dict,
-                    "contextualIds": contextual_vars_id_dict
+                    "contextualIds": contextual_vars_id_dict, 
+                    'isUniform': True
                 }
-
                 InteractionModel.insert_one(new_interaction)
-            return lucky_version
-        except Exception as e:
-            print(traceback.format_exc())
-            return None
+                return lucky_version
+            
+            mean = parameters['coef_mean']
+            cov = parameters['coef_cov']
+            variance_a = float(parameters['variance_a'])
+            variance_b = float(parameters['variance_b'])
+            
+            
+            precesion_draw = invgamma.rvs(variance_a, 0, variance_b, size=1)
+            coef_draw = np.random.multivariate_normal(mean, precesion_draw * cov)
+            
+            # Compute outcome for each action
+            best_outcome = -np.inf
+            best_action = None
+
+
+            
+            for version in all_versions:
+                independent_vars = {}
+                for contextual_var in contextual_vars_dict:
+                    independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
+                independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
+                outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
+                if best_action is None or outcome > best_outcome:
+                    best_outcome = outcome
+                    best_action = version
+
+            lucky_version = best_action
+
+        # Interaction
+        # – learner
+        # – treatment
+        # – outcome
+        # – where: like which page, which dialogue…
+        # – Assigner
+        # – timestamp
+        # – otherInformation
+        
+        # Insert a record for the interaction.
+
+            new_interaction = {
+                "user": user,
+                "treatment": lucky_version,
+                "outcome": None,
+                "where": where,
+                "assignerId": self._id,
+                "timestamp": datetime.datetime.now(),
+                "otherInformation": other_information, 
+                "contextuals": contextual_vars_dict,
+                "contextualIds": contextual_vars_id_dict
+            }
+
+            InteractionModel.insert_one(new_interaction)
+        return lucky_version
 
 
 

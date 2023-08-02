@@ -56,7 +56,7 @@ def get_assigner_for_user(study, user):
         root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
         return inductive_get_assigner(root_assigner, user)
 
-def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None):
+def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None, request_different_arm = False):
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
     if deployment is None:
@@ -77,7 +77,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
     the_assigner = get_assigner_for_user(study, user)
     try:
         assigner = create_assigner_instance(user, the_assigner)
-        version_to_show = assigner.choose_arm(user, where, other_information)
+        version_to_show = assigner.choose_arm(user, where, other_information,request_different_arm)
         if DEV_MODE:
             end_time = time.time()
             execution_time = end_time - start_time
@@ -154,6 +154,7 @@ def get_treatment():
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
         apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
+        request_different_arm = request.json['requestDifferentArm'] if 'requestDifferentArm' in request.json else False
 
         if deployment is None or study is None or user is None:
             return json_util.dumps({
@@ -164,7 +165,7 @@ def get_treatment():
             return json_util.dumps({
                 "status_code": 200,
                 "message": "This is your treatment.", 
-                "treatment": assign_treatment(deployment, study, user, where, apiToken, other_information)
+                "treatment": assign_treatment(deployment, study, user, where, apiToken, other_information, request_different_arm)
             }), 200
         
     except StudyNotFound as e:
@@ -191,6 +192,12 @@ def get_treatment():
             "message": str(e)
         }), 409
 
+    except NoDifferentTreatmentAvailable as e:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": str(e)
+        }), 400
+
     except Exception as e:
         print(traceback.format_exc())
         return json_util.dumps({
@@ -209,7 +216,7 @@ def give_reward():
         user = request.json['user'] if 'user' in request.json else None
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
-        value = request.json['value'] if 'value' in request.json else None
+        value = float(request.json['value']) if 'value' in request.json else None
         apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
 
         if deployment is None or study is None or user is None or value is None:

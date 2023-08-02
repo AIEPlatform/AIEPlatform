@@ -6,6 +6,7 @@ from errors import *
 from Models.StudyModel import StudyModel
 class Policy(ABC):
 	def __init__(self, user, **assigner_obj_from_db):
+		print(assigner_obj_from_db)
 		for key, value in assigner_obj_from_db.items():
 			setattr(self, key, value)
 
@@ -23,7 +24,7 @@ class Policy(ABC):
 		self.user = user
 
 	@abstractmethod
-	def choose_arm(self, user, where, other_information):
+	def choose_arm(self, user, where, other_information, request_different_arm = False):
 		pass
 
 	def get_reward(self, user, value, where, other_information):
@@ -55,3 +56,17 @@ class Policy(ABC):
 			return None
 		else:
 			return last_interaction['treatment']
+
+
+	def get_all_versions(self, user, where, request_different_arm = False):
+		if not request_different_arm: return self.study['versions']
+		else:
+			# get all versions a user has been previously assigned to from Interaction.
+
+			past_interactions = InteractionModel.get_interactions_for_where(self._id, user, where)
+			assigned_versions = [interaction['treatment'] for interaction in past_interactions if interaction['outcome'] is None]
+			if assigned_versions is None:
+				return self.study['versions']
+			else:
+				unassigned_versions = [version for version in self.study['versions'] if version not in assigned_versions]
+				return unassigned_versions

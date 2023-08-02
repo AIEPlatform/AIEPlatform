@@ -25,8 +25,11 @@ class GPT(Policy):
 	# parameters: {
     # prompt: "", 
     # lastK: ""}
-	def choose_arm(self, user, where, other_information):
+	def choose_arm(self, user, where, other_information, request_different_arm = False):
 		# TODO: Check if consistent assignment!
+		all_versions = self.get_all_versions(user, where, request_different_arm)
+		if len(all_versions) == 0:
+			raise NoDifferentTreatmentAvailable("There is no unassigned version left.")
 		try:
 			if 'messages' not in self.parameters:
 				self.parameters['messages'] = []
@@ -45,19 +48,19 @@ class GPT(Policy):
 				if contextual_value['variableName'] == "gender":
 					prompt = prompt.replace("{gender}", str(contextual_value['value']))
 			# only get version names
-			versions = [version['name'] for version in self.study['versions']]
+			versions = [version['name'] for version in all_versions]
 			
 			prompt = prompt.replace("{versions}", str(versions))
 
 			version_chosen = chatbot({"role": "user", "content": prompt}, self.parameters['messages'])
 			lucky_version = None
-			for version in self.study['versions']:
+			for version in all_versions:
 				if version['name'] in version_chosen:
 					lucky_version = version
 					break
 			if lucky_version is None:
 				# do unifoirm
-				lucky_version = random.choice(self.study['versions'])
+				lucky_version = random.choice(all_versions)
 			
 			new_interaction = {
 				"user": user,
@@ -75,7 +78,7 @@ class GPT(Policy):
 			return lucky_version
 		except Exception as e:
 			print(e)
-			lucky_version = random.choice(self.study['versions'])
+			lucky_version = random.choice(all_versions)
 			
 			new_interaction = {
 				"user": user,

@@ -61,3 +61,6 @@ class VariableNotExist(Exception):
 
 class StudyStopped(Exception):
     pass
+
+class NoDifferentTreatmentAvailable(Exception):
+    pass
