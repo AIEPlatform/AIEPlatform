@@ -183,7 +183,6 @@ export default function DataAnalysis(props) {
             // Replace the dataset with the new returned one.
             sTheDataset(data["dataset"]);
             sTheDatasets(data["datasets"]);
-            console.log(data["dataset"]);
           }
           else {
             alert("Error: " + data["message"]);

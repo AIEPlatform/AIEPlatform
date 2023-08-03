@@ -31,9 +31,6 @@ function TSConfigurable(props) {
             }
         }
 
-        console.log(assigner['parameters']['current_posteriors'])
-
-
         sAssigners(tree);
 
     }, []);

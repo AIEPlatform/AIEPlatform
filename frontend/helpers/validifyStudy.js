@@ -1,6 +1,5 @@
 // To Policy Author, please note that you need to remove the version and variable from the assigner's policy, if your policy makes use of the version or variable that you are deleting.
 function validifyStudy(study) {
-    console.log("hello world")
     let modifiedStudy = {...study};
 
     // For study versions. Need to remove the factor from the version if the factor is deleted, or add the factor if the factor is added.
@@ -17,14 +16,10 @@ function validifyStudy(study) {
         // check versionJSON of each version, and remove the factor if it's not there.
         for(let factor of study.factors) {
             if(!version.versionJSON[factor]) {
-                console.log("good")
                 delete version.versionJSON[factor];
             }
         }
     }
-
-    console.log(study.versions)
-
 
     // Validify the simulation setting.
     if(modifiedStudy.simulationSetting) {
@@ -84,8 +79,6 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         // Step 2: remove the formula item that are empty. Reduce the corresponding parameters.
 
         // Can do: prompt the user it's very risky to do when an experiment is running. They may want to keep a copy of the previous matrices
-
-        console.log(parameters['regressionFormulaItems'][2])
 
         if(parameters['regressionFormulaItems'] === undefined) {
             return parameters;

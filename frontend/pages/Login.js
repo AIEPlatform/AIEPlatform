@@ -43,10 +43,6 @@ export default function SignIn() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
 
     fetch('/apis/auth/login', {
       method: 'POST',
@@ -60,7 +56,6 @@ export default function SignIn() {
     })
       .then(response => response.json())
       .then(data => {
-        console.log(data);
         if (data["status"] == 200) {
           window.location.href = "/";
         }

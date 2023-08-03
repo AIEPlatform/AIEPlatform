@@ -17,8 +17,6 @@ function GPT(props) {
             assigner['parameters']['initialPrompt'] = '';
         }
         sAssigners(tree);
-
-        console.log(assigner)
     }, []);
     return (
         <Box>

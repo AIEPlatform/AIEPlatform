@@ -1,5 +1,5 @@
 import { React, useState } from 'react';
-import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container } from '@mui/material';
+import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, FormControl, InputLabel, Input } from '@mui/material';
 import Select from 'react-select';
 import WeightedRandom from './WeightedRandom';
 import TSContextual from './TSContextual';
@@ -64,8 +64,16 @@ function AssignerEditor(props) {
             flexDirection: 'column'
         }}>
             <Box sx={{ mt: 2 }}>
-                Editing:
-                <input type="text" name="name" value={assigner.name} onChange={handleAssignerNameChange} />
+                <FormControl variant="standard">
+                    <InputLabel htmlFor="input-with-icon-adornment">
+                        Rename this assigner
+                    </InputLabel>
+                    <Input
+                        id="input-with-icon-adornment"
+                        value={assigner.name}
+                        onChange={handleAssignerNameChange}
+                    />
+                </FormControl>
             </Box>
 
             <Box sx={{ mt: 2 }}>
@@ -94,7 +102,7 @@ function AssignerEditor(props) {
                 {assigner.policy === 'ThompsonSamplingContextual' && <TSContextual factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSContextual>}
                 {assigner.policy === 'GPT' && <GPT factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></GPT>}
 
-                
+
             </Box>
         </Paper>
     );

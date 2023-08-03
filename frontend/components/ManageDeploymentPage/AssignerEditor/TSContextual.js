@@ -10,8 +10,8 @@ const CoefCovInput = (props) => {
 
     const handleInputChange = (e, rowIndex, colIndex) => {
         const value = e.target.value;
-        assigner['parameters']['coef_cov'][rowIndex][colIndex] = Number(value);
-        assigner['parameters']['coef_cov'][colIndex][rowIndex] = Number(value);
+        assigner['parameters']['coef_cov'][rowIndex][colIndex] = value;
+        assigner['parameters']['coef_cov'][colIndex][rowIndex] = value;
         sAssigners(tree);
     };
 
@@ -48,13 +48,12 @@ const CoefMeanInput = (props) => {
 
     const handleInputChange = (e, index) => {
         const value = e.target.value;
-        assigner['parameters']['coef_mean'][index] = Number(value);
+        assigner['parameters']['coef_mean'][index] = value;
         sAssigners(tree);
     };
 
 
     const renderMatrix = () => {
-        console.log(assigner['parameters'])
         return (assigner['parameters']['coef_mean'] || []).map((cell, index) => (
             <input
                 key={index}
@@ -90,7 +89,7 @@ function TSContextual(props) {
     let regressionFormulaVariables = variables.concat(factors);
 
     let handleWeightChange = (event, name) => {
-        assigner['parameters'][name] = Number(event.target.value);
+        assigner['parameters'][name] = event.target.value;
         sAssigners(tree)
 
     }

@@ -122,7 +122,6 @@ export default function PilotStudy() {
             .then(response => response.json())
             .then(result => {
                 sTreatment(result['treatment']['content']);
-                console.log(result['treatment'])
             })
             .catch(error => console.log('error', error));
     }
@@ -192,8 +191,6 @@ export default function PilotStudy() {
     }, [router.query.topic]);
 
     useEffect(() => {
-        console.log(username);
-        console.log(whichStudy);
         let contextualValueDoneOrNot = localStorage.getItem(`AIEPlatformPilotStudy${router.query.topic}${whichStudy}${username}`);
         if (username !== null && whichStudy !== null && contextualValueDoneOrNot !== null) {
             loadQuestion();

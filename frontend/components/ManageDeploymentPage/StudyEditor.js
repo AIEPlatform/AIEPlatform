@@ -199,7 +199,6 @@ function StudyEditor(props) {
     // Call the helper function to validate the study.
 
     useEffect(() => {
-        console.log("Variables, versions, or factors length change")
         let modifiedStudy = validifyStudy(study);
         sStudy(modifiedStudy);
     }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all assigners

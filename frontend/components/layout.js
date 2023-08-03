@@ -97,7 +97,6 @@ export default function Layout({ children }) {
             .then(data => {
                 if (data['status'] === 200) {
                     sUserContext(null);
-                    console.log(userContext)
                 }
             })
     }

@@ -12,7 +12,7 @@ function WeightedRandom(props) {
     let handleWeightChange =(index, event) => {
         let data = [...assigners];
         let assigner = data.find(assigner => assigner.id === myId);
-        assigner['parameters'][versions[index]['name']] = Number(event.target.value);
+        assigner['parameters'][versions[index]['name']] = event.target.value;
         sAssigners(data);
     }
     return (

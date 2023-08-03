@@ -32,12 +32,6 @@ export default function SignUp() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-      firstName: data.get('firstName'),
-        lastName: data.get('lastName'),
-    });
     fetch('/apis/auth/signup', {
         method: 'POST',
         body: JSON.stringify({
@@ -52,7 +46,6 @@ export default function SignUp() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data);
         if (data["status"] == 200) {
             window.location.href = "/Login";
         }

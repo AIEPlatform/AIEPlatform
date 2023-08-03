@@ -35,9 +35,7 @@ function CommonAssignerAttribute(props) {
                 type="number"
                 value={assigner['autoZeroThreshold'] || ""}
                 onChange={(e) => {
-                    console.log(parseFloat(e.target.value))
                     assigner['autoZeroThreshold'] = parseFloat(e.target.value);
-                    console.log(assigner)
                     sAssigners(tree);
                 }}
             />

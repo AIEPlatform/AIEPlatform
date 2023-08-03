@@ -85,7 +85,7 @@ function ManageDeployment() {
 
     const handleDeploymentTokenUpdate = () => {
         // put api to /apis/experimentDesign/generateDeploymentApiToken with deployment in the request body
-        
+        if (!confirm("Are you sure you want to generate/update the api token? If you have used the apis, you may need to add the api token in the header.")) return;
         fetch(`/apis/experimentDesign/generateDeploymentApiToken`, {
             method: 'PUT',
             headers: {

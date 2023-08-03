@@ -32,7 +32,6 @@ function NewDeployment() {
             })
         }).then(response => response.json())
             .then(data => {
-                console.log(data);
                 if (data['status_code'] === 200) {
                     alert("Deployment created successfully!");
                     sDeploymentName("");

@@ -21,10 +21,6 @@ function NewDeployment() {
     const handleSubmit = (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        console.log({
-          currentPassword: data.get('current-password'),
-          newPassword: data.get('new-password'),
-        });
         //@auth_apis.route("/apis/auth/changePassword", methods=["PUT"])
         fetch('/apis/auth/changePassword', {
             method: 'PUT',
@@ -38,7 +34,6 @@ function NewDeployment() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log(data);
                 if (data["status"] == 200) {
                     alert("Password changed successfully!");
                 } else {
