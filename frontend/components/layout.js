@@ -22,6 +22,7 @@ import DatasetIcon from '@mui/icons-material/Dataset';
 import InsightsIcon from '@mui/icons-material/Insights';
 import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AttributionIcon from '@mui/icons-material/Attribution';
 
 import { UserContext } from "../contexts/UserContextWrapper";
 import getConfig from 'next/config';
@@ -102,9 +103,9 @@ export default function Layout({ children }) {
     }
 
 
-    const links = ['My Deployment', 'New Deployment', 'Data Workshop', 'Analysis & Visualizations'];
-    const linkURLs = ['/', '/NewDeployment', '/DataWorkshop', '/AnalysisVisualizations'];
-    const icons = [<AutoFixHighIcon />, <AddIcon />, <DatasetIcon />, <InsightsIcon />]
+    const links = ['My Deployment', 'Variables', 'Data Workshop', 'Analysis & Visualizations'];
+    const linkURLs = ['/', '/Variables', '/DataWorkshop', '/AnalysisVisualizations'];
+    const icons = [<AutoFixHighIcon />, <AttributionIcon />, <DatasetIcon />, <InsightsIcon />]
 
     return (
         <Box sx={{ display: 'flex' }}>

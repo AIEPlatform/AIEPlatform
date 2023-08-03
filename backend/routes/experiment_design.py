@@ -207,9 +207,47 @@ def my_deployments():
     }), 200
 
 
+@experiment_design_apis.route("/apis/experimentDesign/deployment", methods=["GET"])
+def my_deployment():
+    deployment_name = request.args.get('deployment_name') if 'deployment_name' in request.args else None
+    if deployment_name is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment_id or deployment_name."
+        }), 400
+    else:
+        the_deployment = DeploymentModel.get_one({"name": deployment_name})
+        if the_deployment is None:
+            return json_util.dumps({
+                "status_code": 403,
+                "message": "You don't have access to this deployment. You will be redirected to the page where you can select your deployment."
+            }), 403
+        return json_util.dumps({
+            "status_code": 200,
+            "message": "This the deployment.",
+            "deployment": the_deployment
+        }), 200
+
+
 @experiment_design_apis.route("/apis/experimentDesign/the_studies", methods=["GET"])
 def the_studies():
-    deployment_id = request.args.get('deployment_id')
+    deployment_id = request.args.get('deployment_id') if 'deployment_id' in request.args else None
+    if deployment_id is None:
+        deployment_name = request.args.get('deployment_name') if 'deployment_name' in request.args else None
+        if deployment_name is None:
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "Please provide deployment_id or deployment_name."
+            }), 400
+        else:
+            the_deployment = DeploymentModel.get_one({"name": deployment_name})
+            if the_deployment is None:
+                return json_util.dumps({
+                    "status_code": 400,
+                    "message": "Deployment does not exist."
+                }), 400
+            else:
+                deployment_id = the_deployment['_id']
     studies = Study.find({"deploymentId": ObjectId(deployment_id)})
     return json_util.dumps({
         "status_code": 200,
