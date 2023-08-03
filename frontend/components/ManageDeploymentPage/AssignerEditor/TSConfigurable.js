@@ -12,9 +12,6 @@ function TSConfigurable(props) {
     let tree = [...assigners];
     let assigner = tree.find(assigner => assigner.id === myId);
 
-    console.log(assigner)
-
-
     useEffect(() => {
         // Initial parameters for TSConfigurable.
         if (!assigner['parameters']['prior']) {

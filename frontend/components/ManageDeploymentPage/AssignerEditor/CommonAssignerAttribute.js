@@ -24,9 +24,22 @@ function CommonAssignerAttribute(props) {
                 control={<Checkbox checked={assigner['reassignAfterReward'] || false} onChange={(e) => {
                     assigner['reassignAfterReward'] = e.target.checked;
                     sAssigners(tree)
-                    console.log(tree);
                 }} />}
                 label="Re-assign a treatment only if the previous one has received a reward"
+            />
+
+            <TextField
+                sx={{ m: 1 }}
+                required
+                label={`Auto Zero Threshold (in seconds)`}
+                type="number"
+                value={assigner['autoZeroThreshold'] || ""}
+                onChange={(e) => {
+                    console.log(parseFloat(e.target.value))
+                    assigner['autoZeroThreshold'] = parseFloat(e.target.value);
+                    console.log(assigner)
+                    sAssigners(tree);
+                }}
             />
         </Box>
     )

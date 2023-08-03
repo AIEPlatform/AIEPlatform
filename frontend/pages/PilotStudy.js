@@ -281,7 +281,7 @@ export default function PilotStudy() {
                 {treatment === "concept_first" &&
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
-                        <Box><mark><a href={question['concept']}> Material To Read</a></mark></Box>
+                        <Box><mark><a href={question['concept']} target="_blank"> Material To Read</a></mark></Box>
                         <iframe src={question['concept']} sandbox="" width={"80%"} height={"500px"}></iframe>
                     </Box>}
 
@@ -318,7 +318,7 @@ export default function PilotStudy() {
                 {score != null && treatment === "concept_later" &&
                     <Box>
                         <Typography variant='h6'>Something useful. Please have a read: </Typography>
-                        <Box><mark><a href={question['concept']}> Material To Read</a></mark></Box>
+                        <Box><mark><a href={question['concept']} target="_blank"> Material To Read</a></mark></Box>
                         <iframe src={question['concept']} sandbox="" width={"80%"} height={"500px"}></iframe>
                     </Box>}
             </Box>

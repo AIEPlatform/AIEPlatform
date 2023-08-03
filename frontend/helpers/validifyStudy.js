@@ -1,12 +1,13 @@
 // To Policy Author, please note that you need to remove the version and variable from the assigner's policy, if your policy makes use of the version or variable that you are deleting.
 function validifyStudy(study) {
+    console.log("hello world")
     let modifiedStudy = {...study};
 
     // For study versions. Need to remove the factor from the version if the factor is deleted, or add the factor if the factor is added.
     for(let factor of study.factors) {
         // check versionJSON of each version, and add the factor if it's not there.
         for(let version of study.versions) {
-            if(!version.versionJSON.hasOwnProperty(factor)) {
+            if(!version.versionJSON[factor]) {
                 version.versionJSON[factor] = 0;
             }
         }
@@ -15,11 +16,14 @@ function validifyStudy(study) {
     for(let version of study.versions) {
         // check versionJSON of each version, and remove the factor if it's not there.
         for(let factor of study.factors) {
-            if(!version.versionJSON.hasOwnProperty(factor)) {
+            if(!version.versionJSON[factor]) {
+                console.log("good")
                 delete version.versionJSON[factor];
             }
         }
     }
+
+    console.log(study.versions)
 
 
     // Validify the simulation setting.
