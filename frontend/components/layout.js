@@ -179,6 +179,10 @@ export default function Layout({ children }) {
             <Main open={open}>
                 <DrawerHeader />
                 {<main>{children}</main>}
+                <Box sx={{textAlign: "center", "mt": 10}}>
+                <small>@ {new Date().getFullYear()} {websiteName}.</small><br></br>
+                <small>{websiteName} is an instance of <a href="https://www.aieplatform.com">Adaptive and Iterative Experimentation Platform</a></small>
+                </Box>
             </Main>
         </Box>
     );
