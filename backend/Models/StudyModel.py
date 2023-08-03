@@ -15,13 +15,35 @@ class StudyModel:
 
     # get many
     @staticmethod
-    def get_many(filter, projection = {}, public = False, session = None):
+    def get_many(filter, projection = {}, public = False, session = None, showDeploymentName = False):
         if not public:
             email = get_username()
             deploymentIds = list(DeploymentModel.get_many({"owner": email}, {"_id": 1}))
             deploymentIds = [r['_id'] for r in deploymentIds]
             filter['deploymentId'] = {"$in": deploymentIds}
-        return Study.find(filter, projection, session=session)
+
+        if not showDeploymentName:
+            return Study.find(filter, projection, session=session)
+        
+        else:
+            pipeline = [
+                {
+                    "$match": filter  # Add the filter criteria to the $match stage
+                },
+                {
+                    "$lookup": {
+                        "from": "deployment",
+                        "localField": "deploymentId",
+                        "foreignField": "_id",
+                        "as": "deployment"
+                    }
+                },
+                {
+                    "$unwind": "$deployment"  # Since the join could result in an array, unwind it to get individual documents
+                }
+            ] 
+            result = Study.aggregate(pipeline)
+            return result
     
 
     def get_deployment_studies(deploymentId, session = None):

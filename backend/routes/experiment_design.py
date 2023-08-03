@@ -400,12 +400,24 @@ def modify_existing_study():
 
 @experiment_design_apis.route("/apis/variables", methods=["GET"])
 def get_variables():
+    # get showStudies from params if not, set to False.
+    showStudies = request.args.get('showStudies') == 'true' if 'showStudies' in request.args else False
+    print("hello world")
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
         }), 403
     try:
-        variables = VariableModel.get_many({})
+        variables = list(VariableModel.get_many({}))
+        if showStudies:
+            # for every variables, get the studies that use it. Every study has a list called variables.
+            for variable in variables:
+                studies = list(StudyModel.get_many({"variables": { "$elemMatch": { "$eq": variable['name'] } }}, showDeploymentName = True))
+                for study in studies:
+                    print(study)
+                # get deploymentName for each study by deployment Id.
+                variable['studies'] = [f'{study["name"]} in {study["deployment"]["name"]}' for study in studies]
+
         return json_util.dumps({
             "status_code": 200, 
             "data": variables

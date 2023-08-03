@@ -37,7 +37,6 @@ function VariableEditor(props) {
         // only keep the name of the variables in options, and make a list.
         const selectedVariables = options.map(obj => obj.name);
         sSelectedVariables(selectedVariables);
-        console.log(selectedVariables);
     }
 
     useEffect(() => {
