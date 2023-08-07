@@ -27,8 +27,8 @@ RewardLog = db['rewardLog']
 
 Deployment.create_index("name", unique=True)
 Study.create_index([('name', pymongo.ASCENDING), ('deploymentId', pymongo.ASCENDING)], unique=True)
-VariableValue.create_index([('variableName', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
-VariableValue.create_index("variableName")
+VariableValue.create_index([('variable', pymongo.ASCENDING), ('user', pymongo.ASCENDING)])
+VariableValue.create_index("variable")
 
 Assigner.create_index([('name', pymongo.ASCENDING), ('studyId', pymongo.ASCENDING)], unique=True)
 

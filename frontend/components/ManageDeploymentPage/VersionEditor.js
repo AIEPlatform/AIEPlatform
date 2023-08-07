@@ -36,7 +36,7 @@ function VersionEditor(props) {
 
     const handleVersionJSONChange = (index, factor, e) => {
         let data = [...versions];
-        data[index]['versionJSON'][factor] = isNaN(e.target.value) ? 0 : parseFloat(e.target.value);
+        data[index]['versionJSON'][factor] = e.target.value;
         sVersions(data);
     }
 
@@ -68,7 +68,7 @@ function VersionEditor(props) {
                                     sx={{mr: 2, mb: 2}}
                                     key={factor}
                                     label={factor}
-                                    value={input['versionJSON'][factor] || 0}
+                                    value={input['versionJSON'][factor]}
                                     type="number"
                                     onChange={(e) => { handleVersionJSONChange(index, factor, e)}}
                                 />

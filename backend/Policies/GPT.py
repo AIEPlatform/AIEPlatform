@@ -42,10 +42,10 @@ class GPT(Policy):
 
 			prompt = self.parameters['prompt']
 			for contextual_value in contextual_values:
-				contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-				contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+				contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+				contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
-				if contextual_value['variableName'] == "gender":
+				if contextual_value['variable'] == "gender":
 					prompt = prompt.replace("{gender}", str(contextual_value['value']))
 			# only get version names
 			versions = [version['name'] for version in all_versions]

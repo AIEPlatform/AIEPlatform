@@ -2,7 +2,11 @@
 function validifyStudy(study) {
     let modifiedStudy = {...study};
 
-    // For study versions. Need to remove the factor from the version if the factor is deleted, or add the factor if the factor is added.
+
+    // We want to make sure that the factorss & versions are on the same page.
+    // 1. remove factors from version json if the factor is deleted.
+    // 2. Auto initialize the factor in version json if the factor is added.
+
     for(let factor of study.factors) {
         // check versionJSON of each version, and add the factor if it's not there.
         for(let version of study.versions) {
@@ -14,13 +18,13 @@ function validifyStudy(study) {
 
     for(let version of study.versions) {
         // check versionJSON of each version, and remove the factor if it's not there.
-        for(let factor of study.factors) {
-            if(!version.versionJSON[factor]) {
+
+        for(let factor in version.versionJSON) {
+            if(!study.factors.includes(factor)) {
                 delete version.versionJSON[factor];
             }
         }
     }
-
     // Validify the simulation setting.
     if(modifiedStudy.simulationSetting) {
         // first, add version or remove version to Base Reward Probability.

@@ -210,7 +210,7 @@ export default function PilotStudy() {
             "deployment": "Pilot Study",
             "study": whichStudy,
             "user": username,
-            "variableName": variableName,
+            "variable": variableName,
             "where": router.query.topic,
             "value": contextualValue
         });

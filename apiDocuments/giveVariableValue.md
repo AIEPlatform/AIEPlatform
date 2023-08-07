@@ -16,7 +16,7 @@ A user gives a variable value
     "deployment": "Name of the deployment",
     "study": "Name of the study",
     "user": "Name of the user",
-    "variableName": "Name of the variable"
+    "variable": "Name of the variable"
     "value": "Value of the variable of the user"
 }
 ```

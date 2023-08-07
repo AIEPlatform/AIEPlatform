@@ -82,8 +82,8 @@ class TSConfigurable(Policy):
                 contextual_vars_dict = {}
                 contextual_vars_id_dict = {}
                 for contextual_value in contextual_values:
-                    contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                    contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+                    contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+                    contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
                 #number of current participants within uniform random threshold, random sample
                 if "uniform_threshold" in self.parameters and current_enrolled < self.parameters["uniform_threshold"]:
