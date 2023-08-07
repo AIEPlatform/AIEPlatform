@@ -64,3 +64,9 @@ class StudyStopped(Exception):
 
 class NoDifferentTreatmentAvailable(Exception):
     pass
+
+class DuplicatedVersionJSON(Exception):
+    pass
+
+class DuplicatedVersionName(Exception):
+    pass

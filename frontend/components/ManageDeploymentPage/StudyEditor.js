@@ -229,7 +229,8 @@ function StudyEditor(props) {
         })
             .then(response => response.json())
             .then(data => {
-                alert("Study modified successfully!");
+                if(data["status_code"] === 200) alert("Study modified successfully!");
+                else alert(data["message"])
             })
             .catch((error) => {
                 alert("Study modification failed!")

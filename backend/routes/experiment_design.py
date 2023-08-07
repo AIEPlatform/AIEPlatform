@@ -99,6 +99,42 @@ def create_assigner(assigner, study_id, session):
     response = AssignerModel.create(new_assigner, session=session)
     return response.inserted_id
 
+
+def checkIfVersionsAreValid(versions):
+    # check if any two versions have the same versionJSON.
+    # check if any two versions have the same name.
+
+    #version is a list of object with keys: name, versionJSON(which is a dict, like {factor1:0}).
+
+    seen_names = {}
+
+    # Iterate over the objects and check for duplicates
+    for version in versions:
+        if version['name'] in seen_names:
+            raise DuplicatedVersionJSON('At least two versions have the exactly the same name.')
+        else:
+            seen_names[version['name']] = 1
+        
+    seen_version_jsons = {}
+
+    for version in versions:
+        if json.dumps(version['versionJSON']) in seen_version_jsons:
+            raise DuplicatedVersionJSON('At least two versions have the exactly the same version json.')
+        else:
+            seen_version_jsons[json.dumps(version['versionJSON'])] = 1
+
+    for i in range(len(versions)):
+        for key, value in versions[i]['versionJSON'].items():
+            try:
+                number_value = float(value)  # Try to convert the value to a float
+                versions[i]['versionJSON'][key] = number_value
+            except ValueError:
+                raise ValueError(f"Please make sure that every factor in the version json is a valid number.")
+
+    return versions
+
+    
+
 # Create a study for a deployment.
 # This function should be atomic. (TODO: testing it).
 # This function should verify if the given study is valid or not. (TODO: keep completing it).
@@ -111,9 +147,6 @@ def create_study():
         }), 401
     
     study = request.json['study'] if 'study' in request.json else None;
-
-    print(study)
-
     if study is None:
         return json_util.dumps({
             "status_code": 400, 
@@ -129,39 +162,42 @@ def create_study():
     rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else None;
     simulationSetting = study['simulationSetting'] if 'simulationSetting' in study else None;
     status = study['status'] if 'status' in study else 'stopped';
-
     deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
-    
-
-    # TODO: Check if valid study name or not.
-    if len(studyName) < 3 or len(studyName) > 50:
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": "Study name should be between 3 and 50 characters."
-        }), 400
-
-
-    the_deployment = DeploymentModel.get_one({'name': deploymentName});
-
-    # TODO: Check if the deployment exists or not.
-    if the_deployment is None:
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": "Deployment does not exist or you don't have access."
-        }), 400
-
-    assigner_trees = convert_front_list_assigners_into_tree(assigners)
-
-    doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': studyName}, public = True)
-    if doc is not None: 
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": "Study name already exists."
-        }), 400
 
     with client.start_session() as session:
+        session.start_transaction()
         try:
-            session.start_transaction()
+            
+
+            versions = checkIfVersionsAreValid(versions)
+            
+
+            # TODO: Check if valid study name or not.
+            if len(studyName) < 3 or len(studyName) > 50:
+                return json_util.dumps({
+                    "status_code": 400, 
+                    "message": "Study name should be between 3 and 50 characters."
+                }), 400
+
+
+            the_deployment = DeploymentModel.get_one({'name': deploymentName});
+
+            # TODO: Check if the deployment exists or not.
+            if the_deployment is None:
+                return json_util.dumps({
+                    "status_code": 400, 
+                    "message": "Deployment does not exist or you don't have access."
+                }), 400
+
+            assigner_trees = convert_front_list_assigners_into_tree(assigners)
+
+            doc = StudyModel.get_one({'deploymentId': ObjectId(the_deployment['_id']), 'name': studyName}, public = True)
+            if doc is not None: 
+                return json_util.dumps({
+                    "status_code": 400, 
+                    "message": "Study name already exists."
+                }), 400
+            
             the_study = {
                 'name': studyName,
                 'deploymentId': the_deployment['_id'],
@@ -187,6 +223,27 @@ def create_study():
                 "studies": studies,
                 "study": the_study
             }), 200
+        
+        except DuplicatedVersionJSON as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 409,
+                "message": str(e)
+            }), 409
+        
+        except DuplicatedVersionName as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 409,
+                "message": str(e)
+            }), 409
+        
+        except ValueError as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 400,
+                "message": str(e)
+            }), 400
         except Exception as e:
             print(e)
             session.abort_transaction()
@@ -395,20 +452,24 @@ def modify_existing_study():
             "message": "Please make sure the deployment, study, assigners, versions, variables are provided."
         }), 400
 
-    # TODO: check if the following exists (it's part of validate)
-    assigners = study['assigners']
-    versions = study['versions']
-    variables = study['variables']
-    factors = study['factors']
-    studyName = study['name']
-    status = study['status'] if 'status' in study else 'stopped'
-
-    the_deployment = DeploymentModel.get_one({"name": deployment})
-    the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
-
     with client.start_session() as session:
         try:
             session.start_transaction()
+
+            
+            # TODO: check if the following exists (it's part of validate)
+            assigners = study['assigners']
+            versions = study['versions']
+            variables = study['variables']
+            factors = study['factors']
+            studyName = study['name']
+            status = study['status'] if 'status' in study else 'stopped'
+
+            the_deployment = DeploymentModel.get_one({"name": deployment})
+            the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
+
+            study['versions'] = checkIfVersionsAreValid(study['versions'])
+
             Study.update_one({'_id': the_study['_id']}, {'$set': {
                 'versions': versions, 
                 'variables': variables,
@@ -422,6 +483,26 @@ def modify_existing_study():
             modify_assigner(designer_tree, the_study['_id'], session=session)
 
             session.commit_transaction()
+
+        except DuplicatedVersionJSON as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 409,
+                "message": str(e)
+            }), 409
+        
+        except DuplicatedVersionName as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 409,
+                "message": str(e)
+            }), 409
+        except ValueError as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 400,
+                "message": str(e)
+            }), 400
         except Exception as e:
             print(e)
             session.abort_transaction()
