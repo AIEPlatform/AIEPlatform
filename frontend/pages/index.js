@@ -35,7 +35,7 @@ function ManageDeployment() {
             <Layout>
                 <Head><title>Manage Deployment - {websiteName}</title></Head>
 
-                <Container>
+                <Container sx={{mb: 2}}>
                     <Tabs value={tabIndex} onChange={(e, newValue) => {sTabIndex(newValue)}} aria-label="basic tabs example">
                         <Tab label="Deployment Menu"/>
                         <Tab label="Create New Deployment"/>

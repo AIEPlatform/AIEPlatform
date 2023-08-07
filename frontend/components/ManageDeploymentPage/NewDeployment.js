@@ -29,7 +29,6 @@ function NewDeployment() {
 
     return (
         <Container>
-            <Typography>Create a new deployment</Typography>
             <TextField sx={{ mr: 3 }} label="Deployment name" value={deploymentName} onChange={(e) => sDeploymentName(e.target.value)}></TextField>
             <TextField sx={{ mr: 3, mt: 3 }} label="Deployment description" value={deploymentDescription} onChange={(e) => sDeploymentDescription(e.target.value)} maxRows={10} multiline fullWidth></TextField>
             <Box sx={{ mt: 2 }}><Button variant="contained" sx={{ mr: 3 }} onClick={handleCreateDeployment}>Create</Button></Box>
