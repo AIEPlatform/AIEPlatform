@@ -9,9 +9,9 @@ class VariableValueModel:
     # Static methods:
     # Get the latest value for each of the given variables for the given user.
     @staticmethod
-    def get_latest_variable_values(variableNames, user, session = None):
-        column_name = 'variableName'
-        array_list = variableNames  # Example array list
+    def get_latest_variable_values(variables, user, session = None):
+        column_name = 'variable'
+        array_list = variables  # Example array list
 
         # Aggregation pipeline to filter and keep the last occurrence
         pipeline = [
@@ -48,7 +48,7 @@ class VariableValueModel:
     def insert_variable_value(variable, session = None):
         try:
             # Need to check if it is a text variable or not.
-            theVariable = VariableModel.get_one({'name': variable['variableName']}, public = True, session = session)
+            theVariable = VariableModel.get_one({'name': variable['variable']}, public = True, session = session)
             if theVariable['type'] == 'text':
                 numeric_value = int(VariableValueModel.gpt_reader(theVariable, variable['value']))
                 variable['text'] = variable['value']

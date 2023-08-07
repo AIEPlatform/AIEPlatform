@@ -21,8 +21,8 @@ class UniformRandom(Policy):
 
 			for contextual_value in contextual_values:
 				print(contextual_value['value'])
-				contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-				contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+				contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+				contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
 
 			new_interaction = {

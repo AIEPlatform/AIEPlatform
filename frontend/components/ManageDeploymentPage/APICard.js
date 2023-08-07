@@ -80,7 +80,7 @@ export default function APICard(props) {
                                 "deployment": props.deploymentName,
                                 "study": props.studyName,
                                 "user": "chenpan",
-                                "variableName": "wantToTravel",
+                                "variable": "wantToTravel",
                                 "value": "variable value"
                             }, null, 2)}</pre>
                             <mark>Sample Response</mark>

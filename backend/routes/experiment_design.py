@@ -399,6 +399,7 @@ def modify_existing_study():
     assigners = study['assigners']
     versions = study['versions']
     variables = study['variables']
+    factors = study['factors']
     studyName = study['name']
     status = study['status'] if 'status' in study else 'stopped'
 
@@ -411,6 +412,7 @@ def modify_existing_study():
             Study.update_one({'_id': the_study['_id']}, {'$set': {
                 'versions': versions, 
                 'variables': variables,
+                'factors': factors,
                 'status': status
                 }}, session=session)
             
@@ -787,10 +789,10 @@ def run_simulation():
             Interaction.update_many({"_id": {"$in": time_assigner_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
-    def give_variable_value_helper(deployment, study, variableName, user, value, apiToken):
+    def give_variable_value_helper(deployment, study, variable, user, value, apiToken):
         url = f'http://localhost:20110/apis/variable'
         headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variableName': variableName, 'where': 'simulation', 'apiToken': apiToken}
+        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variable': variable, 'where': 'simulation', 'apiToken': apiToken}
         response = requestSession.post(url, headers=headers, data=json.dumps(payload))
         return response
     
@@ -835,7 +837,7 @@ def run_simulation():
         }), 404
     
 
-    apiToken = the_deployment['apiToken']
+    apiToken = the_deployment['apiToken'] if 'apiToken' in the_deployment else None
     
 
     # check if a simulation is running.
@@ -887,6 +889,7 @@ def run_simulation():
         # change simulationStatus back to idle.
         Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
     except Exception as e:
+        print(traceback.format_exc())
         Study.update_one({"_id": the_study['_id']}, {"$set": {"simulationStatus": "idle"}})
 
 

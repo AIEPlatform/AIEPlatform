@@ -133,7 +133,7 @@ class ThompsonSamplingContextual(Policy):
 
                 # Check if a document exists for the current value
                 for document in result:
-                    if document['variableName'] == value:
+                    if document['variable'] == value:
                         has_document = True
                         break
 
@@ -143,7 +143,7 @@ class ThompsonSamplingContextual(Policy):
                 # Insert a document into the other collection if no document exists
                 if not has_document:
                     document_to_insert = {
-                        "variableName": value, 
+                        "variable": value, 
                         'value': imputed_value,   # TODO: impute based on a better rule.
                         'user': user,
                         'where': 'auto init', 
@@ -157,8 +157,8 @@ class ThompsonSamplingContextual(Policy):
             contextual_vars_id_dict = {}
 
             for contextual_value in contextual_values:
-                contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+                contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+                contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
             if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                 lucky_version = random.choice(all_versions)
@@ -520,7 +520,7 @@ def choose_arm_individual(self, user, where, other_information):
 
                 # Check if a document exists for the current value
                 for document in result:
-                    if document['variableName'] == value:
+                    if document['variable'] == value:
                         has_document = True
                         break
 
@@ -530,7 +530,7 @@ def choose_arm_individual(self, user, where, other_information):
                 # Insert a document into the other collection if no document exists
                 if not has_document:
                     document_to_insert = {
-                        "variableName": value, 
+                        "variable": value, 
                         'value': imputed_value,   # TODO: impute based on a better rule.
                         'user': user,
                         'where': 'auto init', 
@@ -544,8 +544,8 @@ def choose_arm_individual(self, user, where, other_information):
             contextual_vars_id_dict = {}
 
             for contextual_value in contextual_values:
-                contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+                contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+                contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
             if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                 lucky_version = random.choice(self.study['versions'])
@@ -653,7 +653,7 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     # Split RHS of equation into variable list (context, action, interactions)
     vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
 
-
+    print(vars_list)
     # Add 1 for intercept in variable list if specified
     if include_intercept:
         vars_list.insert(0,1.)

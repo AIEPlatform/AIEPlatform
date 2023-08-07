@@ -18,8 +18,8 @@ class WeightedRandom(Policy):
             contextual_vars_id_dict = {}
 
             for contextual_value in contextual_values:
-                contextual_vars_dict[contextual_value['variableName']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                contextual_vars_id_dict[contextual_value['variableName']] = contextual_value['_id']
+                contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+                contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
 
             lucky_version = self.get_incomplete_consistent_assignment(user, where)
