@@ -22,6 +22,8 @@ import AttributionIcon from '@mui/icons-material/Attribution';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import AbcIcon from '@mui/icons-material/Abc';
+import StopIcon from '@mui/icons-material/Stop';
+import StartIcon from '@mui/icons-material/Start';
 
 import {
     Tree,
@@ -32,50 +34,38 @@ import { DndProvider } from "react-dnd";
 
 function StudyEditor(props) {
 
+    const [study, sStudy] = useState(null);
     let theStudy = props.theStudy; // theStudy is not study!
+
+    const [assignerModalOpen, sAssignerModalOpen] = useState(false);
+    const [idToEdit, sIdToEdit] = useState(null);
+    const treeRef = useRef(null);
+    let handleOpen = null;
+
+    // Call the helper function to validate the study.
+    useEffect(() => {
+        // TODO: Think about how to open all the assigners from cookies.
+        loadCurrentStudy();
+    }, [theStudy]);
+
+    useEffect(() => {
+        if (study === null) return;
+        handleOpen = (nodeId) => treeRef.current.open(nodeId);
+        handleOpen(1);
+    }, [study]);
+
+
+    useEffect(() => {
+        if (study === null) return;
+        let modifiedStudy = validifyStudy(study);
+        sStudy(modifiedStudy);
+    }, [study?.variables.length, study?.versions.length, study?.factors.length]); // also listen on the array of parameters of all assigners
+
     let sTheStudies = props.sTheStudies;
     let sTheStudy = props.sTheStudy;
 
     let [tabIndex, sTabIndex] = useState(0);
 
-    let designGraph = [
-        {
-            "id": 1,
-            "parent": 0,
-            "droppable": true,
-            "isOpen": true,
-            "text": "assigner1",
-            "name": "assigner1",
-            "policy": "UniformRandom",
-            "parameters": {},
-            "weight": 1
-        }
-    ];
-
-    const newStudy = {
-        "name": "",
-        "variables": [],
-        "factors": [],
-        "versions": [],
-        "assigners": designGraph,
-        "rewardInformation": {
-            "name": "reward",
-            "min": 0,
-            "max": 1
-        },
-        "simulationSetting": {
-            "baseReward": {},
-            "contextualEffects": [],
-            "numDays": 5
-        },
-        "status": "stopped"
-    }
-    const [study, sStudy] = useState(
-        newStudy
-    );
-
-
-    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
     const deploymentName = props.deploymentName;
     const handleDrop = (newTreeData) => {
         // check if two nodes have parent as 0. If so, alert user that they can't do that.
@@ -86,10 +76,6 @@ function StudyEditor(props) {
         }
         sAssigners(newTreeData)
     };
-    const [assignerModalOpen, sAssignerModalOpen] = useState(false);
-    const [idToEdit, sIdToEdit] = useState(null);
-    const treeRef = useRef(null);
-    const handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
     const addAssigner = () => {
         let newId = study.assigners.length + 1;
@@ -156,64 +142,16 @@ function StudyEditor(props) {
 
     }
 
-
-    const handleCreateStudy = () => {
-        fetch('/apis/experimentDesign/study', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "deploymentName": deploymentName, // TODO: change to "deploymentId
-                "study": study
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data['status_code'] == 200) {
-                    alert("Study created successfully!");
-                    sTheStudies([theStudy].concat(data["studies"]));
-                    sTheStudy(data['study']);
-
-                }
-                else {
-                    alert(data['message']);
-                }
-            })
-    };
-
     const loadCurrentStudy = () => {
         fetch(`/apis/experimentDesign/study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
-                sStatus(4);
                 sStudy(data['study']);
-                sStatus(2);
             })
             .catch((error) => {
                 console.error('Error:', error);
             })
     }
-
-
-    // Call the helper function to validate the study.
-
-    useEffect(() => {
-        let modifiedStudy = validifyStudy(study);
-        sStudy(modifiedStudy);
-    }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all assigners
-
-    useEffect(() => {
-        handleOpen(1);
-        // TODO: Think about how to open all the assigners from cookies.
-        if (theStudy['_id']['$oid'] != 1998) {
-            loadCurrentStudy();
-        }
-        else {
-            sStatus(1);
-            sStudy(newStudy);
-        }
-    }, [theStudy]);
 
     const handleModifyStudy = () => {
         // validate the study
@@ -237,23 +175,27 @@ function StudyEditor(props) {
             })
     };
 
-    const handleResetStudy = () => {
-        if (!confirm("Are you sure you want to reset the study? The study will be reverted to earliest status after last reset. The interactions/datasets associated will all be deleted.")) return;
-        fetch('/apis/experimentDesign/resetStudy', {
+    const handleStudyStatusChange = (newStatus) => {
+        if (newStatus === "reset" && !confirm("Are you sure you want to reset the study? The study will be reverted to earliest status after last reset. The interactions/datasets associated will all be deleted.")) return;
+
+        if (newStatus === "stopped" && !confirm("Are you sure you want to pause the study? The study will not be able to accept new rewards and it will not send treatments as well.")) return;
+
+        if (newStatus === "running" && !confirm("Are you sure you want to start the study?")) return;
+        fetch('/apis/experimentDesign/changeStudyStatus', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 "deployment": deploymentName, // TODO: change to "deploymentId
-                "study": study['name']
+                "study": study['name'],
+                "status": newStatus
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data['status_code'] === 200) {
                     loadCurrentStudy();
-                    alert("reset successfully!")
                 }
                 else {
                     alert("Something is wrong.");
@@ -292,7 +234,6 @@ function StudyEditor(props) {
             .then(data => {
                 if (data['status_code'] === 200) {
                     alert("Study deleted successfully!");
-                    sStatus(1);
                     location.reload();
                 }
                 else {
@@ -311,35 +252,26 @@ function StudyEditor(props) {
     const sVariables = setStudyAttributes.bind('variables');
     const sVersions = setStudyAttributes.bind('versions');
     const sFactors = setStudyAttributes.bind('factors');
-    const sStudyName = setStudyAttributes.bind('name');
     const sRewardInformation = setStudyAttributes.bind('rewardInformation');
     const sAssigners = setStudyAttributes.bind('assigners');
     const sSimulationSetting = setStudyAttributes.bind('simulationSetting');
 
-
-
+    if (study === null) return (<div></div>);
     return (
-        <Container>
+        <Box>
             <Box>
                 <Box sx={{ mb: 2 }}>
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleResetStudy} startIcon={<RestartAltIcon />}>Reset</Button>}
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
-                    <Box>
-                        <FormGroup>
-                            <FormControlLabel control={<Checkbox checked={study['status'] === 'running'} onChange={
-                                (e) => {
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('reset')} startIcon={<RestartAltIcon />}>Reset</Button>}
 
-                                    let temp = { ...study };
-                                    temp['status'] = e.target.checked ? 'running' : 'stopped';
-                                    sStudy(temp);
-                                }
-                            } />} label="Start the study" />
-                        </FormGroup>
-                    </Box>
+                    {study['status'] === "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('stopped')} startIcon={<StopIcon />}>Pause</Button>}
+
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('running')} startIcon={<StartIcon />}>Start</Button>}
+
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
                 </Box>
 
-                {status === 2 && <Container sx={{ mb: 2 }}>
+                {study['status'] !== "running" && <Container sx={{ mb: 2 }}>
                     <Tabs value={tabIndex} onChange={(e, newValue) => { sTabIndex(newValue) }} aria-label="basic tabs example">
                         <Tab label="Configuration" />
                         <Tab label="Simulations" />
@@ -347,20 +279,6 @@ function StudyEditor(props) {
                 </Container>}
 
                 {tabIndex === 0 && <Box sx={{ mb: 2 }}>
-                    {status === 1 && <Accordion>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls="panel1a-content"
-                            id="name-editor"
-                        >
-                            <Typography variant='h6'>Study name</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <TextField required sx={{ mb: 3 }} label="Study name" value={study.name} onChange={(e) => sStudyName(e.target.value)}></TextField>
-                        </AccordionDetails>
-                    </Accordion>}
-
-
                     <Accordion>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
@@ -395,8 +313,8 @@ function StudyEditor(props) {
                             <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
-                            <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
+                            <FactorsEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
+                            <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} />
                         </AccordionDetails>
                     </Accordion>
                     <Accordion>
@@ -448,9 +366,6 @@ function StudyEditor(props) {
                     <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
                 }
             </Box>
-            <Box sx={{ mb: 2 }}>
-                {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
-            </Box>
             <Modal
                 open={assignerModalOpen}
                 onClose={handleAssignerModalClose}
@@ -458,10 +373,10 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <AssignerEditor assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
+                    <AssignerEditor study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
                 </Box>
             </Modal>
-        </Container >
+        </Box >
     );
 }
 

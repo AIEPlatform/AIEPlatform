@@ -1,11 +1,12 @@
 import { React, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
-import { Typography, Box, Button, Container, Link } from '@mui/material';
+import { Typography, Box, Button, Container, Link, Fade, FormControlLabel, Switch } from '@mui/material';
 import Layout from '../../components/layout';
 import Head from 'next/head';
 import Select from 'react-select';
 import StudyEditor from '../../components/ManageDeploymentPage/StudyEditor';
+import NewStudy from '../../components/ManageDeploymentPage/NewStudy';
 import { UserContext } from "../../contexts/UserContextWrapper";
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -17,12 +18,6 @@ import { usePathname } from 'next/navigation'
 
 const { publicRuntimeConfig } = getConfig();
 const websiteName = publicRuntimeConfig.websiteName;
-
-
-const newStudy = {
-    "name": "Create New Study",
-    "_id": { "$oid": "1998" }
-}
 
 function ManageDeployment() {
     const router = useRouter();
@@ -50,14 +45,14 @@ function ManageDeployment() {
                 }
                 else {
                     sPermissionError(true);
-                    setTimeout(function() {
+                    setTimeout(function () {
                         window.location.href = "/deployments"; // Replace with the URL you want to redirect to
                     }, 5000);
 
                     // update permissionErrorRedirectionCounter every second.
 
                     setInterval(
-                        function() {
+                        function () {
                             sPermissionErrorRedirectionCounter((permissionErrorRedirectionCounter) => permissionErrorRedirectionCounter - 1);
                         }, 1000
                     )
@@ -71,7 +66,7 @@ function ManageDeployment() {
         fetch(`/apis/experimentDesign/the_studies/?deployment_name=${theDeployment['name']}`)
             .then(response => response.json())
             .then(data => {
-                sTheStudies([newStudy].concat(data["studies"]));
+                sTheStudies(data["studies"]);
             });
     }, [theDeployment]);
 
@@ -168,6 +163,8 @@ function ManageDeployment() {
             );
     }
 
+    const [creatingNewStudy, sCreatingNewStudy] = useState(false);
+
     if (userContext !== undefined && userContext !== null && !permissionError) {
         return (
             <Layout>
@@ -191,21 +188,40 @@ function ManageDeployment() {
                             </Box>
                         }
                     </Box>
-
-
-                    <Box>
-                        <Typography variant="h6">Study</Typography>
-                        <Select
-                            options={theStudies}
-                            getOptionLabel={(option) => option["name"]}
-                            getOptionValue={(option) => option["_id"]["$oid"]}
-                            value={theStudy}
-                            onChange={(option) => handleSelectStudy(option)}
-                            placeholder="Select a study"
-                        />
-                    </Box>
                 </Container>
-                {theStudy && <StudyEditor deploymentName={theDeployment['name']} theStudy={theStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></StudyEditor>}
+
+                <Container>
+                    <FormControlLabel
+                        control={<Switch checked={creatingNewStudy} onChange={() => sCreatingNewStudy((creatingNewStudy) => !creatingNewStudy)} />}
+                        label="Creating new study"
+                    />
+                    {!creatingNewStudy && <Fade in={!creatingNewStudy}>
+                        <Box>
+                            <Box>
+                                <Typography variant="h6">Study</Typography>
+                                <Select
+                                    options={theStudies}
+                                    getOptionLabel={(option) => option["name"]}
+                                    getOptionValue={(option) => option["_id"]["$oid"]}
+                                    value={theStudy}
+                                    onChange={(option) => handleSelectStudy(option)}
+                                    placeholder="Select a study"
+                                    isClearable={true}
+                                />
+                            </Box>
+                            {theStudy && <StudyEditor deploymentName={theDeployment['name']} theStudy={theStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></StudyEditor>}
+                        </Box>
+                    </Fade>}
+
+                    {creatingNewStudy && <Fade in={creatingNewStudy}>
+                        <Box>
+                            <NewStudy deployment={deployment} sCreatingNewStudy={sCreatingNewStudy} sTheStudies={sTheStudies} sTheStudy={sTheStudy}></NewStudy>
+                        </Box>
+                    </Fade>}
+
+
+
+                </Container>
             </Layout>
         );
     }

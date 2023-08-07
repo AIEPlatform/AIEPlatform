@@ -31,6 +31,7 @@ const availablePolicies = [
 
 
 function AssignerEditor(props) {
+    let study = props.study;
     let assigners = props.assigners;
     let myId = props.idToEdit;
     let sAssigners = props.sAssigners;
@@ -78,7 +79,7 @@ function AssignerEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy</Typography>
-                {assigner.dbId == undefined && <Select
+                {study['status'] === "reset" && <Select
                     name="policies"
                     options={availablePolicies}
                     className="basic-multi-select"
@@ -91,7 +92,7 @@ function AssignerEditor(props) {
                     }}
                 />}
 
-                {assigner.dbId !== undefined && <Typography>{assigner.policy}</Typography>}
+                {study['status'] !== "reset" && <Typography>{assigner.policy}</Typography>}
             </Box>
 
             <Box sx={{ mt: 2 }}>

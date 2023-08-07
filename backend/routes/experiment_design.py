@@ -146,32 +146,40 @@ def create_study():
             "status_code": 401
         }), 401
     
-    study = request.json['study'] if 'study' in request.json else None;
-    if study is None:
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": "Missing required parameters."
-        }), 400
-    
 
-    studyName = study['name'] if 'name' in study else None;
-    assigners = study['assigners'] if 'assigners' in study else None;
-    versions = study['versions'] if 'versions' in study else None;
-    variables = study['variables'] if 'variables' in study else None;
-    factors = study['factors'] if 'factors' in study else None;
-    rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else None;
-    simulationSetting = study['simulationSetting'] if 'simulationSetting' in study else None;
-    status = study['status'] if 'status' in study else 'stopped';
-    deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
+    studyName = request.json['name'] if 'name' in request.json else None
+    deploymentName = request.json['deployment'] if 'deployment' in request.json else None;
+    assigners = [
+        {
+            "id": 1,
+            "parent": 0,
+            "droppable": True,
+            "isOpen": True,
+            "text": "assigner1",
+            "name": "assigner1",
+            "policy": "UniformRandom",
+            "parameters": {},
+            "weight": 1
+        }
+    ]
+    versions = []
+    factors = []
+    variables = []
+    rewardInformation = {
+            "name": "reward",
+            "min": 0,
+            "max": 1
+        }
+    simulationSetting = {
+            "baseReward": {},
+            "contextualEffects": [],
+            "numDays": 5
+        }
+    status = 'reset';
 
     with client.start_session() as session:
         session.start_transaction()
         try:
-            
-
-            versions = checkIfVersionsAreValid(versions)
-            
-
             # TODO: Check if valid study name or not.
             if len(studyName) < 3 or len(studyName) > 50:
                 return json_util.dumps({
@@ -217,11 +225,13 @@ def create_study():
 
             studies = Study.find({"deploymentId": ObjectId(the_deployment['_id'])})
             the_study = Study.find_one({'_id': study_id})
+            assigners = build_json_for_study(the_study['_id'])
+            the_study['assigners'] = assigners # Note that in DB, we only save the root assigner!
             return json_util.dumps({
                 "status_code": 200, 
                 "message": "success", 
                 "studies": studies,
-                "study": the_study
+                "theStudy": the_study
             }), 200
         
         except DuplicatedVersionJSON as e:
@@ -245,7 +255,7 @@ def create_study():
                 "message": str(e)
             }), 400
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
@@ -511,11 +521,14 @@ def modify_existing_study():
                 "status_code": 500,
                 "message": "Not successful, please try again later."
             }), 500
+        
+    study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
     return json_util.dumps(
         {
         "status_code": 200,
         "message": "Study is modified.", 
-        "temp": designer_tree
+        "temp": designer_tree,
+        "study": study
         }
     ), 200
 
@@ -604,6 +617,11 @@ def create_variable():
 def reset_study_helper(the_deployment, the_study, session):
     try:
         studyId = the_study['_id']
+
+        # update the status to reset.
+        Study.update_one({'_id': studyId}, {'$set': {
+            'status': 'reset'
+            }}, session=session)
         # get all assigner ids
         assigners = AssignerModel.find_assigners({"studyId": ObjectId(studyId)})
         assignerids = [assigner['_id'] for assigner in assigners]
@@ -627,14 +645,20 @@ def reset_study_helper(the_deployment, the_study, session):
         return 500
 
 
-@experiment_design_apis.route("/apis/experimentDesign/resetStudy", methods=["PUT"])
+@experiment_design_apis.route("/apis/experimentDesign/changeStudyStatus", methods=["PUT"])
 def reset_study():
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
         }), 403
-    deployment = request.json['deployment']
-    study = request.json['study']
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+    status = request.json['status'] if 'status' in request.json else None
+    if deployment is None or study is None or status is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment, study and status."
+        }), 400
     the_deployment = DeploymentModel.get_one({"name": deployment})
     if the_deployment is None: 
         return json_util.dumps({
@@ -648,20 +672,42 @@ def reset_study():
             "message": "You don't have access to the study."
         }), 403
     with client.start_session() as session:
-        session.start_transaction()
-        response = reset_study_helper(the_deployment, the_study, session)
-        if response == 200:
-            session.commit_transaction()
-            return json_util.dumps({
-                "status_code": 200,
-                "message": "The study is reset successfully."
-            }), 200
-        else:
+        try:
+            session.start_transaction()
+            if status == "reset":
+                response = reset_study_helper(the_deployment, the_study, session)
+                if response == 200:
+                    session.commit_transaction()
+                    return json_util.dumps({
+                        "status_code": 200,
+                        "message": "Done."
+                    }), 200
+                else:
+                    session.abort_transaction()
+                    return json_util.dumps({
+                        "status_code": 500,
+                        "message": "Something went wrong, please try again later."
+                    }), 500
+            else:
+                # update study status
+                Study.update_one({'_id': the_study['_id']}, {'$set': {
+                    'status': status
+                    }}, session=session)
+                
+                session.commit_transaction()
+                return json_util.dumps({
+                    "status_code": 200,
+                    "message": "Done."
+                }), 200
+        except Exception as e:
+
             session.abort_transaction()
+        
             return json_util.dumps({
                 "status_code": 500,
                 "message": "Something went wrong, please try again later."
             }), 500
+
     
 
 import traceback

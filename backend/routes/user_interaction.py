@@ -70,8 +70,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
     
     # check if the studyis stopped or not.
-    if study['status'] == 'stopped':
-        raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
+    if study['status'] != 'running':
+        raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running at this moment.")
     
     start_time = time.time()
     the_assigner = get_assigner_for_user(study, user)
@@ -116,8 +116,8 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
     
     # check if the studyis stopped or not.
-    if study['status'] == 'stopped':
-        raise StudyStopped(f"Study {study_name} in {deployment_name} has stopped.")
+    if study['status'] != 'running':
+        raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running..")
     start_time = time.time()
     the_assigner = get_assigner_for_user(study, user)
 
