@@ -1,5 +1,5 @@
 import { React, useState, useRef, useEffect } from 'react';
-import { Typography, TextField, Box, Button, Container, Input, Checkbox, FormControl, FormGroup, FormControlLabel } from '@mui/material';
+import { Typography, TextField, Box, Button, Container, Input, Checkbox, FormControl, FormGroup, FormControlLabel, Tabs, Tab } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
@@ -22,8 +22,6 @@ import AttributionIcon from '@mui/icons-material/Attribution';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import AbcIcon from '@mui/icons-material/Abc';
-import StopIcon from '@mui/icons-material/Stop';
-import StartIcon from '@mui/icons-material/Start';
 
 import {
     Tree,
@@ -37,6 +35,8 @@ function StudyEditor(props) {
     let theStudy = props.theStudy; // theStudy is not study!
     let sTheStudies = props.sTheStudies;
     let sTheStudy = props.sTheStudy;
+
+    let [tabIndex, sTabIndex] = useState(0);
 
     let designGraph = [
         {
@@ -229,7 +229,7 @@ function StudyEditor(props) {
         })
             .then(response => response.json())
             .then(data => {
-                if(data["status_code"] === 200) alert("Study modified successfully!");
+                if (data["status_code"] === 200) alert("Study modified successfully!");
                 else alert(data["message"])
             })
             .catch((error) => {
@@ -322,8 +322,6 @@ function StudyEditor(props) {
         <Container>
             <Box>
                 <Box sx={{ mb: 2 }}>
-                    {/* {status === 2 && theStudy['status'] === "stopped" && <Button sx={{ m: 1 }} variant="outlined" onClick={handle} startIcon={<StartIcon />}>Start</Button>}
-                    {status === 2 && theStudy['status'] === "running" && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<StopIcon />}>Stop</Button>} */}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleResetStudy} startIcon={<RestartAltIcon />}>Reset</Button>}
                     {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
@@ -341,113 +339,113 @@ function StudyEditor(props) {
                     </Box>
                 </Box>
 
-                {status === 1 && <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="name-editor"
-                    >
-                        <Typography variant='h6'>Study name</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <TextField required sx={{ mb: 3 }} label="Study name" value={study.name} onChange={(e) => sStudyName(e.target.value)}></TextField>
-                    </AccordionDetails>
-                </Accordion>}
+                {status === 2 && <Container sx={{ mb: 2 }}>
+                    <Tabs value={tabIndex} onChange={(e, newValue) => { sTabIndex(newValue) }} aria-label="basic tabs example">
+                        <Tab label="Configuration" />
+                        <Tab label="Simulations" />
+                    </Tabs>
+                </Container>}
+
+                {tabIndex === 0 && <Box sx={{ mb: 2 }}>
+                    {status === 1 && <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="name-editor"
+                        >
+                            <Typography variant='h6'>Study name</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <TextField required sx={{ mb: 3 }} label="Study name" value={study.name} onChange={(e) => sStudyName(e.target.value)}></TextField>
+                        </AccordionDetails>
+                    </Accordion>}
 
 
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="reward-editor"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ScaleIcon sx={{ mr: 1 }}></ScaleIcon>Reward</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="panel1a-header"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
-                    </AccordionDetails>
-                </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="reward-editor"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ScaleIcon sx={{ mr: 1 }}></ScaleIcon>Reward</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
+                        </AccordionDetails>
+                    </Accordion>
 
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="panel1a-header"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
-                        <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="assigner-graph"
-                        id="assigner-graph"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <DndProvider backend={MultiBackend} options={getBackendOptions()}>
-                            {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
-                            <Tree
-                                ref={treeRef}
-                                tree={study.assigners}
-                                rootId={0}
-                                onDrop={handleDrop}
-                                initialOpen={true}
-                                sort={false}
-                                render={(node, { depth, isOpen, onToggle }) => (
-                                    <Box style={{ marginLeft: depth * 10 }}>
-                                        {node.droppable && (
-                                            <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
-                                        )}
-                                        <Typography sx={{ m: 0.5 }} variant='span' component='strong'>{node.name}</Typography>
-                                        <Typography sx={{ m: 0.5 }} variant='span'>Weight:</Typography>
-                                        <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleAssignerWeightChange(event, node.id)} />
-                                        <small>{getWeight(node)}</small>
-                                        <Button onClick={() => {
-                                            sIdToEdit(node.id);
-                                            sAssignerModalOpen(true);
-                                        }} startIcon={<EditIcon />}>Edit</Button>
-
-
-                                        <Button onClick={() => handleAssignerRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
-                                    </Box>
-                                )}
-                            />
-                        </DndProvider>
-                        <Button sx={{ m: 2 }} variant="contained" onClick={addAssigner}>Add a new Assigner</Button>
-                    </AccordionDetails>
-                </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
+                            <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="assigner-graph"
+                            id="assigner-graph"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <DndProvider backend={MultiBackend} options={getBackendOptions()}>
+                                {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
+                                <Tree
+                                    ref={treeRef}
+                                    tree={study.assigners}
+                                    rootId={0}
+                                    onDrop={handleDrop}
+                                    initialOpen={true}
+                                    sort={false}
+                                    render={(node, { depth, isOpen, onToggle }) => (
+                                        <Box style={{ marginLeft: depth * 10 }}>
+                                            {node.droppable && (
+                                                <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
+                                            )}
+                                            <Typography sx={{ m: 0.5 }} variant='span' component='strong'>{node.name}</Typography>
+                                            <Typography sx={{ m: 0.5 }} variant='span'>Weight:</Typography>
+                                            <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleAssignerWeightChange(event, node.id)} />
+                                            <small>{getWeight(node)}</small>
+                                            <Button onClick={() => {
+                                                sIdToEdit(node.id);
+                                                sAssignerModalOpen(true);
+                                            }} startIcon={<EditIcon />}>Edit</Button>
 
 
-                {status === 2 && <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="assigner-graph"
-                        id="assigner-graph"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AutoModeIcon sx={{ mr: 1 }}></AutoModeIcon>Simulations</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
-                    </AccordionDetails>
-                </Accordion>
+                                            <Button onClick={() => handleAssignerRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
+                                        </Box>
+                                    )}
+                                />
+                            </DndProvider>
+                            <Button sx={{ m: 2 }} variant="contained" onClick={addAssigner}>Add a new Assigner</Button>
+                        </AccordionDetails>
+                    </Accordion>
+                </Box>}
+
+
+
+                {tabIndex === 1 &&
+                    <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
                 }
             </Box>
             <Box sx={{ mb: 2 }}>
