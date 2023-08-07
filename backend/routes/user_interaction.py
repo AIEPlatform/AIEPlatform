@@ -289,7 +289,6 @@ def give_variable():
     # save a contextual varialble.
     try:
         deployment = request.json['deployment'] if 'deployment' in request.json else None
-        study = request.json['study'] if 'study' in request.json else None
         variableName = request.json['variableName'] if 'variableName' in request.json else None
         user = request.json['user'] if 'user' in request.json else None
         value = request.json['value'] if 'value' in request.json else None
@@ -297,7 +296,7 @@ def give_variable():
         other_information = request.json['other_information'] if 'other_information' in request.json else None
         apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
 
-        if deployment is None or study is None or variableName is None or user is None or value is None:
+        if deployment is None or variableName is None or user is None or value is None:
             return json_util.dumps({
                 "status_code": 400,
                 "message": "Please make sure variableName, user, value are provided."
@@ -310,30 +309,15 @@ def give_variable():
             raise DeploymentNotFound(f"Deployment {deployment} not found or you don't have permission.")
         if the_deployment['apiToken'] != None and the_deployment['apiToken'] != apiToken:
             raise InvalidDeploymentToken(f"Invalid token for deployment {deployment}.")
-        the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']}, public = True)
-        if the_study is None:
-            raise StudyNotFound(f"Study {study} not found or you don't have permission.")
-        
-        # check if the studyis stopped or not.
-        if the_study['status'] == 'stopped':
-            raise StudyStopped(f"Study {study} in {deployment} has stopped.")
-        
-        elif the_study['variables'] is None or variableName not in the_study['variables']:
-            raise VariableNotInStudy(f"Variable {variableName} is not in study {study} in deployment {deployment}.")
-        else:
-            doc = VariableModel.get_one({"name": variableName}, public = True)
-            if doc is None: raise VariableNotExist(f"Variable {variableName} does not exist.")
-            give_variable_value(variableName, user, value, where, apiToken, other_information)
+
+        doc = VariableModel.get_one({"name": variableName}, public = True)
+        if doc is None: raise VariableNotExist(f"Variable {variableName} does not exist.")
+        give_variable_value(variableName, user, value, where, apiToken, other_information)
 
         return json_util.dumps({
                     "status_code": 200,
                     "message": "Variable value is saved."
                 }), 200
-    except StudyNotFound as e:
-        return json_util.dumps({
-            "status_code": 404,
-            "message": str(e)
-        }), 404
     except DeploymentNotFound as e:
         return json_util.dumps({
             "status_code": 404,
@@ -355,12 +339,6 @@ def give_variable():
             "status_code": 400,
             "message": str(e)
         }), 400
-    
-    except StudyStopped as e:
-        return json_util.dumps({
-            "status_code": 409,
-            "message": str(e)
-        }), 409
     except Exception as e:
         print(traceback.format_exc())
         return json_util.dumps({
