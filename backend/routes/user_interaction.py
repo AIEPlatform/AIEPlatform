@@ -56,13 +56,11 @@ def get_assigner_for_user(study, user):
     root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
     return inductive_get_assigner(root_assigner, user)
 
-def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None, request_different_arm = False, fromSimulation=False):
+def assign_treatment(deployment_name, study_name, user, where = None, other_information = None, request_different_arm = False, fromSimulation=False):
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
     if deployment is None:
         raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
-    if 'apiToken' in deployment != None and deployment['apiToken'] != apiToken:
-        raise InvalidDeploymentToken(f"Invalid token for deployment {deployment_name}.")
     
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
 
@@ -102,15 +100,14 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
             TreatmentLog.insert_one(the_log)
         return None
 
-def get_reward(deployment_name, study_name, user, value, where = None, apiToken = None,  other_information = None, fromSimulation=False):
+def get_reward(deployment_name, study_name, user, value, where = None, other_information = None, fromSimulation=False):
     # Get Assigner!
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
 
     if deployment is None:
         raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
-    if 'apiToken' in deployment and deployment['apiToken'] != apiToken:
-        raise InvalidDeploymentToken(f"Invalid token for deployment {deployment_name}.")
+
     study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
     if study is None:
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
@@ -138,6 +135,58 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
     return response
 
 
+def api_key_middleware():
+
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    the_deployment = DeploymentModel.get_one({'name': deployment}, public = True)
+    if the_deployment is None:
+        return {
+            "status_code": 404,
+            "message": f"Deployment {deployment} not found."
+        }, 404
+    
+    if 'apiToken' not in the_deployment:
+        return
+    
+    if not(
+        (request.endpoint == "user_interaction_apis.get_treatment" and request.method == "POST") or 
+        (request.endpoint == "user_interaction_apis.give_reward" and request.method == "POST") or 
+        (request.endpoint == "user_interaction_apis.give_variable" and request.method == "POST")
+    ): return
+
+    # for these endpoints, just need to check if the 
+    authorization_header = request.headers.get("Authorization")
+
+    if not authorization_header:
+        print("24242q4")
+        return {
+            "status_code": 401,
+            "message": "Authorization header is required"
+        }, 401
+    
+    authorization_header_spiltted = authorization_header.split(" ")
+    if len(authorization_header_spiltted) != 2:
+        return {
+            "status_code": 401,
+            "message": "API key is required. Please provide it as Authorization: Basic TOKEN in the header. Make sure that TOKEN won't have any space."
+        }, 401
+    
+    
+    api_key = authorization_header_spiltted[1]
+    if api_key != the_deployment['apiToken']:
+        return {
+            "status_code": 401,
+            "message": "API key is not correct."
+        }, 401
+    
+
+
+@user_interaction_apis.before_request
+def before_request():
+    response = api_key_middleware()
+    if response is not None:
+        return response
+
 
 # https://security.stackexchange.com/questions/154462/why-cant-we-use-post-method-for-all-requests
 # GET : does not change anything server side, multiple GET with same parameters should get same response - typically get an account value
@@ -153,7 +202,6 @@ def get_treatment():
         user = request.json['user'] if 'user' in request.json else None
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
-        apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
         request_different_arm = request.json['requestDifferentArm'] if 'requestDifferentArm' in request.json else False
 
         if deployment is None or study is None or user is None:
@@ -165,7 +213,7 @@ def get_treatment():
             return json_util.dumps({
                 "status_code": 200,
                 "message": "This is your treatment.", 
-                "treatment": assign_treatment(deployment, study, user, where, apiToken, other_information, request_different_arm)
+                "treatment": assign_treatment(deployment, study, user, where, other_information, request_different_arm)
             }), 200
         
     except StudyNotFound as e:
@@ -217,7 +265,6 @@ def give_reward():
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
         value = float(request.json['value']) if 'value' in request.json else None
-        apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
 
         if deployment is None or study is None or user is None or value is None:
             return json_util.dumps({
@@ -225,7 +272,7 @@ def give_reward():
                 "message": "Please make sure deployment, study, user and value are provided."
             }), 400
         else:        
-            result = get_reward(deployment, study, user, value, where, apiToken, other_information)
+            result = get_reward(deployment, study, user, value, where, other_information)
 
         return json_util.dumps({
             "status_code": 200,
@@ -296,7 +343,6 @@ def give_variable():
         value = request.json['value'] if 'value' in request.json else None
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
-        apiToken = request.json['apiToken'] if 'apiToken' in request.json else None
         if deployment is None or variable is None or user is None or value is None:
             return json_util.dumps({
                 "status_code": 400,
@@ -308,9 +354,7 @@ def give_variable():
 
         if the_deployment is None:
             raise DeploymentNotFound(f"Deployment {deployment} not found or you don't have permission.")
-        
-        if 'apiToken' in the_deployment and the_deployment['apiToken'] != apiToken:
-            raise InvalidDeploymentToken(f"Invalid token for deployment {deployment}.")
+    
 
         doc = VariableModel.get_one({"name": variable}, public = True)
         if doc is None: raise VariableNotExist(f"Variable {variable} does not exist.")

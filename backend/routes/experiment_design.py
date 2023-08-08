@@ -1010,7 +1010,7 @@ def run_simulation():
                 predictor = random.choice([0, 1])
                 variable_values[variable] = predictor
                 give_variable_value(deployment, variable, user, predictor, where = 'simulation', fromSimulation = True)
-            version_to_show = assign_treatment(deployment, study, user, where = 'simulation', apiToken = apiToken, other_information = None, request_different_arm = False, fromSimulation = True)
+            version_to_show = assign_treatment(deployment, study, user, where = 'simulation', other_information = None, request_different_arm = False, fromSimulation = True)
             treatment = version_to_show['name']
             rewardProb = 0.5
             # TODO: improve the efficiency of the following code.
@@ -1029,7 +1029,7 @@ def run_simulation():
                 value = 1
             else:
                 value = 0
-            get_reward(deployment, study, user, value, where = 'simulation', apiToken = apiToken,  other_information = None, fromSimulation=True)
+            get_reward(deployment, study, user, value, where = 'simulation',  other_information = None, fromSimulation=True)
         fake_data_time(deployment, study, simulationSetting['numDays'])
 
         print("Simulation Done")
