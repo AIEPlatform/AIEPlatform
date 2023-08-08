@@ -325,7 +325,7 @@ def give_variable_value(deployment, variable, user, value, where = None, other_i
         "deployment": deployment,
         "variable": variable,
         "user": user,
-        "value": value,
+        "value": float(value),
         "where": where,
         "other_information": other_information,
         "timestamp": current_time
