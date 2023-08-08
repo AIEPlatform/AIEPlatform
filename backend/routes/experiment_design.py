@@ -429,10 +429,9 @@ def modify_assigner(assigner, study_id, session):
                 "policy": assigner['policy'],
                 "parameters": assigner['parameters'],
                 "studyId": study_id,
-                "isConsistent": False, 
+                "isConsistent": assigner['isConsistent'], 
                 "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
                 "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
-                "autoZeroPerMinute": False, 
                 "children": my_children, 
                 "weight": float(assigner['weight']), 
                 "updatedAt": time
