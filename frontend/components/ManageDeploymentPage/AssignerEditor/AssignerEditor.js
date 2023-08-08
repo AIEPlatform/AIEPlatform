@@ -79,7 +79,7 @@ function AssignerEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy</Typography>
-                {assigner.dbId === undefined && <Select
+                {(assigner.dbId === undefined || study['status'] === "reset") && <Select
                     name="policies"
                     options={availablePolicies}
                     className="basic-multi-select"
@@ -92,7 +92,7 @@ function AssignerEditor(props) {
                     }}
                 />}
 
-                {assigner.dbId !== undefined && <Typography>{assigner.policy}</Typography>}
+                {assigner.dbId !== undefined && study['status'] !== "reset" && <Typography>{assigner.policy}</Typography>}
             </Box>
 
             <Box sx={{ mt: 2 }}>

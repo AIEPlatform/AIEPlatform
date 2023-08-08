@@ -506,6 +506,20 @@ def modify_existing_study():
                 'status': status
                 }}, session=session)
             
+            # get all assigners of this study. Remove assigners whose _id are not present in the assigners list.
+
+            assigners_in_db = AssignerModel.find_assigners({"studyId": the_study['_id']})
+
+            assigners_id_to_keep = [ObjectId(assigner['dbId']['$oid']) for assigner in assigners if 'dbId' in assigner]
+
+            assigners_id_to_remove = []
+
+            for assigner_in_db in list(assigners_in_db):
+                if assigner_in_db['_id'] not in assigners_id_to_keep:
+                    assigners_id_to_remove.append(assigner_in_db['_id'])
+
+            Assigner.delete_many({"_id": {"$in": assigners_id_to_remove}}, session=session)
+            
 
             designer_tree = convert_front_list_assigners_into_tree(assigners)
 
@@ -533,6 +547,7 @@ def modify_existing_study():
                 "message": str(e)
             }), 400
         except Exception as e:
+            print(traceback.format_exc())
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({

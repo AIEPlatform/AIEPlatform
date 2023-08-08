@@ -11,7 +11,15 @@ class WeightedRandom(Policy):
     # make a static method called validate assigner.
     @staticmethod
     def validate_assigner(assigner):
+        # check if cov matrix and mean are numeric.
+        try:
+            # assigner['parameters'] is a dictionary. I want to convert all values to float.
+            assigner['parameters'] = {key: float(value) for key, value in assigner['parameters'].items()}
+        except ValueError as e:
+            raise ValueError("Invalid numeric string found in the weights") from e
+        
         return assigner
+    
     def choose_arm(self, user, where, other_information, request_different_arm = False):
         # TODO: Check if consistent assignment!
         try:
