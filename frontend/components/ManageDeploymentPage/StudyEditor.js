@@ -40,7 +40,7 @@ function StudyEditor(props) {
     const [assignerModalOpen, sAssignerModalOpen] = useState(false);
     const [idToEdit, sIdToEdit] = useState(null);
     const treeRef = useRef(null);
-    let handleOpen = null;
+    let handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
     // Call the helper function to validate the study.
     useEffect(() => {
@@ -50,7 +50,6 @@ function StudyEditor(props) {
 
     useEffect(() => {
         if (study === null) return;
-        handleOpen = (nodeId) => treeRef.current.open(nodeId);
         handleOpen(1);
     }, [study]);
 
@@ -88,7 +87,6 @@ function StudyEditor(props) {
             "weight": 1
         }
         sAssigners([...study.assigners, newAssigner]);
-
         handleOpen(newId);
     };
 
