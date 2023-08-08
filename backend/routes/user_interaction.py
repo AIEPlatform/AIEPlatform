@@ -56,7 +56,7 @@ def get_assigner_for_user(study, user):
         root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
         return inductive_get_assigner(root_assigner, user)
 
-def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None, request_different_arm = False):
+def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None, request_different_arm = False, fromSimulation=False):
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
     if deployment is None:
@@ -70,7 +70,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
     
     # check if the studyis stopped or not.
-    if study['status'] != 'running':
+    if not fromSimulation and study['status'] != 'running':
         raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running at this moment.")
     
     start_time = time.time()
@@ -102,7 +102,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, apiToken =
             TreatmentLog.insert_one(the_log)
         return None
 
-def get_reward(deployment_name, study_name, user, value, where = None, apiToken = None,  other_information = None):
+def get_reward(deployment_name, study_name, user, value, where = None, apiToken = None,  other_information = None, fromSimulation=False):
     # Get Assigner!
 
     deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
@@ -116,7 +116,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, apiToken 
         raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
     
     # check if the studyis stopped or not.
-    if study['status'] != 'running':
+    if not fromSimulation and study['status'] != 'running':
         raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running..")
     start_time = time.time()
     the_assigner = get_assigner_for_user(study, user)
@@ -272,7 +272,7 @@ def give_reward():
 
 
 
-def give_variable_value(deployment, variable, user, value, where = None, other_information = None):
+def give_variable_value(deployment, variable, user, value, where = None, other_information = None, fromSimulation = False):
     current_time = datetime.datetime.now()
     the_variable = {
         "deployment": deployment,
@@ -309,7 +309,6 @@ def give_variable():
         if the_deployment is None:
             raise DeploymentNotFound(f"Deployment {deployment} not found or you don't have permission.")
         
-        print(the_deployment)
         if 'apiToken' in the_deployment and the_deployment['apiToken'] != apiToken:
             raise InvalidDeploymentToken(f"Invalid token for deployment {deployment}.")
 

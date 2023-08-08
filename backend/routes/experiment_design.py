@@ -16,6 +16,7 @@ from bson.objectid import ObjectId
 from flask import send_file, make_response
 from Analysis.basic_reward_summary_table import basic_reward_summary_table
 from Analysis.AverageRewardByTime import AverageRewardByTime
+from routes.user_interaction import give_variable_value, assign_treatment, get_reward
 
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)
@@ -878,7 +879,6 @@ def get_simulation_setting():
     
 import json
 import requests
-import threading
 from Models.InteractionModel import InteractionModel
 requestSession = requests.Session()
 @experiment_design_apis.route("/apis/experimentDesign/runSimulation", methods=["POST"])
@@ -917,26 +917,15 @@ def run_simulation():
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
     def give_variable_value_helper(deployment, study, variable, user, value, apiToken):
-        url = f'http://localhost:20110/apis/variable'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variable': variable, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
+        give_variable_value(deployment, variable, user, value, where = 'simulation', fromSimulation = True)
     
     def assign_treatment_helper(deployment, study, user, apiToken):
-        url = f'http://localhost:20110/apis/treatment'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
+        version_to_show = assign_treatment(deployment, study, user, where = 'simulation', apiToken = apiToken, other_information = None, request_different_arm = False, fromSimulation=True)
+        return version_to_show['name']
 
 
     def get_reward_helper(deployment, study, user, value, apiToken):
-        url = f'http://localhost:20110/apis/reward'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
+        get_reward(deployment, study, user, value, where = 'simulation', apiToken = apiToken,  other_information = None, fromSimulation=True)
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
     sampleSize = int(request.json['sampleSize']) if 'sampleSize' in request.json else None
@@ -989,8 +978,7 @@ def run_simulation():
                 predictor = random.choice([0, 1])
                 variable_values[variable] = predictor
                 give_variable_value_helper(deployment, study, variable, user, predictor, apiToken)
-            assignResponse = assign_treatment_helper(deployment, study, user, apiToken)
-            treatment = assignResponse.json()['treatment']['name']
+            treatment = assign_treatment_helper(deployment, study, user, apiToken)
             rewardProb = 0.5
             # TODO: improve the efficiency of the following code.
             if treatment in simulationSetting['baseReward']:
