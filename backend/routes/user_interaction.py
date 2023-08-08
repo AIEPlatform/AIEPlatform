@@ -51,10 +51,10 @@ def get_assigner_for_user(study, user):
 
     if the_interaction is not None:
         the_assigner = AssignerModel.find_assigner({'_id': the_interaction['assignerId']})
-        return (the_assigner)
-    else:
-        root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
-        return inductive_get_assigner(root_assigner, user)
+        if len(the_assigner['children']) == 0:
+            return (the_assigner)
+    root_assigner = AssignerModel.find_assigner({"_id": study['rootAssigner']})
+    return inductive_get_assigner(root_assigner, user)
 
 def assign_treatment(deployment_name, study_name, user, where = None, apiToken = None, other_information = None, request_different_arm = False, fromSimulation=False):
 
