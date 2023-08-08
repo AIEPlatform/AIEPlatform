@@ -691,6 +691,15 @@ def reset_study():
                     }), 500
             else:
                 # update study status
+                # if new status is running, check if simulation is running. If so, return 400.
+
+                if status == "running":
+                    # check if simulation is running
+                    if 'simulationStatus' in the_study and the_study['simulationStatus'] == "running":
+                        return json_util.dumps({
+                            "status_code": 400,
+                            "message": "The simulation is running. Please stop it first."
+                        }), 400
                 Study.update_one({'_id': the_study['_id']}, {'$set': {
                     'status': status
                     }}, session=session)
@@ -916,16 +925,7 @@ def run_simulation():
             Interaction.update_many({"_id": {"$in": time_assigner_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
-    def give_variable_value_helper(deployment, study, variable, user, value, apiToken):
-        give_variable_value(deployment, variable, user, value, where = 'simulation', fromSimulation = True)
-    
-    def assign_treatment_helper(deployment, study, user, apiToken):
-        version_to_show = assign_treatment(deployment, study, user, where = 'simulation', apiToken = apiToken, other_information = None, request_different_arm = False, fromSimulation=True)
-        return version_to_show['name']
 
-
-    def get_reward_helper(deployment, study, user, value, apiToken):
-        get_reward(deployment, study, user, value, where = 'simulation', apiToken = apiToken,  other_information = None, fromSimulation=True)
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
     sampleSize = int(request.json['sampleSize']) if 'sampleSize' in request.json else None
@@ -943,6 +943,12 @@ def run_simulation():
     try:
         the_deployment = DeploymentModel.get_one({"name": deployment})
         the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        # check if study is running. If so, don't run simulation.
+        if 'status' in the_study and the_study['status'] == 'running': #TODO: didn't test this because the simulation option is hidden from frontend when a study is running.
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "The study is running. Please stop the study first."
+            }), 400
         Study.update_one({'_id': the_study['_id']}, {'$set': {
             'simulationSetting': simulationSetting
             }})
@@ -977,8 +983,9 @@ def run_simulation():
             for variable in the_study['variables']:
                 predictor = random.choice([0, 1])
                 variable_values[variable] = predictor
-                give_variable_value_helper(deployment, study, variable, user, predictor, apiToken)
-            treatment = assign_treatment_helper(deployment, study, user, apiToken)
+                give_variable_value(deployment, variable, user, predictor, where = 'simulation', fromSimulation = True)
+            version_to_show = assign_treatment(deployment, study, user, where = 'simulation', apiToken = apiToken, other_information = None, request_different_arm = False, fromSimulation = True)
+            treatment = version_to_show['name']
             rewardProb = 0.5
             # TODO: improve the efficiency of the following code.
             if treatment in simulationSetting['baseReward']:
@@ -997,7 +1004,7 @@ def run_simulation():
                 value = 1
             else:
                 value = 0
-            get_reward_helper(deployment, study, user, value, apiToken)
+            get_reward(deployment, study, user, value, where = 'simulation', apiToken = apiToken,  other_information = None, fromSimulation=True)
         fake_data_time(deployment, study, simulationSetting['numDays'])
 
         print("Simulation Done")
