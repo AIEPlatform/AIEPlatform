@@ -29,6 +29,8 @@ class ThompsonSamplingContextual(Policy):
     @staticmethod
     def validate_assigner(assigner):
         # check if cov matrix and mean are numeric.
+        if 'coef_cov' not in assigner['parameters'] or 'coef_mean' not in assigner['parameters']:
+            raise ValueError("Missing coefficient matrix or mean")
         try:
             assigner['parameters']['coef_cov'] = [[float(num) for num in row] for row in assigner['parameters']['coef_cov']]
         except ValueError as e:
@@ -38,6 +40,13 @@ class ThompsonSamplingContextual(Policy):
             assigner['parameters']['coef_mean'] = [float(num) for num in assigner['parameters']['coef_mean']]
         except ValueError as e:
             raise ValueError("Invalid numeric string found in the coefficient mean") from e
+        
+        try:
+            # batch_size, variance_a, variance_b, uniform_threshold, updatedPerMinute, include_intercept, individualLevelBatchSize.
+            for key in ['batch_size', 'variance_a', 'variance_b', 'uniform_threshold', 'updatedPerMinute', 'include_intercept', 'individualLevelBatchSize']:
+                assigner['parameters'][key] = float(assigner['parameters'][key])
+        except ValueError as e:
+            raise ValueError("Invalid numeric string found in the policy parameter.") from e
         
         return assigner
         
