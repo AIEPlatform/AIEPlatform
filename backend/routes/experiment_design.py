@@ -519,7 +519,6 @@ def modify_existing_study():
                     assigners_id_to_remove.append(assigner_in_db['_id'])
 
             Assigner.delete_many({"_id": {"$in": assigners_id_to_remove}}, session=session)
-            
 
             designer_tree = convert_front_list_assigners_into_tree(assigners)
 

@@ -49,12 +49,12 @@ class Policy(ABC):
 		if self.reassignAfterReward:
 			# check if the latest one is an incomplete one. #TODO: does it make sure that there won't be any incomplete one in previous interactions??
 			last_interaction = self.get_latest_interaction(user, where)
-			if last_interaction is not None and last_interaction['outcome'] is None:
+			if last_interaction is not None and last_interaction['outcome'] is None and last_interaction['treatment'] in self.study['versions']:
 				return last_interaction['treatment']
 			
 		if not self.isConsistent: return None
 		last_interaction = self.get_latest_interaction(user, where)
-		if last_interaction is None:
+		if last_interaction is None and last_interaction['treatment'] in self.study['versions']:
 			return None
 		else:
 			return last_interaction['treatment']
