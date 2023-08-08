@@ -61,9 +61,6 @@ function StudyEditor(props) {
         sStudy(modifiedStudy);
     }, [study?.variables.length, study?.versions.length, study?.factors.length]); // also listen on the array of parameters of all assigners
 
-    let sTheStudies = props.sTheStudies;
-    let sTheStudy = props.sTheStudy;
-
     let [tabIndex, sTabIndex] = useState(0);
 
     const deploymentName = props.deploymentName;
@@ -196,6 +193,7 @@ function StudyEditor(props) {
             .then(data => {
                 if (data['status_code'] === 200) {
                     loadCurrentStudy();
+                    if(newStatus === "running") sTabIndex(0);
                 }
                 else {
                     alert("Something is wrong.");

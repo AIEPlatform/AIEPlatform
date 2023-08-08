@@ -17,6 +17,7 @@ from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
 from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
+from errors import *
 
 
 #TODO: Please add get_incomplete_consistent_assignment.
@@ -27,6 +28,13 @@ USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
 class TSConfigurable(Policy):
+
+    # TODO
+    # make a static method called validate assigner.
+    @staticmethod
+    def validate_assigner(assigner):
+        return assigner
+    
     def choose_arm(self, user, where, other_information, request_different_arm = False):
         try:
             # TODO: We may need to remove the non-existing versions (that were deleted.)

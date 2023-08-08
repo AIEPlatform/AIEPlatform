@@ -18,6 +18,12 @@ from Analysis.basic_reward_summary_table import basic_reward_summary_table
 from Analysis.AverageRewardByTime import AverageRewardByTime
 from routes.user_interaction import give_variable_value, assign_treatment, get_reward
 
+from Policies.UniformRandom import UniformRandom
+from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
+from Policies.TSConfigurable import TSConfigurable
+from Policies.WeightedRandom import WeightedRandom
+from Policies.GPT import GPT
+
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)
 
@@ -450,6 +456,15 @@ def modify_assigner(assigner, study_id, session):
         }
         response = AssignerModel.create(new_assigner, session=session)
         return response.inserted_id
+    
+def checkIfAssignersAreValid(assigners):
+    # TODO: Need different cases, need to call static functions of each class.
+
+    for i in range(len(assigners)):
+        cls = globals().get(assigners[i]['policy'])
+        assigners[i] = cls.validate_assigner(assigners[i])
+
+    return assigners
 
 @experiment_design_apis.route("/apis/experimentDesign/study", methods = ["PUT"])
 def modify_existing_study():
@@ -479,7 +494,10 @@ def modify_existing_study():
             the_deployment = DeploymentModel.get_one({"name": deployment})
             the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
 
-            study['versions'] = checkIfVersionsAreValid(study['versions'])
+            versions = checkIfVersionsAreValid(versions)
+            assigners = checkIfAssignersAreValid(assigners)
+
+            
 
             Study.update_one({'_id': the_study['_id']}, {'$set': {
                 'versions': versions, 
@@ -515,7 +533,6 @@ def modify_existing_study():
                 "message": str(e)
             }), 400
         except Exception as e:
-            print(e)
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
@@ -537,7 +554,6 @@ def modify_existing_study():
 def get_variables():
     # get showStudies from params if not, set to False.
     showStudies = request.args.get('showStudies') == 'true' if 'showStudies' in request.args else False
-    print("hello world")
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
@@ -548,8 +564,6 @@ def get_variables():
             # for every variables, get the studies that use it. Every study has a list called variables.
             for variable in variables:
                 studies = list(StudyModel.get_many({"variables": { "$elemMatch": { "$eq": variable['name'] } }}, showDeploymentName = True))
-                for study in studies:
-                    print(study)
                 # get deploymentName for each study by deployment Id.
                 variable['studies'] = [f'{study["name"]} in {study["deployment"]["name"]}' for study in studies]
 
@@ -998,7 +1012,6 @@ def run_simulation():
                         if contextualEffect['operator'] == '=':
                             if compare_values(variable_values[variable], contextualEffect['value']):
                                 rewardProb = rewardProb + float(contextualEffect['effect'])
-                                print(rewardProb)
                                 break                            
             if random.random() < rewardProb:
                 value = 1

@@ -5,8 +5,10 @@ from errors import *
 
 from Models.StudyModel import StudyModel
 class Policy(ABC):
+	@staticmethod
+	def validate_assigner(assigner):
+		pass
 	def __init__(self, user, **assigner_obj_from_db):
-		print(assigner_obj_from_db)
 		for key, value in assigner_obj_from_db.items():
 			setattr(self, key, value)
 

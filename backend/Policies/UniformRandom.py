@@ -4,7 +4,12 @@ from credentials import *
 from Policies.policy import Policy
 from Models.InteractionModel import InteractionModel
 from Models.VariableValueModel import VariableValueModel
+from errors import *
 class UniformRandom(Policy):
+
+	@staticmethod
+	def validate_assigner(assigner):
+		return assigner
 	def choose_arm(self, user, where, other_information, request_different_arm = False):
 		# TODO: Check if consistent assignment!
 		try:

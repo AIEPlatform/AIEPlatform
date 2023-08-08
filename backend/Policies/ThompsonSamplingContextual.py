@@ -17,13 +17,31 @@ from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
 from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
+from errors import *
 
 
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
 class ThompsonSamplingContextual(Policy):
-
+    # TODO
+    # make a static method called validate assigner.
+    @staticmethod
+    def validate_assigner(assigner):
+        # check if cov matrix and mean are numeric.
+        try:
+            assigner['parameters']['coef_cov'] = [[float(num) for num in row] for row in assigner['parameters']['coef_cov']]
+        except ValueError as e:
+            raise ValueError("Invalid numeric string found in the coefficient matrix") from e
+        
+        try:
+            assigner['parameters']['coef_mean'] = [float(num) for num in assigner['parameters']['coef_mean']]
+        except ValueError as e:
+            raise ValueError("Invalid numeric string found in the coefficient mean") from e
+        
+        return assigner
+        
+        
     # Draw thompson sample of (reg. coeff., variance) and also select the optimal action
     # thompson sampling policy with contextual information.
     # Outcome is estimated using bayesian linear regression implemented by NIG conjugate priors.
@@ -112,7 +130,6 @@ class ThompsonSamplingContextual(Policy):
         if lucky_version is None:
             all_versions = self.get_all_versions(user, where, request_different_arm)
             if len(all_versions) == 0:
-                print(12346789)
                 raise NoDifferentTreatmentAvailable("There is no unassigned version left.")
             parameters = self.parameters
             # Store regression equation string
@@ -344,7 +361,6 @@ class ThompsonSamplingContextual(Policy):
                 LockModel.delete({"_id": new_lock_id})
                 return
             except Exception as e:
-                print(e)
                 print(f'model update failed, rollback...')
                 LockModel.delete({"_id": new_lock_id})
                 session.abort_transaction()
@@ -451,7 +467,7 @@ class ThompsonSamplingContextual(Policy):
                 LockModel.delete({"_id": new_lock_id})
                 return
             except Exception as e:
-                print(e)
+                print(traceback.format_exc())
                 print(f'model update failed, rollback...')
                 LockModel.delete({"_id": new_lock_id})
                 session.abort_transaction()
@@ -625,6 +641,8 @@ def choose_arm_individual(self, user, where, other_information):
 
 
 
+
+
 def check_lock_individual(assignerId, user):
     # Check if lock exists
     try:
@@ -652,7 +670,7 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     # :return: outcome given formula, coefficients and variables values
     # Split RHS of equation into variable list (context, action, interactions)
     vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
-
+    print(formula)
     print(vars_list)
     # Add 1 for intercept in variable list if specified
     if include_intercept:
