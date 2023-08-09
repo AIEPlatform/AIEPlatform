@@ -984,10 +984,6 @@ def run_simulation():
             "message": "Can't find the study."
         }), 404
     
-
-    apiToken = the_deployment['apiToken'] if 'apiToken' in the_deployment else None
-    
-
     # check if a simulation is running.
     if 'simulationStatus' in the_study and the_study['simulationStatus'] != 'idle':
         return json_util.dumps({
@@ -1007,7 +1003,9 @@ def run_simulation():
             user = f'{deployment}_{study}_simulated_user_{i}'
             variable_values = {}
             for variable in the_study['variables']:
-                predictor = random.choice([0, 1])
+                the_variable = Variable.find_one({"name": variable})
+
+                predictor = random.randint(float(the_variable['min']), float(the_variable['max']))
                 variable_values[variable] = predictor
                 give_variable_value(deployment, variable, user, predictor, where = 'simulation', fromSimulation = True)
             version_to_show = assign_treatment(deployment, study, user, where = 'simulation', other_information = None, request_different_arm = False, fromSimulation = True)

@@ -67,7 +67,8 @@ class ThompsonSamplingContextual(Policy):
                 response = AssignerIndividualLevelInformation.insert_one({"assignerId": self._id, "user": user, "parameters": current_params})
                 the_info = AssignerIndividualLevelInformation.find_one({"_id": response.inserted_id})
                 self.parameters = the_info['parameters']
-                
+
+        self.parameters['regressionFormulaItems'] = expand_categorical_variables(self.parameters['regressionFormulaItems'])
 
         regression_formula = "reward~"
         items = []
@@ -80,10 +81,12 @@ class ThompsonSamplingContextual(Policy):
         self.parameters['regression_formula'] = regression_formula
 
 
+
     def reinit(self):
         regression_formula = "reward~"
         items = []
         possible_variables = []
+        self.parameters['regressionFormulaItems'] = expand_categorical_variables(self.parameters['regressionFormulaItems'])
         for regression_formula_item in self.parameters['regressionFormulaItems']:
             temp = regression_formula_item
             possible_variables.extend(regression_formula_item)
@@ -213,7 +216,18 @@ class ThompsonSamplingContextual(Policy):
             for version in all_versions:
                 independent_vars = {}
                 for contextual_var in contextual_vars_dict:
-                    independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
+                    # TODO: check if the variable is a categorical variable or not.
+                    the_variable = Variable.find_one({'name': contextual_var})
+                    if the_variable['type'] == 'categorical':
+                        # iterate over the min and max. make independent_vars[contextual_var + "::" + index] = 1 if it's the same as the value, otherwise 0.
+                        for index in range(the_variable['min'], the_variable['max'] + 1):
+                            if contextual_vars_dict[contextual_var]['value'] == index:
+                                independent_vars[contextual_var + "::" + str(index)] = 1
+                            else:
+                                independent_vars[contextual_var + "::" + str(index)] = 0
+                    else:
+                        independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
+
                 independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
                 outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
                 if best_action is None or outcome > best_outcome:
@@ -302,7 +316,21 @@ class ThompsonSamplingContextual(Policy):
                     for key, sub_dict in interaction['contextuals'].items():
                         contextual_vars_dict[key] = sub_dict["value"]
                         
-                    independent_vars = contextual_vars_dict
+                    independent_vars = {}
+                    for contextual_var in contextual_vars_dict:
+                        # TODO: check if the variable is a categorical variable or not.
+                        the_variable = Variable.find_one({'name': contextual_var})
+                        if the_variable['type'] == 'categorical':
+                            # iterate over the min and max. make independent_vars[contextual_var + "::" + index] = 1 if it's the same as the value, otherwise 0.
+                            for index in range(the_variable['min'], the_variable['max'] + 1):
+                                if contextual_vars_dict[contextual_var]['value'] == index:
+                                    independent_vars[contextual_var + "::" + str(index)] = 1
+                                else:
+                                    independent_vars[contextual_var + "::" + str(index)] = 0
+                        else:
+                            independent_vars[contextual_var] = contextual_vars_dict[contextual_var]['value']
+
+                    independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
                     # for version in all_versions:
                     #     if version == interaction['treatment']['name']:
                     #         independent_vars[version] = 1
@@ -404,6 +432,8 @@ class ThompsonSamplingContextual(Policy):
                 if include_intercept:
                     vars_list.insert(0,1.)
 
+                # TODO: expand the vars_list if there are categorical variables.
+
                 # construct design matrix.
                 design_matrix = np.zeros((len(interactions_for_posterior), len(vars_list)))
                 for i in range(len(interactions_for_posterior)):
@@ -413,13 +443,21 @@ class ThompsonSamplingContextual(Policy):
 
                     for key, sub_dict in interaction['contextuals'].items():
                         contextual_vars_dict[key] = sub_dict["value"]
+
                         
-                    independent_vars = contextual_vars_dict
-                    # for version in all_versions:
-                    #     if version == interaction['treatment']['name']:
-                    #         independent_vars[version] = 1
-                    #     else:
-                    #         independent_vars[version] = 0
+                    independent_vars = {}
+                    for contextual_var in contextual_vars_dict:
+                        # TODO: check if the variable is a categorical variable or not.
+                        the_variable = Variable.find_one({'name': contextual_var})
+                        if the_variable['type'] == 'categorical':
+                            # iterate over the min and max. make independent_vars[contextual_var + "::" + index] = 1 if it's the same as the value, otherwise 0.
+                            for index in range(the_variable['min'], the_variable['max'] + 1):
+                                if contextual_vars_dict[contextual_var] == index:
+                                    independent_vars[contextual_var + "::" + str(index)] = 1
+                                else:
+                                    independent_vars[contextual_var + "::" + str(index)] = 0
+                        else:
+                            independent_vars[contextual_var] = contextual_vars_dict[contextual_var]
 
 
                     versionName = interaction['treatment']['name']
@@ -427,6 +465,7 @@ class ThompsonSamplingContextual(Policy):
                     version = next(version for version in all_versions if version['name'] == versionName)
 
                     independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
+
 
                     for j in range(len(vars_list)):
                         var = vars_list[j]
@@ -670,8 +709,6 @@ def calculate_outcome(var_dict, coef_list, include_intercept, formula):
     # :return: outcome given formula, coefficients and variables values
     # Split RHS of equation into variable list (context, action, interactions)
     vars_list = list(map(str.strip, formula.split('~')[1].split('+')))
-    print(formula)
-    print(vars_list)
     # Add 1 for intercept in variable list if specified
     if include_intercept:
         vars_list.insert(0,1.)
@@ -792,3 +829,47 @@ def posteriors(y, X, m_pre, V_pre, a1_pre, a2_pre):
         "coef_cov": V_post,
         "variance_a": a1_post,
         "variance_b": a2_post}
+
+
+
+def generate_combinations(arrays):
+    if len(arrays) == 0:
+        return [[]]
+
+    first_array = arrays[0]
+    rest_arrays = arrays[1:]
+    combinations_without_first = generate_combinations(rest_arrays)
+
+    result = []
+
+    for element in first_array:
+        for combination in combinations_without_first:
+            result.append([element] + combination)
+
+    return result
+
+def expand_categorical_variables(regressionFormulaItems):
+    expandedFormulaItems = []
+    
+
+    for item in regressionFormulaItems:
+        expandedItem = []
+        for item_component in item:
+            
+            the_variable = Variable.find_one({"name": item_component})
+
+
+
+            if the_variable is not None and the_variable['type'] == 'categorical': # TODO: need to rewrite this, otherwisse let's say if a factor shares the same name as a variable?
+                
+                temp = [f"{item_component}::{i}" for i in range(the_variable['min'], the_variable['max'] + 1)]
+                expandedItem.append(temp)
+                
+
+                
+            else:
+                expandedItem.append([item_component])
+                
+        expandedFormulaItems.extend(generate_combinations(expandedItem))
+
+    return expandedFormulaItems

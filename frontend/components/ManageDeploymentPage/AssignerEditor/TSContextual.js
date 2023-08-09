@@ -26,7 +26,7 @@ const CoefCovInput = (props) => {
                         key={colIndex}
                         value={cell}
                         type={"number"}
-                        style={{ fontSize: "16px", textRendering: "auto", width: "32px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
+                        style={{ fontSize: "16px", textRendering: "auto", width: "64px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
                         onChange={e => handleInputChange(e, rowIndex, colIndex)}
                     />
                 ))}
@@ -61,7 +61,7 @@ const CoefMeanInput = (props) => {
                 key={index}
                 value={cell}
                 type={"number"}
-                style={{ fontSize: "16px", textRendering: "auto", width: "32px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
+                style={{ fontSize: "16px", textRendering: "auto", width: "64px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
                 onChange={e => handleInputChange(e, index)}
             />
         ))
