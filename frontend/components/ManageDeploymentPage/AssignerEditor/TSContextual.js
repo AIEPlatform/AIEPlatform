@@ -3,6 +3,8 @@ import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '
 import Select from 'react-select';
 import CommonAssignerAttribute from './CommonAssignerAttribute';
 
+import {calculateFormulateItemSize, coefMeanRemoveItem, coefCovRemoveItem} from '../../../helpers/TSContextualHelpers';
+
 const CoefCovInput = (props) => {
     let assigner = props.assigner;
     let tree = props.tree;
@@ -24,7 +26,7 @@ const CoefCovInput = (props) => {
                         key={colIndex}
                         value={cell}
                         type={"number"}
-                        style={{ width: '4em', height: '4em' }}
+                        style={{ fontSize: "16px", textRendering: "auto", width: "32px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
                         onChange={e => handleInputChange(e, rowIndex, colIndex)}
                     />
                 ))}
@@ -59,7 +61,7 @@ const CoefMeanInput = (props) => {
                 key={index}
                 value={cell}
                 type={"number"}
-                style={{ width: '4em', height: '4em' }}
+                style={{ fontSize: "16px", textRendering: "auto", width: "32px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
                 onChange={e => handleInputChange(e, index)}
             />
         ))
@@ -99,110 +101,56 @@ function TSContextual(props) {
 
     }
 
-    const coefCovAddNewItem = (newItem) => {
+    const coefCovAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_cov']) {
             assigner['parameters']['coef_cov'] = [];
         }
 
         const n = assigner['parameters']['coef_cov'].length;
-        const expandedArray = Array(n + 1)
+        const expandedArray = Array(n + newItemSize)
             .fill(null)
-            .map(() => Array(n + 1).fill(0));
-        if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
+            .map(() => Array(n + newItemSize).fill(0));
+
         for (let i = 0; i < n; i++) {
             for (let j = 0; j < n; j++) {
                 expandedArray[i][j] = assigner['parameters']['coef_cov'][i][j];
             }
         }
-        expandedArray[n][n] = 1;
+
+        for (let k = 0; k < newItemSize; k++) {
+            expandedArray[startPoint + k][startPoint + k] = 1;
+        }
 
         assigner['parameters']['coef_cov'] = expandedArray;
 
         sAssigners(tree);
     };
 
-    const coefCovAddIntercept = () => {
-        if (!assigner['parameters']['coef_cov']) {
-            assigner['parameters']['coef_cov'] = [];
-        }
-
-        const n = assigner['parameters']['coef_cov'].length;
-        const expandedArray = Array(n + 1)
-            .fill(null)
-            .map(() => Array(n + 1).fill(0));
-        if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
-        for (let i = 0; i < n; i++) {
-            for (let j = 0; j < n; j++) {
-                expandedArray[i + 1][j + 1] = assigner['parameters']['coef_cov'][i][j];
-            }
-        }
-
-        expandedArray[0][0] = 1;
-
-        assigner['parameters']['coef_cov'] = expandedArray;
-        sAssigners(tree);
-    };
-
-
-    const coefCovRemoveItem = rowIndex => {
-        assigner['parameters']['coef_cov'].splice(rowIndex, 1);
-        assigner['parameters']['coef_cov'].forEach(row => row.splice(rowIndex, 1));
-        sAssigners(tree);
-    };
-
-    const coefMeanAddNewItem = (newItem) => {
+    const coefMeanAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_mean']) {
             assigner['parameters']['coef_mean'] = [];
         }
 
-        const expandedArray = assigner['parameters']['coef_mean'].concat([0]);
+        // create an array of size newItemSize with value 0
+        let newMeans = Array(newItemSize).fill(0);
+
+        // concat at startPoint
+        const expandedArray = assigner['parameters']['coef_mean'].slice(0, startPoint).concat(newMeans).concat(assigner['parameters']['coef_mean'].slice(startPoint));
 
         assigner['parameters']['coef_mean'] = expandedArray;
 
         sAssigners(tree);
     };
-
-    const coefMeanAddIntercept = () => {
-        if (!assigner['parameters']['coef_mean']) {
-            assigner['parameters']['coef_mean'] = [];
-        }
-
-        const expandedArray = [0].concat(assigner['parameters']['coef_mean']);
-
-        assigner['parameters']['coef_mean'] = expandedArray;
-        sAssigners(tree);
-    };
-
-
-    const coefMeanRemoveItem = index => {
-        assigner['parameters']['coef_mean'].splice(index, 1);
-        sAssigners(tree);
-    };
-
-    const calculateFormulateItemSize = (item) => {
-
-        let merged = item.map((item) => {
-            let found = existingVariables.find((variable) => variable.name === item.value);
-            return { ...item, ...found };
-        });
-        let size = 1;
-        merged.forEach((item) => {
-            if (item.type === 'categorical') {
-                size *= item.max - item.min + 1;
-            }
-        });
-        return size;
-    }
 
     const addRegressionFormulaItem = () => {
         // newItem is an array like 0: {value: 'job', label: 'job'} 1: {value: 'factor1', label: 'factor1'}.
         // Merge this array with existingVariables based on value, so we know the categorical or not, and the min and max.
-        let sizeOfNewItems = calculateFormulateItemSize(newItem);
         let regressionFormulaItem = newItem.map((item) => item.value);
+        let sizeOfNewItems = calculateFormulateItemSize(existingVariables, regressionFormulaItem);
 
         let temp = [[]]
 
-        if(!assigner['parameters']['regressionFormulaItems']){
+        if (!assigner['parameters']['regressionFormulaItems']) {
             assigner['parameters']['regressionFormulaItems'] = [];
         }
         if (assigner['parameters']['regressionFormulaItems']) {
@@ -212,61 +160,53 @@ function TSContextual(props) {
 
         sAssigners(tree);
 
-        // coefCovAddNewItem();
-        // coefMeanAddNewItem();
+        // get the start point (the current size of coef_mean and coef_cov), and add the size of new items to it.
+
+        coefCovAddNewItem(assigner['parameters']['coef_cov'].length, sizeOfNewItems);
+        coefMeanAddNewItem(assigner['parameters']['coef_cov'].length, sizeOfNewItems);
         sNewItem([]);
     }
 
     const removeFields = (index) => {
+        // calculate the start point.
+
+        let startPoint = 0;
+        for (let i = 0; i < index; i++) {
+            startPoint += calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][i]);
+        }
+
+        if(assigner['parameters']['include_intercept']) {
+            startPoint += 1;
+        }
+
+
+
+        coefCovRemoveItem(assigner, startPoint, calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][index]));
+        coefMeanRemoveItem(assigner, startPoint, calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][index]));
         assigner['parameters']['regressionFormulaItems'].splice(index, 1);
         sAssigners(tree);
+
     }
-
-    const handleRegressionFormulaItemPickup = (option, index) => {
-        assigner['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
-
-
-        // check if the option is categorical or not.
-        let isCategorical = false
-
-        let parameters = assigner['parameters'];
-        let deepCopy = JSON.parse(JSON.stringify(parameters));
-
-
-        for (let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
-            if (deepCopy.regressionFormulaItems[i].length === 0) {
-
-                parameters['regressionFormulaItems'].splice(i, 1);
-
-                let coefIndex = deepCopy['include_intercept'] ? i + 1 : i;
-                parameters['coef_cov'].splice(coefIndex, 1);
-                parameters['coef_cov'].forEach(row => row.splice(coefIndex, 1));
-
-                parameters['coef_mean'].splice(coefIndex, 1);
-            }
-        }
-        sAssigners(tree)
-    };
 
     function generateCombinations(arrays) {
         if (arrays.length === 0) {
-          return [[]];
+            return [[]];
         }
-      
+
         const firstArray = arrays[0];
         const restArrays = arrays.slice(1);
         const combinationsWithoutFirst = generateCombinations(restArrays);
-      
+
         const result = [];
-      
+
         for (const element of firstArray) {
-          for (const combination of combinationsWithoutFirst) {
-            result.push([element, ...combination]);
-          }
+            for (const combination of combinationsWithoutFirst) {
+                result.push([element, ...combination]);
+            }
         }
-      
+
         return result;
-      }
+    }
 
     const writeRegressionFormula = () => {
         let formula = "reward ~ "
@@ -293,13 +233,8 @@ function TSContextual(props) {
                         expandedItem.push([item.item]);
                     }
                 });
-                console.log(generateCombinations(expandedItem))
                 expandedFormulaItems = expandedFormulaItems.concat(generateCombinations(expandedItem));
             }
-
-            console.log(expandedFormulaItems)
-            
-
 
             formula += expandedFormulaItems.map((item) => {
                 // need to check if any of the item is categorical or not.
@@ -376,12 +311,13 @@ function TSContextual(props) {
                         assigner['parameters']['include_intercept'] = e.target.checked;
                         sAssigners(tree);
                         if (e.target.checked) {
-                            coefCovAddIntercept();
-                            coefMeanAddIntercept();
+                            coefCovAddNewItem(0,1);
+                            coefMeanAddNewItem(0,1);
                         }
                         else {
-                            coefCovRemoveItem(0);
-                            coefMeanRemoveItem(0);
+                            coefCovRemoveItem(assigner, 0, 1);
+                            coefMeanRemoveItem(assigner, 0, 1);
+                            sAssigners(tree);
                         }
                     }} />}
                     label="Include Intercept"
@@ -448,8 +384,6 @@ function TSContextual(props) {
                             />
                             <Button onClick={() => {
                                 removeFields(index);
-                                // coefCovRemoveItem(index);
-                                // coefMeanRemoveItem(index);
                             }
                             } variant="contained" sx={{ m: 1 }} color="error">Remove</Button>
                         </Box>

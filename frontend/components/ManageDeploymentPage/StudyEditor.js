@@ -70,9 +70,9 @@ function StudyEditor(props) {
 
     useEffect(() => {
         if (study === null) return;
-        let modifiedStudy = validifyStudy(study);
+        let modifiedStudy = validifyStudy(study, existingVariables);
         sStudy(modifiedStudy);
-    }, [study?.variables.length, study?.versions.length, study?.factors.length]); // also listen on the array of parameters of all assigners
+    }, [study?.variables.length, study?.versions.length, study?.factors.length, existingVariables]); // also listen on the array of parameters of all assigners
 
     let [tabIndex, sTabIndex] = useState(0);
 
