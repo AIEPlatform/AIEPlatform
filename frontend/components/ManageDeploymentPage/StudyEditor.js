@@ -42,6 +42,20 @@ function StudyEditor(props) {
     const treeRef = useRef(null);
     let handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
+    let [existingVariables, sExistingVariables] = useState([]);
+
+    useEffect(() => {
+        fetch(`/apis/variables`)
+            .then(res => res.json())
+            .then(response => {
+                if (response['status_code'] === 200)
+                    sExistingVariables(response.data)
+            })
+            .catch(error => {
+                alert("something is wrong with loading existing variables. Please try again later.");
+            })
+    }, []);
+
     // Call the helper function to validate the study.
     useEffect(() => {
         // TODO: Think about how to open all the assigners from cookies.
@@ -296,7 +310,7 @@ function StudyEditor(props) {
                             <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
+                            <VariableEditor sExistingVariables = {sExistingVariables} existingVariables = {existingVariables} selectedVariables={study.variables} sSelectedVariables={sVariables} />
                         </AccordionDetails>
                     </Accordion>
 
@@ -369,7 +383,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <AssignerEditor study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
+                    <AssignerEditor existingVariables = {existingVariables} study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
                 </Box>
             </Modal>
         </Box >

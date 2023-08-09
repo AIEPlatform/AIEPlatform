@@ -1,4 +1,4 @@
-import { React, useEffect } from 'react';
+import { React, useEffect, useState } from 'react';
 import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '@mui/material';
 import Select from 'react-select';
 import CommonAssignerAttribute from './CommonAssignerAttribute';
@@ -88,13 +88,18 @@ function TSContextual(props) {
 
     let regressionFormulaVariables = variables.concat(factors);
 
+    let existingVariables = props.existingVariables;
+
+
+    let [newItem, sNewItem] = useState([]);
+
     let handleWeightChange = (event, name) => {
         assigner['parameters'][name] = event.target.value;
         sAssigners(tree)
 
     }
 
-    const coefCovAddNewItem = () => {
+    const coefCovAddNewItem = (newItem) => {
         if (!assigner['parameters']['coef_cov']) {
             assigner['parameters']['coef_cov'] = [];
         }
@@ -112,6 +117,7 @@ function TSContextual(props) {
         expandedArray[n][n] = 1;
 
         assigner['parameters']['coef_cov'] = expandedArray;
+
         sAssigners(tree);
     };
 
@@ -144,7 +150,7 @@ function TSContextual(props) {
         sAssigners(tree);
     };
 
-    const coefMeanAddNewItem = () => {
+    const coefMeanAddNewItem = (newItem) => {
         if (!assigner['parameters']['coef_mean']) {
             assigner['parameters']['coef_mean'] = [];
         }
@@ -152,6 +158,7 @@ function TSContextual(props) {
         const expandedArray = assigner['parameters']['coef_mean'].concat([0]);
 
         assigner['parameters']['coef_mean'] = expandedArray;
+
         sAssigners(tree);
     };
 
@@ -172,16 +179,42 @@ function TSContextual(props) {
         sAssigners(tree);
     };
 
-    const addFields = () => {
-        let newfield = []
+    const calculateFormulateItemSize = (item) => {
+
+        let merged = item.map((item) => {
+            let found = existingVariables.find((variable) => variable.name === item.value);
+            return { ...item, ...found };
+        });
+        let size = 1;
+        merged.forEach((item) => {
+            if (item.type === 'categorical') {
+                size *= item.max - item.min + 1;
+            }
+        });
+        return size;
+    }
+
+    const addRegressionFormulaItem = () => {
+        // newItem is an array like 0: {value: 'job', label: 'job'} 1: {value: 'factor1', label: 'factor1'}.
+        // Merge this array with existingVariables based on value, so we know the categorical or not, and the min and max.
+        let sizeOfNewItems = calculateFormulateItemSize(newItem);
+        let regressionFormulaItem = newItem.map((item) => item.value);
+
         let temp = [[]]
+
+        if(!assigner['parameters']['regressionFormulaItems']){
+            assigner['parameters']['regressionFormulaItems'] = [];
+        }
         if (assigner['parameters']['regressionFormulaItems']) {
-            temp = [...assigner['parameters']['regressionFormulaItems'], newfield]
+            temp = [...assigner['parameters']['regressionFormulaItems'], regressionFormulaItem]
         }
         assigner['parameters']['regressionFormulaItems'] = temp
 
-
         sAssigners(tree);
+
+        // coefCovAddNewItem();
+        // coefMeanAddNewItem();
+        sNewItem([]);
     }
 
     const removeFields = (index) => {
@@ -192,11 +225,17 @@ function TSContextual(props) {
     const handleRegressionFormulaItemPickup = (option, index) => {
         assigner['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
 
+
+        // check if the option is categorical or not.
+        let isCategorical = false
+
         let parameters = assigner['parameters'];
         let deepCopy = JSON.parse(JSON.stringify(parameters));
-        for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
-            if(deepCopy.regressionFormulaItems[i].length === 0) {
-                
+
+
+        for (let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
+            if (deepCopy.regressionFormulaItems[i].length === 0) {
+
                 parameters['regressionFormulaItems'].splice(i, 1);
 
                 let coefIndex = deepCopy['include_intercept'] ? i + 1 : i;
@@ -209,10 +248,65 @@ function TSContextual(props) {
         sAssigners(tree)
     };
 
+    function generateCombinations(arrays) {
+        if (arrays.length === 0) {
+          return [[]];
+        }
+      
+        const firstArray = arrays[0];
+        const restArrays = arrays.slice(1);
+        const combinationsWithoutFirst = generateCombinations(restArrays);
+      
+        const result = [];
+      
+        for (const element of firstArray) {
+          for (const combination of combinationsWithoutFirst) {
+            result.push([element, ...combination]);
+          }
+        }
+      
+        return result;
+      }
+
     const writeRegressionFormula = () => {
         let formula = "reward ~ "
         if (assigner['parameters']['regressionFormulaItems']) {
-            formula += assigner['parameters']['regressionFormulaItems'].map((item) => item.join(" * ")).join(" + ")
+
+            let expandedFormulaItems = [];
+
+            for (let i = 0; i < assigner['parameters']['regressionFormulaItems'].length; i++) {
+                let item = assigner['parameters']['regressionFormulaItems'][i];
+                let merged = item.map((item) => {
+                    let found = existingVariables.find((variable) => variable.name === item);
+                    return { item, ...found };
+                });
+                let expandedItem = [];
+                merged.forEach((item) => {
+                    if (item.type === 'categorical') {
+                        let temp = [];
+                        for (let i = item.min; i <= item.max; i++) {
+                            temp.push(`${item.name}::${i}`);
+                        }
+                        expandedItem.push(temp);
+                    }
+                    else {
+                        expandedItem.push([item.item]);
+                    }
+                });
+                console.log(generateCombinations(expandedItem))
+                expandedFormulaItems = expandedFormulaItems.concat(generateCombinations(expandedItem));
+            }
+
+            console.log(expandedFormulaItems)
+            
+
+
+            formula += expandedFormulaItems.map((item) => {
+                // need to check if any of the item is categorical or not.
+                // item is like ['job', 'nonCategorical']. let's say job is categorical.
+                // Then we need to expand the item to ['job::1', 'job::2', ..., nonCategorical], depending on the min and max of job.
+                return item.join(" * ")
+            }).join(" + ")
         }
         return formula
     }
@@ -346,9 +440,7 @@ function TSContextual(props) {
                                 className="basic-multi-select"
                                 classNamePrefix="select"
                                 value={regressionFormulaItem.map(v => ({ label: v, value: v }))}
-                                onChange={(option) => {
-                                    handleRegressionFormulaItemPickup(option, index);
-                                }}
+                                isDisabled={true}
                                 styles={{
                                     // Fixes the overlapping problem of the component
                                     menu: provided => ({ ...provided, zIndex: 9999 })
@@ -356,18 +448,36 @@ function TSContextual(props) {
                             />
                             <Button onClick={() => {
                                 removeFields(index);
-                                coefCovRemoveItem(index);
-                                coefMeanRemoveItem(index);
+                                // coefCovRemoveItem(index);
+                                // coefMeanRemoveItem(index);
                             }
                             } variant="contained" sx={{ m: 1 }} color="error">Remove</Button>
                         </Box>
                     )
                 })}
 
+
+                <Select
+                    isMulti
+                    name="contextuals"
+                    options={regressionFormulaVariables.map((option) => ({
+                        value: option,
+                        label: option
+                    }))}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    value={newItem}
+                    onChange={(e) => {
+                        sNewItem(e);
+                    }}
+                    styles={{
+                        // Fixes the overlapping problem of the component
+                        menu: provided => ({ ...provided, zIndex: 9999 })
+                    }}
+                />
+
                 <Button onClick={(e) => {
-                    addFields();
-                    coefCovAddNewItem();
-                    coefMeanAddNewItem();
+                    addRegressionFormulaItem();
                 }
                 } variant="contained" color="primary" sx={{ m: 1 }}>Add a regression formula item</Button>
 
