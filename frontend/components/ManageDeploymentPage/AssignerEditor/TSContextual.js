@@ -1,9 +1,9 @@
 import { React, useEffect, useState } from 'react';
-import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '@mui/material';
+import { Typography, TextField, Button, Box, Checkbox, FormControlLabel, Input } from '@mui/material';
 import Select from 'react-select';
 import CommonAssignerAttribute from './CommonAssignerAttribute';
 
-import {calculateFormulateItemSize, coefMeanRemoveItem, coefCovRemoveItem} from '../../../helpers/TSContextualHelpers';
+import { calculateFormulateItemSize, coefMeanRemoveItem, coefCovRemoveItem } from '../../../helpers/TSContextualHelpers';
 
 const CoefCovInput = (props) => {
     let assigner = props.assigner;
@@ -20,24 +20,43 @@ const CoefCovInput = (props) => {
 
     const renderMatrix = () => {
         return (assigner['parameters']['coef_cov'] || []).map((row, rowIndex) => (
-            <div key={rowIndex}>
+            <Box key={rowIndex} style={{ display: 'flex' }}>
                 {row.map((cell, colIndex) => (
-                    <input
+                    <Input
                         key={colIndex}
                         value={cell}
                         type={"number"}
-                        style={{ fontSize: "16px", textRendering: "auto", width: "64px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
+                        style={{
+                            fontSize: "16px", // Initial font size
+                            textRendering: "auto",
+                            width: "auto", // Initial width
+                            minWidth: "50px", // Set a minimum width
+                            maxWidth: "100%", // Ensure input doesn't exceed parent width
+                            height: "auto",
+                            padding: "5px",
+                            border: "1px solid #ccc"
+                        }}
                         onChange={e => handleInputChange(e, rowIndex, colIndex)}
+                        ref={inputRef => {
+                            if (inputRef) {
+                                const parentWidth = inputRef.parentNode.offsetWidth;
+                                const contentWidth = inputRef.scrollWidth;
+                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                inputRef.style.width = "auto"; // Reset width after adjusting font size
+                            }
+                        }}
                     />
                 ))}
-            </div>
+            </Box>
         ));
     };
 
     return (
-        <div>
+        <Box>
             {renderMatrix()}
-        </div>
+        </Box>
     );
 };
 
@@ -56,21 +75,44 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
-        return (assigner['parameters']['coef_mean'] || []).map((cell, index) => (
-            <input
-                key={index}
-                value={cell}
-                type={"number"}
-                style={{ fontSize: "16px", textRendering: "auto", width: "64px", height: "auto", padding: "5px", border: "1px solid #ccc" }}
-                onChange={e => handleInputChange(e, index)}
-            />
-        ))
-    }
+        return (
+            <Box style={{ display: 'flex' }}>
+                {(assigner['parameters']['coef_mean'] || []).map((cell, index) => (
+                    <input
+                        key={index}
+                        value={cell}
+                        type={"number"}
+                        style={{
+                            fontSize: "16px", // Initial font size
+                            textRendering: "auto",
+                            flex: 1, // Distribute available space evenly
+                            minWidth: "50px", // Set a minimum width
+                            maxWidth: "100%", // Ensure input doesn't exceed parent width
+                            height: "auto",
+                            padding: "5px",
+                            border: "1px solid #ccc",
+                        }}
+                        onChange={e => handleInputChange(e, index)}
+                        ref={inputRef => {
+                            if (inputRef) {
+                                const parentWidth = inputRef.parentNode.offsetWidth;
+                                const contentWidth = inputRef.scrollWidth;
+                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                inputRef.style.width = "auto"; // Reset width after adjusting font size
+                            }
+                        }}
+                    />
+                ))}
+            </Box>
+        );
+    };
 
     return (
-        <div>
+        <Box>
             {renderMatrix()}
-        </div>
+        </Box>
     );
 };
 
@@ -175,7 +217,7 @@ function TSContextual(props) {
             startPoint += calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][i]);
         }
 
-        if(assigner['parameters']['include_intercept']) {
+        if (assigner['parameters']['include_intercept']) {
             startPoint += 1;
         }
 
@@ -222,7 +264,6 @@ function TSContextual(props) {
                 });
                 let expandedItem = [];
                 merged.forEach((item) => {
-                    console.log(item)
                     if (item.type === 'categorical') {
                         let temp = [];
                         for (let i = item.min; i <= item.max; i++) {
@@ -312,8 +353,8 @@ function TSContextual(props) {
                         assigner['parameters']['include_intercept'] = e.target.checked;
                         sAssigners(tree);
                         if (e.target.checked) {
-                            coefCovAddNewItem(0,1);
-                            coefMeanAddNewItem(0,1);
+                            coefCovAddNewItem(0, 1);
+                            coefMeanAddNewItem(0, 1);
                         }
                         else {
                             coefCovRemoveItem(assigner, 0, 1);
@@ -424,7 +465,6 @@ function TSContextual(props) {
 
                 <Box>
                     <Typography variant='h6'>Coefficient mean</Typography>
-                    <small>The first is for the intercept if you have checked to include intercept.</small>
                     <CoefMeanInput assigner={assigner} tree={tree} sAssigners={sAssigners} />
                 </Box>
             </Box>
