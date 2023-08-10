@@ -744,6 +744,58 @@ def reset_study():
                 "message": "Something went wrong, please try again later."
             }), 500
 
+
+@experiment_design_apis.route("/apis/experimentDesign/resetDeployment", methods=["PUT"])
+def reset_deployment():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    if deployment is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment."
+        }), 400
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+
+    if the_deployment is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
+
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+
+            # get all studies.
+            studies = StudyModel.get_deployment_studies(the_deployment['_id'], session=session)
+
+            for study in studies:
+                response = reset_study_helper(the_deployment, study, session)
+                if response != 200:
+                    session.abort_transaction()
+                    return json_util.dumps({
+                        "status_code": 500,
+                        "message": "Something went wrong, please try again later."
+                    }), 500
+
+            # delete all variables
+
+            VariableValue.delete_many({"deployment": the_deployment['name']}, session=session)
+            session.commit_transaction()
+            return json_util.dumps({
+                "status_code": 200,
+                "message": "Done."
+            }), 200
+        except Exception as e:
+            session.abort_transaction()
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Something went wrong, please try again later."
+            }), 500
+
     
 
 import traceback
