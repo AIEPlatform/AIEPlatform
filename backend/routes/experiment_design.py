@@ -16,6 +16,13 @@ from bson.objectid import ObjectId
 from flask import send_file, make_response
 from Analysis.basic_reward_summary_table import basic_reward_summary_table
 from Analysis.AverageRewardByTime import AverageRewardByTime
+from routes.user_interaction import give_variable_value, assign_treatment, get_reward
+
+from Policies.UniformRandom import UniformRandom
+from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
+from Policies.TSConfigurable import TSConfigurable
+from Policies.WeightedRandom import WeightedRandom
+from Policies.GPT import GPT
 
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)
@@ -146,32 +153,40 @@ def create_study():
             "status_code": 401
         }), 401
     
-    study = request.json['study'] if 'study' in request.json else None;
-    if study is None:
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": "Missing required parameters."
-        }), 400
-    
 
-    studyName = study['name'] if 'name' in study else None;
-    assigners = study['assigners'] if 'assigners' in study else None;
-    versions = study['versions'] if 'versions' in study else None;
-    variables = study['variables'] if 'variables' in study else None;
-    factors = study['factors'] if 'factors' in study else None;
-    rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else None;
-    simulationSetting = study['simulationSetting'] if 'simulationSetting' in study else None;
-    status = study['status'] if 'status' in study else 'stopped';
-    deploymentName = request.json['deploymentName'] if 'deploymentName' in request.json else None;
+    studyName = request.json['name'] if 'name' in request.json else None
+    deploymentName = request.json['deployment'] if 'deployment' in request.json else None;
+    assigners = [
+        {
+            "id": 1,
+            "parent": 0,
+            "droppable": True,
+            "isOpen": True,
+            "text": "assigner1",
+            "name": "assigner1",
+            "policy": "UniformRandom",
+            "parameters": {},
+            "weight": 1
+        }
+    ]
+    versions = []
+    factors = []
+    variables = []
+    rewardInformation = {
+            "name": "reward",
+            "min": 0,
+            "max": 1
+        }
+    simulationSetting = {
+            "baseReward": {},
+            "contextualEffects": [],
+            "numDays": 5
+        }
+    status = 'reset';
 
     with client.start_session() as session:
         session.start_transaction()
         try:
-            
-
-            versions = checkIfVersionsAreValid(versions)
-            
-
             # TODO: Check if valid study name or not.
             if len(studyName) < 3 or len(studyName) > 50:
                 return json_util.dumps({
@@ -217,11 +232,13 @@ def create_study():
 
             studies = Study.find({"deploymentId": ObjectId(the_deployment['_id'])})
             the_study = Study.find_one({'_id': study_id})
+            assigners = build_json_for_study(the_study['_id'])
+            the_study['assigners'] = assigners # Note that in DB, we only save the root assigner!
             return json_util.dumps({
                 "status_code": 200, 
                 "message": "success", 
                 "studies": studies,
-                "study": the_study
+                "theStudy": the_study
             }), 200
         
         except DuplicatedVersionJSON as e:
@@ -245,7 +262,7 @@ def create_study():
                 "message": str(e)
             }), 400
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
@@ -412,10 +429,9 @@ def modify_assigner(assigner, study_id, session):
                 "policy": assigner['policy'],
                 "parameters": assigner['parameters'],
                 "studyId": study_id,
-                "isConsistent": False, 
+                "isConsistent": assigner['isConsistent'] if "isConsistent" in assigner else False, 
                 "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
                 "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
-                "autoZeroPerMinute": False, 
                 "children": my_children, 
                 "weight": float(assigner['weight']), 
                 "updatedAt": time
@@ -428,10 +444,9 @@ def modify_assigner(assigner, study_id, session):
             "policy": assigner['policy'],
             "parameters": assigner['parameters'],
             "studyId": study_id,
-            "isConsistent": False, 
+            "isConsistent": assigner['isConsistent'] if "isConsistent" in assigner else False,
             "reassignAfterReward": assigner['reassignAfterReward'] if "reassignAfterReward" in assigner else None,
             "autoZeroThreshold": assigner['autoZeroThreshold'] if 'autoZeroThreshold' in assigner else 0,
-            "autoZeroPerMinute": False, 
             "children": my_children, 
             "weight": float(assigner['weight']), 
             "createdAt": time, 
@@ -439,6 +454,15 @@ def modify_assigner(assigner, study_id, session):
         }
         response = AssignerModel.create(new_assigner, session=session)
         return response.inserted_id
+    
+def checkIfAssignersAreValid(assigners):
+    # TODO: Need different cases, need to call static functions of each class.
+
+    for i in range(len(assigners)):
+        cls = globals().get(assigners[i]['policy'])
+        assigners[i] = cls.validate_assigner(assigners[i])
+
+    return assigners
 
 @experiment_design_apis.route("/apis/experimentDesign/study", methods = ["PUT"])
 def modify_existing_study():
@@ -468,7 +492,10 @@ def modify_existing_study():
             the_deployment = DeploymentModel.get_one({"name": deployment})
             the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
 
-            study['versions'] = checkIfVersionsAreValid(study['versions'])
+            versions = checkIfVersionsAreValid(versions)
+            assigners = checkIfAssignersAreValid(assigners)
+
+            
 
             Study.update_one({'_id': the_study['_id']}, {'$set': {
                 'versions': versions, 
@@ -477,6 +504,19 @@ def modify_existing_study():
                 'status': status
                 }}, session=session)
             
+            # get all assigners of this study. Remove assigners whose _id are not present in the assigners list.
+
+            assigners_in_db = AssignerModel.find_assigners({"studyId": the_study['_id']})
+
+            assigners_id_to_keep = [ObjectId(assigner['dbId']['$oid']) for assigner in assigners if 'dbId' in assigner]
+
+            assigners_id_to_remove = []
+
+            for assigner_in_db in list(assigners_in_db):
+                if assigner_in_db['_id'] not in assigners_id_to_keep:
+                    assigners_id_to_remove.append(assigner_in_db['_id'])
+
+            Assigner.delete_many({"_id": {"$in": assigners_id_to_remove}}, session=session)
 
             designer_tree = convert_front_list_assigners_into_tree(assigners)
 
@@ -504,18 +544,21 @@ def modify_existing_study():
                 "message": str(e)
             }), 400
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             session.abort_transaction()
             print("Transaction rolled back!")
             return json_util.dumps({
                 "status_code": 500,
                 "message": "Not successful, please try again later."
             }), 500
+        
+    study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
     return json_util.dumps(
         {
         "status_code": 200,
         "message": "Study is modified.", 
-        "temp": designer_tree
+        "temp": designer_tree,
+        "study": study
         }
     ), 200
 
@@ -523,7 +566,6 @@ def modify_existing_study():
 def get_variables():
     # get showStudies from params if not, set to False.
     showStudies = request.args.get('showStudies') == 'true' if 'showStudies' in request.args else False
-    print("hello world")
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
@@ -534,8 +576,6 @@ def get_variables():
             # for every variables, get the studies that use it. Every study has a list called variables.
             for variable in variables:
                 studies = list(StudyModel.get_many({"variables": { "$elemMatch": { "$eq": variable['name'] } }}, showDeploymentName = True))
-                for study in studies:
-                    print(study)
                 # get deploymentName for each study by deployment Id.
                 variable['studies'] = [f'{study["name"]} in {study["deployment"]["name"]}' for study in studies]
 
@@ -604,6 +644,11 @@ def create_variable():
 def reset_study_helper(the_deployment, the_study, session):
     try:
         studyId = the_study['_id']
+
+        # update the status to reset.
+        Study.update_one({'_id': studyId}, {'$set': {
+            'status': 'reset'
+            }}, session=session)
         # get all assigner ids
         assigners = AssignerModel.find_assigners({"studyId": ObjectId(studyId)})
         assignerids = [assigner['_id'] for assigner in assigners]
@@ -627,14 +672,20 @@ def reset_study_helper(the_deployment, the_study, session):
         return 500
 
 
-@experiment_design_apis.route("/apis/experimentDesign/resetStudy", methods=["PUT"])
+@experiment_design_apis.route("/apis/experimentDesign/changeStudyStatus", methods=["PUT"])
 def reset_study():
     if check_if_loggedin() is False:
         return json_util.dumps({
             "status_code": 403,
         }), 403
-    deployment = request.json['deployment']
-    study = request.json['study']
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    study = request.json['study'] if 'study' in request.json else None
+    status = request.json['status'] if 'status' in request.json else None
+    if deployment is None or study is None or status is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment, study and status."
+        }), 400
     the_deployment = DeploymentModel.get_one({"name": deployment})
     if the_deployment is None: 
         return json_util.dumps({
@@ -648,20 +699,103 @@ def reset_study():
             "message": "You don't have access to the study."
         }), 403
     with client.start_session() as session:
-        session.start_transaction()
-        response = reset_study_helper(the_deployment, the_study, session)
-        if response == 200:
+        try:
+            session.start_transaction()
+            if status == "reset":
+                response = reset_study_helper(the_deployment, the_study, session)
+                if response == 200:
+                    session.commit_transaction()
+                    return json_util.dumps({
+                        "status_code": 200,
+                        "message": "Done."
+                    }), 200
+                else:
+                    session.abort_transaction()
+                    return json_util.dumps({
+                        "status_code": 500,
+                        "message": "Something went wrong, please try again later."
+                    }), 500
+            else:
+                # update study status
+                # if new status is running, check if simulation is running. If so, return 400.
+
+                if status == "running":
+                    # check if simulation is running
+                    if 'simulationStatus' in the_study and the_study['simulationStatus'] == "running":
+                        return json_util.dumps({
+                            "status_code": 400,
+                            "message": "The simulation is running. Please stop it first."
+                        }), 400
+                Study.update_one({'_id': the_study['_id']}, {'$set': {
+                    'status': status
+                    }}, session=session)
+                
+                session.commit_transaction()
+                return json_util.dumps({
+                    "status_code": 200,
+                    "message": "Done."
+                }), 200
+        except Exception as e:
+
+            session.abort_transaction()
+        
+            return json_util.dumps({
+                "status_code": 500,
+                "message": "Something went wrong, please try again later."
+            }), 500
+
+
+@experiment_design_apis.route("/apis/experimentDesign/resetDeployment", methods=["PUT"])
+def reset_deployment():
+    if check_if_loggedin() is False:
+        return json_util.dumps({
+            "status_code": 403,
+        }), 403
+    deployment = request.json['deployment'] if 'deployment' in request.json else None
+    if deployment is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please provide deployment."
+        }), 400
+    the_deployment = DeploymentModel.get_one({"name": deployment})
+
+    if the_deployment is None: 
+        return json_util.dumps({
+            "status_code": 403,
+            "message": "You don't have access to the study."
+        }), 403
+
+    with client.start_session() as session:
+        try:
+            session.start_transaction()
+
+            # get all studies.
+            studies = StudyModel.get_deployment_studies(the_deployment['_id'], session=session)
+
+            for study in studies:
+                response = reset_study_helper(the_deployment, study, session)
+                if response != 200:
+                    session.abort_transaction()
+                    return json_util.dumps({
+                        "status_code": 500,
+                        "message": "Something went wrong, please try again later."
+                    }), 500
+
+            # delete all variables
+
+            VariableValue.delete_many({"deployment": the_deployment['name']}, session=session)
             session.commit_transaction()
             return json_util.dumps({
                 "status_code": 200,
-                "message": "The study is reset successfully."
+                "message": "Done."
             }), 200
-        else:
+        except Exception as e:
             session.abort_transaction()
             return json_util.dumps({
                 "status_code": 500,
                 "message": "Something went wrong, please try again later."
             }), 500
+
     
 
 import traceback
@@ -832,7 +966,6 @@ def get_simulation_setting():
     
 import json
 import requests
-import threading
 from Models.InteractionModel import InteractionModel
 requestSession = requests.Session()
 @experiment_design_apis.route("/apis/experimentDesign/runSimulation", methods=["POST"])
@@ -870,27 +1003,7 @@ def run_simulation():
             Interaction.update_many({"_id": {"$in": time_assigner_lists[i]}}, {"$set": {"rewardTimestamp": datetime.datetime.now() - datetime.timedelta(days=i)}})
     def compare_values(a, b):
         return (float(a) - float(b)) == 0
-    def give_variable_value_helper(deployment, study, variable, user, value, apiToken):
-        url = f'http://localhost:20110/apis/variable'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'variable': variable, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
-    
-    def assign_treatment_helper(deployment, study, user, apiToken):
-        url = f'http://localhost:20110/apis/treatment'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
 
-
-    def get_reward_helper(deployment, study, user, value, apiToken):
-        url = f'http://localhost:20110/apis/reward'
-        headers = {'Content-Type': 'application/json'}
-        payload = {'deployment': deployment, 'study': study, 'user': user, 'value': value, 'where': 'simulation', 'apiToken': apiToken}
-        response = requestSession.post(url, headers=headers, data=json.dumps(payload))
-        return response
     deployment = request.json['deployment'] if 'deployment' in request.json else None
     study = request.json['study'] if 'study' in request.json else None
     sampleSize = int(request.json['sampleSize']) if 'sampleSize' in request.json else None
@@ -908,6 +1021,12 @@ def run_simulation():
     try:
         the_deployment = DeploymentModel.get_one({"name": deployment})
         the_study = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
+        # check if study is running. If so, don't run simulation.
+        if 'status' in the_study and the_study['status'] == 'running': #TODO: didn't test this because the simulation option is hidden from frontend when a study is running.
+            return json_util.dumps({
+                "status_code": 400,
+                "message": "The study is running. Please stop the study first."
+            }), 400
         Study.update_one({'_id': the_study['_id']}, {'$set': {
             'simulationSetting': simulationSetting
             }})
@@ -917,10 +1036,6 @@ def run_simulation():
             "message": "Can't find the study."
         }), 404
     
-
-    apiToken = the_deployment['apiToken'] if 'apiToken' in the_deployment else None
-    
-
     # check if a simulation is running.
     if 'simulationStatus' in the_study and the_study['simulationStatus'] != 'idle':
         return json_util.dumps({
@@ -940,11 +1055,13 @@ def run_simulation():
             user = f'{deployment}_{study}_simulated_user_{i}'
             variable_values = {}
             for variable in the_study['variables']:
-                predictor = random.choice([0, 1])
+                the_variable = Variable.find_one({"name": variable})
+
+                predictor = random.randint(float(the_variable['min']), float(the_variable['max']))
                 variable_values[variable] = predictor
-                give_variable_value_helper(deployment, study, variable, user, predictor, apiToken)
-            assignResponse = assign_treatment_helper(deployment, study, user, apiToken)
-            treatment = assignResponse.json()['treatment']['name']
+                give_variable_value(deployment, variable, user, predictor, where = 'simulation', fromSimulation = True)
+            version_to_show = assign_treatment(deployment, study, user, where = 'simulation', other_information = None, request_different_arm = False, fromSimulation = True)
+            treatment = version_to_show['name']
             rewardProb = 0.5
             # TODO: improve the efficiency of the following code.
             if treatment in simulationSetting['baseReward']:
@@ -957,13 +1074,12 @@ def run_simulation():
                         if contextualEffect['operator'] == '=':
                             if compare_values(variable_values[variable], contextualEffect['value']):
                                 rewardProb = rewardProb + float(contextualEffect['effect'])
-                                print(rewardProb)
                                 break                            
             if random.random() < rewardProb:
                 value = 1
             else:
                 value = 0
-            get_reward_helper(deployment, study, user, value, apiToken)
+            get_reward(deployment, study, user, value, where = 'simulation',  other_information = None, fromSimulation=True)
         fake_data_time(deployment, study, simulationSetting['numDays'])
 
         print("Simulation Done")

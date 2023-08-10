@@ -6,6 +6,7 @@ from Models.InteractionModel import InteractionModel
 from Models.VariableValueModel import VariableValueModel
 from Models.AssignerModel import AssignerModel
 import openai
+from errors import *
 
 openai.api_key = OPEN_AI_KEY
 import threading
@@ -25,6 +26,13 @@ class GPT(Policy):
 	# parameters: {
     # prompt: "", 
     # lastK: ""}
+
+    # TODO
+    # make a static method called validate assigner.
+	@staticmethod
+	def validate_assigner(assigner):
+		return assigner
+    
 	def choose_arm(self, user, where, other_information, request_different_arm = False):
 		# TODO: Check if consistent assignment!
 		all_versions = self.get_all_versions(user, where, request_different_arm)

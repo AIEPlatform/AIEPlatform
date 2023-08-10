@@ -5,8 +5,10 @@ from errors import *
 
 from Models.StudyModel import StudyModel
 class Policy(ABC):
+	@staticmethod
+	def validate_assigner(assigner):
+		pass
 	def __init__(self, user, **assigner_obj_from_db):
-		print(assigner_obj_from_db)
 		for key, value in assigner_obj_from_db.items():
 			setattr(self, key, value)
 
@@ -47,12 +49,12 @@ class Policy(ABC):
 		if self.reassignAfterReward:
 			# check if the latest one is an incomplete one. #TODO: does it make sure that there won't be any incomplete one in previous interactions??
 			last_interaction = self.get_latest_interaction(user, where)
-			if last_interaction is not None and last_interaction['outcome'] is None:
+			if last_interaction is not None and last_interaction['outcome'] is None and last_interaction['treatment'] in self.study['versions']:
 				return last_interaction['treatment']
 			
 		if not self.isConsistent: return None
 		last_interaction = self.get_latest_interaction(user, where)
-		if last_interaction is None:
+		if last_interaction is None and last_interaction['treatment'] in self.study['versions']:
 			return None
 		else:
 			return last_interaction['treatment']
@@ -64,7 +66,7 @@ class Policy(ABC):
 			# get all versions a user has been previously assigned to from Interaction.
 
 			past_interactions = InteractionModel.get_interactions_for_where(self._id, user, where)
-			assigned_versions = [interaction['treatment'] for interaction in past_interactions if interaction['outcome'] is None]
+			assigned_versions = [interaction['treatment'] for interaction in past_interactions]
 			if assigned_versions is None:
 				return self.study['versions']
 			else:

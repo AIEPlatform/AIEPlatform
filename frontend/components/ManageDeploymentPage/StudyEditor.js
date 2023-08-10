@@ -1,5 +1,5 @@
 import { React, useState, useRef, useEffect } from 'react';
-import { Typography, TextField, Box, Button, Container, Input, Checkbox, FormControl, FormGroup, FormControlLabel } from '@mui/material';
+import { Typography, TextField, Box, Button, Container, Input, Checkbox, FormControl, FormGroup, FormControlLabel, Tabs, Tab } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
@@ -34,48 +34,48 @@ import { DndProvider } from "react-dnd";
 
 function StudyEditor(props) {
 
+    const [study, sStudy] = useState(null);
     let theStudy = props.theStudy; // theStudy is not study!
-    let sTheStudies = props.sTheStudies;
-    let sTheStudy = props.sTheStudy;
 
-    let designGraph = [
-        {
-            "id": 1,
-            "parent": 0,
-            "droppable": true,
-            "isOpen": true,
-            "text": "assigner1",
-            "name": "assigner1",
-            "policy": "UniformRandom",
-            "parameters": {},
-            "weight": 1
-        }
-    ];
+    const [assignerModalOpen, sAssignerModalOpen] = useState(false);
+    const [idToEdit, sIdToEdit] = useState(null);
+    const treeRef = useRef(null);
+    let handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
-    const newStudy = {
-        "name": "",
-        "variables": [],
-        "factors": [],
-        "versions": [],
-        "assigners": designGraph,
-        "rewardInformation": {
-            "name": "reward",
-            "min": 0,
-            "max": 1
-        },
-        "simulationSetting": {
-            "baseReward": {},
-            "contextualEffects": [],
-            "numDays": 5
-        },
-        "status": "stopped"
-    }
-    const [study, sStudy] = useState(
-        newStudy
-    );
+    let [existingVariables, sExistingVariables] = useState([]);
+
+    useEffect(() => {
+        fetch(`/apis/variables`)
+            .then(res => res.json())
+            .then(response => {
+                if (response['status_code'] === 200)
+                    sExistingVariables(response.data)
+            })
+            .catch(error => {
+                alert("something is wrong with loading existing variables. Please try again later.");
+            })
+    }, []);
+
+    // Call the helper function to validate the study.
+    useEffect(() => {
+        // TODO: Think about how to open all the assigners from cookies.
+        loadCurrentStudy();
+    }, [theStudy]);
+
+    useEffect(() => {
+        if (study === null) return;
+        handleOpen(1);
+    }, [study]);
 
 
-    const [status, sStatus] = useState(0); // 0: loading, 1: new study, 2: existing study., 4: loading exiting study
+    useEffect(() => {
+        if (study === null) return;
+        let modifiedStudy = validifyStudy(study, existingVariables);
+        sStudy(modifiedStudy);
+    }, [study?.variables.length, study?.versions.length, study?.factors.length, existingVariables]); // also listen on the array of parameters of all assigners
+
+    let [tabIndex, sTabIndex] = useState(0);
+
     const deploymentName = props.deploymentName;
     const handleDrop = (newTreeData) => {
         // check if two nodes have parent as 0. If so, alert user that they can't do that.
@@ -86,10 +86,6 @@ function StudyEditor(props) {
         }
         sAssigners(newTreeData)
     };
-    const [assignerModalOpen, sAssignerModalOpen] = useState(false);
-    const [idToEdit, sIdToEdit] = useState(null);
-    const treeRef = useRef(null);
-    const handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
     const addAssigner = () => {
         let newId = study.assigners.length + 1;
@@ -105,7 +101,6 @@ function StudyEditor(props) {
             "weight": 1
         }
         sAssigners([...study.assigners, newAssigner]);
-
         handleOpen(newId);
     };
 
@@ -156,64 +151,16 @@ function StudyEditor(props) {
 
     }
 
-
-    const handleCreateStudy = () => {
-        fetch('/apis/experimentDesign/study', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "deploymentName": deploymentName, // TODO: change to "deploymentId
-                "study": study
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data['status_code'] == 200) {
-                    alert("Study created successfully!");
-                    sTheStudies([theStudy].concat(data["studies"]));
-                    sTheStudy(data['study']);
-
-                }
-                else {
-                    alert(data['message']);
-                }
-            })
-    };
-
     const loadCurrentStudy = () => {
         fetch(`/apis/experimentDesign/study?deployment=${deploymentName}&study=${theStudy['name']}`)
             .then(response => response.json())
             .then(data => {
-                sStatus(4);
                 sStudy(data['study']);
-                sStatus(2);
             })
             .catch((error) => {
                 console.error('Error:', error);
             })
     }
-
-
-    // Call the helper function to validate the study.
-
-    useEffect(() => {
-        let modifiedStudy = validifyStudy(study);
-        sStudy(modifiedStudy);
-    }, [study.variables.length, study.versions.length, study.factors.length]); // also listen on the array of parameters of all assigners
-
-    useEffect(() => {
-        handleOpen(1);
-        // TODO: Think about how to open all the assigners from cookies.
-        if (theStudy['_id']['$oid'] != 1998) {
-            loadCurrentStudy();
-        }
-        else {
-            sStatus(1);
-            sStudy(newStudy);
-        }
-    }, [theStudy]);
 
     const handleModifyStudy = () => {
         // validate the study
@@ -229,7 +176,7 @@ function StudyEditor(props) {
         })
             .then(response => response.json())
             .then(data => {
-                if(data["status_code"] === 200) alert("Study modified successfully!");
+                if (data["status_code"] === 200) alert("Study modified successfully!");
                 else alert(data["message"])
             })
             .catch((error) => {
@@ -237,23 +184,28 @@ function StudyEditor(props) {
             })
     };
 
-    const handleResetStudy = () => {
-        if (!confirm("Are you sure you want to reset the study? The study will be reverted to earliest status after last reset. The interactions/datasets associated will all be deleted.")) return;
-        fetch('/apis/experimentDesign/resetStudy', {
+    const handleStudyStatusChange = (newStatus) => {
+        if (newStatus === "reset" && !confirm("Are you sure you want to reset the study? The study will be reverted to earliest status after last reset. The interactions/datasets associated will all be deleted.")) return;
+
+        if (newStatus === "stopped" && !confirm("Are you sure you want to pause the study? The study will not be able to accept new rewards and it will not send treatments as well.")) return;
+
+        if (newStatus === "running" && !confirm("Are you sure you want to start the study?")) return;
+        fetch('/apis/experimentDesign/changeStudyStatus', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 "deployment": deploymentName, // TODO: change to "deploymentId
-                "study": study['name']
+                "study": study['name'],
+                "status": newStatus
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data['status_code'] === 200) {
                     loadCurrentStudy();
-                    alert("reset successfully!")
+                    if(newStatus === "running") sTabIndex(0);
                 }
                 else {
                     alert("Something is wrong.");
@@ -292,7 +244,6 @@ function StudyEditor(props) {
             .then(data => {
                 if (data['status_code'] === 200) {
                     alert("Study deleted successfully!");
-                    sStatus(1);
                     location.reload();
                 }
                 else {
@@ -311,147 +262,119 @@ function StudyEditor(props) {
     const sVariables = setStudyAttributes.bind('variables');
     const sVersions = setStudyAttributes.bind('versions');
     const sFactors = setStudyAttributes.bind('factors');
-    const sStudyName = setStudyAttributes.bind('name');
     const sRewardInformation = setStudyAttributes.bind('rewardInformation');
     const sAssigners = setStudyAttributes.bind('assigners');
     const sSimulationSetting = setStudyAttributes.bind('simulationSetting');
 
-
-
+    if (study === null) return (<div></div>);
     return (
-        <Container>
+        <Box>
             <Box>
                 <Box sx={{ mb: 2 }}>
-                    {/* {status === 2 && theStudy['status'] === "stopped" && <Button sx={{ m: 1 }} variant="outlined" onClick={handle} startIcon={<StartIcon />}>Start</Button>}
-                    {status === 2 && theStudy['status'] === "running" && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<StopIcon />}>Stop</Button>} */}
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleResetStudy} startIcon={<RestartAltIcon />}>Reset</Button>}
-                    {status === 2 && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
-                    <Box>
-                        <FormGroup>
-                            <FormControlLabel control={<Checkbox checked={study['status'] === 'running'} onChange={
-                                (e) => {
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" onClick={handleModifyStudy} startIcon={<EditIcon />}>Modify</Button>}
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('reset')} startIcon={<RestartAltIcon />}>Reset</Button>}
 
-                                    let temp = { ...study };
-                                    temp['status'] = e.target.checked ? 'running' : 'stopped';
-                                    sStudy(temp);
-                                }
-                            } />} label="Start the study" />
-                        </FormGroup>
-                    </Box>
+                    {study['status'] === "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('stopped')} startIcon={<StopIcon />}>Pause</Button>}
+
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={() => handleStudyStatusChange('running')} startIcon={<StartIcon />}>Start</Button>}
+
+                    {study['status'] !== "running" && <Button sx={{ m: 1 }} variant="outlined" color="error" onClick={handleDeleteStudy} startIcon={<DeleteIcon />}>Delete</Button>}
                 </Box>
 
-                {status === 1 && <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="name-editor"
-                    >
-                        <Typography variant='h6'>Study name</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <TextField required sx={{ mb: 3 }} label="Study name" value={study.name} onChange={(e) => sStudyName(e.target.value)}></TextField>
-                    </AccordionDetails>
-                </Accordion>}
+                {study['status'] !== "running" && <Container sx={{ mb: 2 }}>
+                    <Tabs value={tabIndex} onChange={(e, newValue) => { sTabIndex(newValue) }} aria-label="basic tabs example">
+                        <Tab label="Configuration" />
+                        <Tab label="Simulations" />
+                    </Tabs>
+                </Container>}
+
+                {tabIndex === 0 && <Box sx={{ mb: 2 }}>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="reward-editor"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ScaleIcon sx={{ mr: 1 }}></ScaleIcon>Reward</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <VariableEditor sExistingVariables = {sExistingVariables} existingVariables = {existingVariables} selectedVariables={study.variables} sSelectedVariables={sVariables} />
+                        </AccordionDetails>
+                    </Accordion>
+
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <FactorsEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
+                            <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} />
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="assigner-graph"
+                            id="assigner-graph"
+                        >
+                            <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <DndProvider backend={MultiBackend} options={getBackendOptions()}>
+                                {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
+                                <Tree
+                                    ref={treeRef}
+                                    tree={study.assigners}
+                                    rootId={0}
+                                    onDrop={handleDrop}
+                                    initialOpen={true}
+                                    sort={false}
+                                    render={(node, { depth, isOpen, onToggle }) => (
+                                        <Box style={{ marginLeft: depth * 10 }}>
+                                            {node.droppable && (
+                                                <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
+                                            )}
+                                            <Typography sx={{ m: 0.5 }} variant='span' component='strong'>{node.name}</Typography>
+                                            <Typography sx={{ m: 0.5 }} variant='span'>Weight:</Typography>
+                                            <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleAssignerWeightChange(event, node.id)} />
+                                            <small>{getWeight(node)}</small>
+                                            <Button onClick={() => {
+                                                sIdToEdit(node.id);
+                                                sAssignerModalOpen(true);
+                                            }} startIcon={<EditIcon />}>Edit</Button>
 
 
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="reward-editor"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ScaleIcon sx={{ mr: 1 }}></ScaleIcon>Reward</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <RewardEditor rewardInformation={study.rewardInformation} sRewardInformation={sRewardInformation} />
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="panel1a-header"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AttributionIcon sx={{ mr: 1 }}></AttributionIcon>Variables</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <VariableEditor selectedVariables={study.variables} sSelectedVariables={sVariables} />
-                    </AccordionDetails>
-                </Accordion>
-
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1a-content"
-                        id="panel1a-header"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <FactorsEditor allowVersionNameChange={status === 1} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
-                        <VersionEditor allowVersionNameChange={status === 1} factors={study.factors} versions={study.versions} sVersions={sVersions} />
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="assigner-graph"
-                        id="assigner-graph"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><ArrowForwardIcon sx={{ mr: 1 }}></ArrowForwardIcon>Assigner Graph</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <DndProvider backend={MultiBackend} options={getBackendOptions()}>
-                            {/* https://www.npmjs.com/package/@minoru/react-dnd-treeview */}
-                            <Tree
-                                ref={treeRef}
-                                tree={study.assigners}
-                                rootId={0}
-                                onDrop={handleDrop}
-                                initialOpen={true}
-                                sort={false}
-                                render={(node, { depth, isOpen, onToggle }) => (
-                                    <Box style={{ marginLeft: depth * 10 }}>
-                                        {node.droppable && (
-                                            <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
-                                        )}
-                                        <Typography sx={{ m: 0.5 }} variant='span' component='strong'>{node.name}</Typography>
-                                        <Typography sx={{ m: 0.5 }} variant='span'>Weight:</Typography>
-                                        <Input className="assigner-weight-input" type="number" variant="standard" value={node.weight} onChange={(event) => handleAssignerWeightChange(event, node.id)} />
-                                        <small>{getWeight(node)}</small>
-                                        <Button onClick={() => {
-                                            sIdToEdit(node.id);
-                                            sAssignerModalOpen(true);
-                                        }} startIcon={<EditIcon />}>Edit</Button>
+                                            <Button onClick={() => handleAssignerRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
+                                        </Box>
+                                    )}
+                                />
+                            </DndProvider>
+                            <Button sx={{ m: 2 }} variant="contained" onClick={addAssigner}>Add a new Assigner</Button>
+                        </AccordionDetails>
+                    </Accordion>
+                </Box>}
 
 
-                                        <Button onClick={() => handleAssignerRemove(node.id)} startIcon={<CloseIcon />} color='error'>Delete</Button>
-                                    </Box>
-                                )}
-                            />
-                        </DndProvider>
-                        <Button sx={{ m: 2 }} variant="contained" onClick={addAssigner}>Add a new Assigner</Button>
-                    </AccordionDetails>
-                </Accordion>
 
-
-                {status === 2 && <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="assigner-graph"
-                        id="assigner-graph"
-                    >
-                        <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AutoModeIcon sx={{ mr: 1 }}></AutoModeIcon>Simulations</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
-                    </AccordionDetails>
-                </Accordion>
+                {tabIndex === 1 &&
+                    <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
                 }
-            </Box>
-            <Box sx={{ mb: 2 }}>
-                {status === 1 && <Button sx={{ m: 1 }} variant="outlined" onClick={handleCreateStudy} startIcon={<AddCircleIcon />} fullWidth>Create</Button>}
             </Box>
             <Modal
                 open={assignerModalOpen}
@@ -460,10 +383,10 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <AssignerEditor assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
+                    <AssignerEditor existingVariables = {existingVariables} study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
                 </Box>
             </Modal>
-        </Container >
+        </Box >
     );
 }
 

@@ -63,8 +63,6 @@ class StudyModel:
     def delete_one_by_id(studyId, session = None):
         try:
             response = Study.delete_one({"_id": studyId}, session=session)
-            print(studyId)
-            print(response.deleted_count)
             return response
         except:
             return None

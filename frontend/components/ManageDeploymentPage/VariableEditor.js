@@ -4,7 +4,8 @@ import Select from 'react-select';
 function VariableEditor(props) {
     let selectedVariables = props.selectedVariables;
     let sSelectedVariables = props.sSelectedVariables;
-    let [existingVariables, sExistingVariables] = useState([]);
+    let existingVariables = props.existingVariables;
+    let sExistingVariables = props.sExistingVariables;
     let [newVariable, sNewVariable] = useState("");
     let [newVariableMin, sNewVariableMin] = useState(0);
     let [newVariableMax, sNewVariableMax] = useState(1);
@@ -18,7 +19,8 @@ function VariableEditor(props) {
         { value: 'discrete', label: 'discrete' },
         { value: 'continuous', label: 'continuous' },
         { value: 'ordinary', label: 'ordinary' },
-        { value: 'text', label: 'text' }
+        { value: 'text', label: 'text' },
+        { value: 'categorical', label: 'categorical'}
     ];
 
     let missingDataOptions = [
@@ -38,18 +40,6 @@ function VariableEditor(props) {
         const selectedVariables = options.map(obj => obj.name);
         sSelectedVariables(selectedVariables);
     }
-
-    useEffect(() => {
-        fetch(`/apis/variables`)
-            .then(res => res.json())
-            .then(response => {
-                if (response['status_code'] === 200)
-                    sExistingVariables(response.data)
-            })
-            .catch(error => {
-                alert("something is wrong with loading existing variables. Please try again later.");
-            })
-    }, []);
 
     let handleCreateNewVariable = () => {
         fetch(`/apis/experimentDesign/variable`, {

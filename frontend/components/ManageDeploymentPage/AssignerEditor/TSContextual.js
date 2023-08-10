@@ -1,7 +1,9 @@
-import { React, useEffect } from 'react';
-import { Typography, TextField, Button, Box, Checkbox, FormControlLabel } from '@mui/material';
+import { React, useEffect, useState } from 'react';
+import { Typography, TextField, Button, Box, Checkbox, FormControlLabel, Input } from '@mui/material';
 import Select from 'react-select';
 import CommonAssignerAttribute from './CommonAssignerAttribute';
+
+import { calculateFormulateItemSize, coefMeanRemoveItem, coefCovRemoveItem } from '../../../helpers/TSContextualHelpers';
 
 const CoefCovInput = (props) => {
     let assigner = props.assigner;
@@ -18,24 +20,43 @@ const CoefCovInput = (props) => {
 
     const renderMatrix = () => {
         return (assigner['parameters']['coef_cov'] || []).map((row, rowIndex) => (
-            <div key={rowIndex}>
+            <Box key={rowIndex} style={{ display: 'flex' }}>
                 {row.map((cell, colIndex) => (
-                    <input
+                    <Input
                         key={colIndex}
                         value={cell}
                         type={"number"}
-                        style={{ width: '4em', height: '4em' }}
+                        style={{
+                            fontSize: "16px", // Initial font size
+                            textRendering: "auto",
+                            width: "auto", // Initial width
+                            minWidth: "50px", // Set a minimum width
+                            maxWidth: "100%", // Ensure input doesn't exceed parent width
+                            height: "auto",
+                            padding: "5px",
+                            border: "1px solid #ccc"
+                        }}
                         onChange={e => handleInputChange(e, rowIndex, colIndex)}
+                        ref={inputRef => {
+                            if (inputRef) {
+                                const parentWidth = inputRef.parentNode.offsetWidth;
+                                const contentWidth = inputRef.scrollWidth;
+                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                inputRef.style.width = "auto"; // Reset width after adjusting font size
+                            }
+                        }}
                     />
                 ))}
-            </div>
+            </Box>
         ));
     };
 
     return (
-        <div>
+        <Box>
             {renderMatrix()}
-        </div>
+        </Box>
     );
 };
 
@@ -54,21 +75,44 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
-        return (assigner['parameters']['coef_mean'] || []).map((cell, index) => (
-            <input
-                key={index}
-                value={cell}
-                type={"number"}
-                style={{ width: '4em', height: '4em' }}
-                onChange={e => handleInputChange(e, index)}
-            />
-        ))
-    }
+        return (
+            <Box style={{ display: 'flex' }}>
+                {(assigner['parameters']['coef_mean'] || []).map((cell, index) => (
+                    <input
+                        key={index}
+                        value={cell}
+                        type={"number"}
+                        style={{
+                            fontSize: "16px", // Initial font size
+                            textRendering: "auto",
+                            flex: 1, // Distribute available space evenly
+                            minWidth: "50px", // Set a minimum width
+                            maxWidth: "100%", // Ensure input doesn't exceed parent width
+                            height: "auto",
+                            padding: "5px",
+                            border: "1px solid #ccc",
+                        }}
+                        onChange={e => handleInputChange(e, index)}
+                        ref={inputRef => {
+                            if (inputRef) {
+                                const parentWidth = inputRef.parentNode.offsetWidth;
+                                const contentWidth = inputRef.scrollWidth;
+                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                inputRef.style.width = "auto"; // Reset width after adjusting font size
+                            }
+                        }}
+                    />
+                ))}
+            </Box>
+        );
+    };
 
     return (
-        <div>
+        <Box>
             {renderMatrix()}
-        </div>
+        </Box>
     );
 };
 
@@ -88,131 +132,158 @@ function TSContextual(props) {
 
     let regressionFormulaVariables = variables.concat(factors);
 
+    let existingVariables = props.existingVariables;
+
+
+    let [newItem, sNewItem] = useState([]);
+
     let handleWeightChange = (event, name) => {
         assigner['parameters'][name] = event.target.value;
         sAssigners(tree)
 
     }
 
-    const coefCovAddNewItem = () => {
+    const coefCovAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_cov']) {
             assigner['parameters']['coef_cov'] = [];
         }
 
         const n = assigner['parameters']['coef_cov'].length;
-        const expandedArray = Array(n + 1)
+        const expandedArray = Array(n + newItemSize)
             .fill(null)
-            .map(() => Array(n + 1).fill(0));
-        if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
+            .map(() => Array(n + newItemSize).fill(0));
+
         for (let i = 0; i < n; i++) {
             for (let j = 0; j < n; j++) {
                 expandedArray[i][j] = assigner['parameters']['coef_cov'][i][j];
             }
         }
-        expandedArray[n][n] = 1;
 
-        assigner['parameters']['coef_cov'] = expandedArray;
-        sAssigners(tree);
-    };
-
-    const coefCovAddIntercept = () => {
-        if (!assigner['parameters']['coef_cov']) {
-            assigner['parameters']['coef_cov'] = [];
+        for (let k = 0; k < newItemSize; k++) {
+            expandedArray[startPoint + k][startPoint + k] = 1;
         }
 
-        const n = assigner['parameters']['coef_cov'].length;
-        const expandedArray = Array(n + 1)
-            .fill(null)
-            .map(() => Array(n + 1).fill(0));
-        if (n === 0) expandedArray[n][n] = 1; // TODO: Check if it's correct.
-        for (let i = 0; i < n; i++) {
-            for (let j = 0; j < n; j++) {
-                expandedArray[i + 1][j + 1] = assigner['parameters']['coef_cov'][i][j];
-            }
-        }
-
-        expandedArray[0][0] = 1;
-
         assigner['parameters']['coef_cov'] = expandedArray;
+
         sAssigners(tree);
     };
 
-
-    const coefCovRemoveItem = rowIndex => {
-        assigner['parameters']['coef_cov'].splice(rowIndex, 1);
-        assigner['parameters']['coef_cov'].forEach(row => row.splice(rowIndex, 1));
-        sAssigners(tree);
-    };
-
-    const coefMeanAddNewItem = () => {
+    const coefMeanAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_mean']) {
             assigner['parameters']['coef_mean'] = [];
         }
 
-        const expandedArray = assigner['parameters']['coef_mean'].concat([0]);
+        // create an array of size newItemSize with value 0
+        let newMeans = Array(newItemSize).fill(0);
+
+        // concat at startPoint
+        const expandedArray = assigner['parameters']['coef_mean'].slice(0, startPoint).concat(newMeans).concat(assigner['parameters']['coef_mean'].slice(startPoint));
 
         assigner['parameters']['coef_mean'] = expandedArray;
+
         sAssigners(tree);
     };
 
-    const coefMeanAddIntercept = () => {
-        if (!assigner['parameters']['coef_mean']) {
-            assigner['parameters']['coef_mean'] = [];
-        }
+    const addRegressionFormulaItem = () => {
+        // newItem is an array like 0: {value: 'job', label: 'job'} 1: {value: 'factor1', label: 'factor1'}.
+        // Merge this array with existingVariables based on value, so we know the categorical or not, and the min and max.
+        let regressionFormulaItem = newItem.map((item) => item.value);
+        let sizeOfNewItems = calculateFormulateItemSize(existingVariables, regressionFormulaItem);
 
-        const expandedArray = [0].concat(assigner['parameters']['coef_mean']);
-
-        assigner['parameters']['coef_mean'] = expandedArray;
-        sAssigners(tree);
-    };
-
-
-    const coefMeanRemoveItem = index => {
-        assigner['parameters']['coef_mean'].splice(index, 1);
-        sAssigners(tree);
-    };
-
-    const addFields = () => {
-        let newfield = []
         let temp = [[]]
+
+        if (!assigner['parameters']['regressionFormulaItems']) {
+            assigner['parameters']['regressionFormulaItems'] = [];
+        }
         if (assigner['parameters']['regressionFormulaItems']) {
-            temp = [...assigner['parameters']['regressionFormulaItems'], newfield]
+            temp = [...assigner['parameters']['regressionFormulaItems'], regressionFormulaItem]
         }
         assigner['parameters']['regressionFormulaItems'] = temp
 
-
         sAssigners(tree);
+
+        // get the start point (the current size of coef_mean and coef_cov), and add the size of new items to it.
+
+        coefCovAddNewItem(assigner['parameters']['coef_cov'].length, sizeOfNewItems);
+        coefMeanAddNewItem(assigner['parameters']['coef_cov'].length, sizeOfNewItems);
+        sNewItem([]);
     }
 
     const removeFields = (index) => {
+        // calculate the start point.
+
+        let startPoint = 0;
+        for (let i = 0; i < index; i++) {
+            startPoint += calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][i]);
+        }
+
+        if (assigner['parameters']['include_intercept']) {
+            startPoint += 1;
+        }
+
+
+
+        coefCovRemoveItem(assigner, startPoint, calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][index]));
+        coefMeanRemoveItem(assigner, startPoint, calculateFormulateItemSize(existingVariables, assigner['parameters']['regressionFormulaItems'][index]));
         assigner['parameters']['regressionFormulaItems'].splice(index, 1);
         sAssigners(tree);
+
     }
 
-    const handleRegressionFormulaItemPickup = (option, index) => {
-        assigner['parameters']["regressionFormulaItems"][index] = option.map((item) => item.value);
+    function generateCombinations(arrays) {
+        if (arrays.length === 0) {
+            return [[]];
+        }
 
-        let parameters = assigner['parameters'];
-        let deepCopy = JSON.parse(JSON.stringify(parameters));
-        for(let i = 0; i < deepCopy['regressionFormulaItems'].length; i++) {
-            if(deepCopy.regressionFormulaItems[i].length === 0) {
-                
-                parameters['regressionFormulaItems'].splice(i, 1);
+        const firstArray = arrays[0];
+        const restArrays = arrays.slice(1);
+        const combinationsWithoutFirst = generateCombinations(restArrays);
 
-                let coefIndex = deepCopy['include_intercept'] ? i + 1 : i;
-                parameters['coef_cov'].splice(coefIndex, 1);
-                parameters['coef_cov'].forEach(row => row.splice(coefIndex, 1));
+        const result = [];
 
-                parameters['coef_mean'].splice(coefIndex, 1);
+        for (const element of firstArray) {
+            for (const combination of combinationsWithoutFirst) {
+                result.push([element, ...combination]);
             }
         }
-        sAssigners(tree)
-    };
+
+        return result;
+    }
 
     const writeRegressionFormula = () => {
         let formula = "reward ~ "
         if (assigner['parameters']['regressionFormulaItems']) {
-            formula += assigner['parameters']['regressionFormulaItems'].map((item) => item.join(" * ")).join(" + ")
+
+            let expandedFormulaItems = [];
+
+            for (let i = 0; i < assigner['parameters']['regressionFormulaItems'].length; i++) {
+                let item = assigner['parameters']['regressionFormulaItems'][i];
+                let merged = item.map((item) => {
+                    let found = existingVariables.find((variable) => variable.name === item);
+                    return { item, ...found };
+                });
+                let expandedItem = [];
+                merged.forEach((item) => {
+                    if (item.type === 'categorical') {
+                        let temp = [];
+                        for (let i = item.min; i <= item.max; i++) {
+                            temp.push(`${item.name}::${i}`);
+                        }
+                        expandedItem.push(temp);
+                    }
+                    else {
+                        expandedItem.push([item.item]);
+                    }
+                });
+                expandedFormulaItems = expandedFormulaItems.concat(generateCombinations(expandedItem));
+            }
+
+            formula += expandedFormulaItems.map((item) => {
+                // need to check if any of the item is categorical or not.
+                // item is like ['job', 'nonCategorical']. let's say job is categorical.
+                // Then we need to expand the item to ['job::1', 'job::2', ..., nonCategorical], depending on the min and max of job.
+                return item.join(" * ")
+            }).join(" + ")
         }
         return formula
     }
@@ -282,12 +353,13 @@ function TSContextual(props) {
                         assigner['parameters']['include_intercept'] = e.target.checked;
                         sAssigners(tree);
                         if (e.target.checked) {
-                            coefCovAddIntercept();
-                            coefMeanAddIntercept();
+                            coefCovAddNewItem(0, 1);
+                            coefMeanAddNewItem(0, 1);
                         }
                         else {
-                            coefCovRemoveItem(0);
-                            coefMeanRemoveItem(0);
+                            coefCovRemoveItem(assigner, 0, 1);
+                            coefMeanRemoveItem(assigner, 0, 1);
+                            sAssigners(tree);
                         }
                     }} />}
                     label="Include Intercept"
@@ -346,9 +418,7 @@ function TSContextual(props) {
                                 className="basic-multi-select"
                                 classNamePrefix="select"
                                 value={regressionFormulaItem.map(v => ({ label: v, value: v }))}
-                                onChange={(option) => {
-                                    handleRegressionFormulaItemPickup(option, index);
-                                }}
+                                isDisabled={true}
                                 styles={{
                                     // Fixes the overlapping problem of the component
                                     menu: provided => ({ ...provided, zIndex: 9999 })
@@ -356,18 +426,34 @@ function TSContextual(props) {
                             />
                             <Button onClick={() => {
                                 removeFields(index);
-                                coefCovRemoveItem(index);
-                                coefMeanRemoveItem(index);
                             }
                             } variant="contained" sx={{ m: 1 }} color="error">Remove</Button>
                         </Box>
                     )
                 })}
 
+
+                <Select
+                    isMulti
+                    name="contextuals"
+                    options={regressionFormulaVariables.map((option) => ({
+                        value: option,
+                        label: option
+                    }))}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    value={newItem}
+                    onChange={(e) => {
+                        sNewItem(e);
+                    }}
+                    styles={{
+                        // Fixes the overlapping problem of the component
+                        menu: provided => ({ ...provided, zIndex: 9999 })
+                    }}
+                />
+
                 <Button onClick={(e) => {
-                    addFields();
-                    coefCovAddNewItem();
-                    coefMeanAddNewItem();
+                    addRegressionFormulaItem();
                 }
                 } variant="contained" color="primary" sx={{ m: 1 }}>Add a regression formula item</Button>
 
@@ -379,7 +465,6 @@ function TSContextual(props) {
 
                 <Box>
                     <Typography variant='h6'>Coefficient mean</Typography>
-                    <small>The first is for the intercept if you have checked to include intercept.</small>
                     <CoefMeanInput assigner={assigner} tree={tree} sAssigners={sAssigners} />
                 </Box>
             </Box>
