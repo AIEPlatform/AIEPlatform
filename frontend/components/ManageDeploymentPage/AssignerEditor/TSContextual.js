@@ -1,9 +1,11 @@
 import { React, useEffect, useState } from 'react';
-import { Typography, TextField, Button, Box, Checkbox, FormControlLabel, Input } from '@mui/material';
+import { Typography, TextField, Button, Box, Checkbox, FormControlLabel, Input, Tooltip } from '@mui/material';
 import Select from 'react-select';
 import CommonAssignerAttribute from './CommonAssignerAttribute';
 
 import { calculateFormulateItemSize, coefMeanRemoveItem, coefCovRemoveItem } from '../../../helpers/TSContextualHelpers';
+
+let theFormula = "";
 
 const CoefCovInput = (props) => {
     let assigner = props.assigner;
@@ -19,35 +21,52 @@ const CoefCovInput = (props) => {
 
 
     const renderMatrix = () => {
+
+        let items = theFormula.split("~");
+        if (items.length > 1) {
+            items = items[1];
+            items = items.split("+").map(function (item) {
+                return item.trim();
+            });
+        }
+
+        if (assigner['parameters']['include_intercept']) {
+            items = ["Intercept"].concat(items);
+        }
+
+
+
         return (assigner['parameters']['coef_cov'] || []).map((row, rowIndex) => (
             <Box key={rowIndex} style={{ display: 'flex' }}>
                 {row.map((cell, colIndex) => (
-                    <Input
-                        key={colIndex}
-                        value={cell}
-                        type={"number"}
-                        style={{
-                            fontSize: "16px", // Initial font size
-                            textRendering: "auto",
-                            width: "auto", // Initial width
-                            minWidth: "50px", // Set a minimum width
-                            maxWidth: "100%", // Ensure input doesn't exceed parent width
-                            height: "auto",
-                            padding: "5px",
-                            border: "1px solid #ccc"
-                        }}
-                        onChange={e => handleInputChange(e, rowIndex, colIndex)}
-                        ref={inputRef => {
-                            if (inputRef) {
-                                const parentWidth = inputRef.parentNode.offsetWidth;
-                                const contentWidth = inputRef.scrollWidth;
-                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
-                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
-                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
-                                inputRef.style.width = "auto"; // Reset width after adjusting font size
-                            }
-                        }}
-                    />
+                    <Tooltip title={`${items[rowIndex]}, ${items[colIndex]}`}>
+                        <Input
+                            key={colIndex}
+                            value={cell}
+                            type={"number"}
+                            style={{
+                                fontSize: "16px", // Initial font size
+                                textRendering: "auto",
+                                width: "auto", // Initial width
+                                minWidth: "50px", // Set a minimum width
+                                maxWidth: "100%", // Ensure input doesn't exceed parent width
+                                height: "auto",
+                                padding: "5px",
+                                border: "1px solid #ccc"
+                            }}
+                            onChange={e => handleInputChange(e, rowIndex, colIndex)}
+                            ref={inputRef => {
+                                if (inputRef) {
+                                    const parentWidth = inputRef.parentNode.offsetWidth;
+                                    const contentWidth = inputRef.scrollWidth;
+                                    const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                    const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                    inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                    inputRef.style.width = "auto"; // Reset width after adjusting font size
+                                }
+                            }}
+                        />
+                    </Tooltip>
                 ))}
             </Box>
         ));
@@ -75,37 +94,53 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
+
+        let items = theFormula.split("~");
+        if (items.length > 1) {
+            items = items[1];
+            items = items.split("+").map(function (item) {
+                return item.trim();
+            });
+        }
+
+        if (assigner['parameters']['include_intercept']) {
+            items = ["Intercept"].concat(items);
+        }
+
         return (
             <Box style={{ display: 'flex' }}>
                 {(assigner['parameters']['coef_mean'] || []).map((cell, index) => (
-                    <input
-                        key={index}
-                        value={cell}
-                        type={"number"}
-                        style={{
-                            fontSize: "16px", // Initial font size
-                            textRendering: "auto",
-                            flex: 1, // Distribute available space evenly
-                            minWidth: "50px", // Set a minimum width
-                            maxWidth: "100%", // Ensure input doesn't exceed parent width
-                            height: "auto",
-                            padding: "5px",
-                            border: "1px solid #ccc",
-                        }}
-                        onChange={e => handleInputChange(e, index)}
-                        ref={inputRef => {
-                            if (inputRef) {
-                                const parentWidth = inputRef.parentNode.offsetWidth;
-                                const contentWidth = inputRef.scrollWidth;
-                                const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
-                                const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
-                                inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
-                                inputRef.style.width = "auto"; // Reset width after adjusting font size
-                            }
-                        }}
-                    />
-                ))}
-            </Box>
+                    <Tooltip title={`${items[index]}`}>
+                        <Input
+                            key={index}
+                            value={cell}
+                            type={"number"}
+                            style={{
+                                fontSize: "16px", // Initial font size
+                                textRendering: "auto",
+                                flex: 1, // Distribute available space evenly
+                                minWidth: "50px", // Set a minimum width
+                                maxWidth: "100%", // Ensure input doesn't exceed parent width
+                                height: "auto",
+                                padding: "5px",
+                                border: "1px solid #ccc",
+                            }}
+                            onChange={e => handleInputChange(e, index)}
+                            ref={inputRef => {
+                                if (inputRef) {
+                                    const parentWidth = inputRef.parentNode.offsetWidth;
+                                    const contentWidth = inputRef.scrollWidth;
+                                    const fontSize = parseFloat(window.getComputedStyle(inputRef).fontSize);
+                                    const maxFontSize = Math.floor(parentWidth / contentWidth * fontSize);
+                                    inputRef.style.fontSize = Math.min(fontSize, maxFontSize) + "px";
+                                    inputRef.style.width = "auto"; // Reset width after adjusting font size
+                                }
+                            }}
+                        />
+                    </Tooltip>
+                ))
+                }
+            </Box >
         );
     };
 
@@ -285,6 +320,8 @@ function TSContextual(props) {
                 return item.join(" * ")
             }).join(" + ")
         }
+
+        theFormula = formula;
         return formula
     }
 
