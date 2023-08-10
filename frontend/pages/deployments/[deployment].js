@@ -163,6 +163,33 @@ function ManageDeployment() {
             );
     }
 
+
+    const handleDeploymentReset = () => {
+        if(!confirm("Are you sure you want to reset the deployment? All studies will be deleted. The interactions/datasets associated will all be deleted. The context variables associated with this deployment will also be delted.")) return;
+
+        fetch('/apis/experimentDesign/resetDeployment', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "deployment": theDeployment['name']
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data['status_code'] === 200) {
+                    alert("Deployment reset successfully.")
+                    window.location.reload();
+                }
+                else {
+                    alert(data['message']);
+                }
+            }).catch((error) => {
+                alert("Something is wrong.");
+            })
+    };
+
     const [creatingNewStudy, sCreatingNewStudy] = useState(false);
 
     if (userContext !== undefined && userContext !== null && !permissionError) {
@@ -177,7 +204,7 @@ function ManageDeployment() {
                             <Box>
                                 <Box>
                                     <Button sx={{ m: 1, ml: 0 }} variant="outlined" startIcon={<DeleteIcon />} onClick={handleDeleteDeployment}>Delete</Button>
-                                    <Button sx={{ m: 1 }} variant="outlined" startIcon={<RestartAltIcon />} onClick={() => alert("Not complete yet! But you can reset each study.")}>Reset</Button>
+                                    <Button sx={{ m: 1 }} variant="outlined" startIcon={<RestartAltIcon />} onClick={() => handleDeploymentReset()}>Reset</Button>
                                 </Box>
                                 <Box>
                                     {!theDeployment['apiToken'] && <Button sx={{ m: 1, ml: 0 }} variant="outlined" startIcon={<VpnKeyIcon />} onClick={handleDeploymentTokenUpdate}>Generate Token</Button>}
