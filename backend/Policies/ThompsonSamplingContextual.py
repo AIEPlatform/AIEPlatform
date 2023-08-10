@@ -161,8 +161,12 @@ class ThompsonSamplingContextual(Policy):
                 imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
 
                 # Insert a document into the other collection if no document exists
+                # get deployment_name
+
+                the_deployment = Deployment.find_one({"_id": self.study['deploymentId']})
                 if not has_document:
                     document_to_insert = {
+                        'deployment': the_deployment['name'],
                         "variable": value, 
                         'value': imputed_value,   # TODO: impute based on a better rule.
                         'user': user,
@@ -586,8 +590,10 @@ def choose_arm_individual(self, user, where, other_information):
                 imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
 
                 # Insert a document into the other collection if no document exists
+                the_deployment = Deployment.find_one({"_id": self.study['deploymentId']})
                 if not has_document:
                     document_to_insert = {
+                        'deployment': the_deployment['name'],
                         "variable": value, 
                         'value': imputed_value,   # TODO: impute based on a better rule.
                         'user': user,
