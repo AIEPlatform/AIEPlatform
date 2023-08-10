@@ -335,6 +335,8 @@ function TSContextual(props) {
         if (!assigner['parameters']['updatedPerMinute']) assigner['parameters']['updatedPerMinute'] = 0
         if (!assigner['parameters']['include_intercept']) assigner['parameters']['include_intercept'] = false
         if (!assigner['parameters']['individualLevelBatchSize']) assigner['parameters']['individualLevelBatchSize'] = 1
+        if (!assigner['parameters']['coef_cov']) assigner['parameters']['coef_cov'] = [];
+        if (!assigner['parameters']['coef_mean']) assigner['parameters']['coef_mean'] = [];
         sAssigners(tree);
 
     }, []);
