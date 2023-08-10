@@ -222,6 +222,7 @@ function TSContextual(props) {
                 });
                 let expandedItem = [];
                 merged.forEach((item) => {
+                    console.log(item)
                     if (item.type === 'categorical') {
                         let temp = [];
                         for (let i = item.min; i <= item.max; i++) {

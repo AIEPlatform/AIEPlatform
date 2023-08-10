@@ -66,7 +66,7 @@ class Policy(ABC):
 			# get all versions a user has been previously assigned to from Interaction.
 
 			past_interactions = InteractionModel.get_interactions_for_where(self._id, user, where)
-			assigned_versions = [interaction['treatment'] for interaction in past_interactions if interaction['outcome'] is None]
+			assigned_versions = [interaction['treatment'] for interaction in past_interactions]
 			if assigned_versions is None:
 				return self.study['versions']
 			else:

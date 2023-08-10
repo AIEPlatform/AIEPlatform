@@ -432,6 +432,9 @@ class ThompsonSamplingContextual(Policy):
                 if include_intercept:
                     vars_list.insert(0,1.)
 
+                print(formula)
+                print(len(list(map(str.strip, formula.split('~')[1].split('+')))))
+
                 # TODO: expand the vars_list if there are categorical variables.
 
                 # construct design matrix.
