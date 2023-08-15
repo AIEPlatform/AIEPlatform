@@ -1,5 +1,5 @@
 from credentials import *
-from flask import Blueprint, session
+from flask import Blueprint, session, make_response
 from flask import request
 from bson import json_util
 from bson.objectid import ObjectId
@@ -21,8 +21,27 @@ from Models.VariableModel import VariableModel
 from errors import *
 import traceback
 from bson.objectid import ObjectId
+from flask_cors import CORS
 
 user_interaction_apis = Blueprint('user_interaction_apis', __name__)
+
+CORS(user_interaction_apis)
+
+@user_interaction_apis.before_request
+def before_request():
+    if request.method == "OPTIONS":
+        # Handle preflight request
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "*")
+        return response
+
+@user_interaction_apis.before_request
+def before_request():
+    response = api_key_middleware()
+    if response is not None:
+        return response
 
 def create_assigner_instance(user, the_assigner):
     cls = globals().get(the_assigner['policy'])
@@ -178,14 +197,6 @@ def api_key_middleware():
             "status_code": 401,
             "message": "API key is not correct."
         }, 401
-    
-
-
-@user_interaction_apis.before_request
-def before_request():
-    response = api_key_middleware()
-    if response is not None:
-        return response
 
 
 # https://security.stackexchange.com/questions/154462/why-cant-we-use-post-method-for-all-requests

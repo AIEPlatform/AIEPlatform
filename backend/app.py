@@ -12,7 +12,6 @@ from config import *
 from credentials import *
 from flask_cors import CORS
 app = Flask(__name__)
-CORS(app)
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem" # Ideally we should use Redis or Memcached
