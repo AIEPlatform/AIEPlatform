@@ -1,5 +1,9 @@
 import os
-from config import *
+# load config from config.json
+import json
+with open('config.json', 'r') as f:
+    config = json.load(f)
+    
 from flask import session
 import pymongo
 from pymongo import MongoClient
@@ -9,8 +13,8 @@ from bson.objectid import ObjectId
 import pickle
 
 
-client = MongoClient(MONGO_DB_CONNECTION_STRING)
-db = client[DB_NAME]
+client = MongoClient(config['MONGO_DB_CONNECTION_STRING'])
+db = client[config['DB_NAME']]
 Dataset = db['dataset']
 Deployment = db['deployment']
 Study = db['study']

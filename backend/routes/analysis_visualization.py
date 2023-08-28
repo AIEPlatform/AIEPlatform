@@ -333,19 +333,19 @@ def create_dataset():
             }
             response = DatasetModel.create(document)
 
-            if EMAIL_NOTIFICATION and is_valid_email(email):
-                subject = "Your Study datasets are ready for download."
-                body = f'Your Study datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
-                sender = EMAIL_USERNAME
-                recipients = [request.get_json()['email']]
-                password = EMAIL_PASSWORD
-                msg = MIMEText(body)
-                msg['Subject'] = subject
-                msg['From'] = sender
-                msg['To'] = ', '.join(recipients)
-                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-                    smtp_server.login(sender, password)
-                    smtp_server.sendmail(sender, recipients, msg.as_string())
+            # if EMAIL_NOTIFICATION and is_valid_email(email):
+            #     subject = "Your Study datasets are ready for download."
+            #     body = f'Your Study datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/downloadArrowDataset/{str(response.inserted_id)}'
+            #     sender = EMAIL_USERNAME
+            #     recipients = [request.get_json()['email']]
+            #     password = EMAIL_PASSWORD
+            #     msg = MIMEText(body)
+            #     msg['Subject'] = subject
+            #     msg['From'] = sender
+            #     msg['To'] = ', '.join(recipients)
+            #     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            #         smtp_server.login(sender, password)
+            #         smtp_server.sendmail(sender, recipients, msg.as_string())
 
             return status_code("DOWNLOAD_DATASET_SUCCESSFUL")
         except Exception as e:
@@ -353,18 +353,18 @@ def create_dataset():
             import traceback
             print(traceback.format_exc())
             print(e)
-            if EMAIL_NOTIFICATION and is_valid_email(email):
-                subject = "Sorry, downloading study datasets failed. please try again."
-                body = subject
-                sender = EMAIL_USERNAME
-                recipients = [request.get_json()['email']]
-                password = EMAIL_PASSWORD
-                msg = MIMEText(body)
-                msg['Subject'] = subject
-                msg['From'] = sender
-                msg['To'] = ', '.join(recipients)
-                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-                    smtp_server.login(sender, password)
-                    smtp_server.sendmail(sender, recipients, msg.as_string())
+            # if EMAIL_NOTIFICATION and is_valid_email(email):
+            #     subject = "Sorry, downloading study datasets failed. please try again."
+            #     body = subject
+            #     sender = EMAIL_USERNAME
+            #     recipients = [request.get_json()['email']]
+            #     password = EMAIL_PASSWORD
+            #     msg = MIMEText(body)
+            #     msg['Subject'] = subject
+            #     msg['From'] = sender
+            #     msg['To'] = ', '.join(recipients)
+            #     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+            #         smtp_server.login(sender, password)
+            #         smtp_server.sendmail(sender, recipients, msg.as_string())
 
             return status_code("DOWNLOAD_DATASET_FAILURE")

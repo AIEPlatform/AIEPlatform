@@ -8,7 +8,7 @@ from routes.analysis_visualization import analysis_visualization_apis
 from routes.examples import examples_apis
 from routes.integration import integration_apis
 from routes.auth import auth_apis
-from config import *
+# from config import *
 from credentials import *
 from flask_cors import CORS
 app = Flask(__name__)

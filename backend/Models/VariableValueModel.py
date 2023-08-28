@@ -2,7 +2,11 @@ from credentials import *
 from Models.VariableModel import VariableModel
 import openai
 
-openai.api_key = OPEN_AI_KEY
+import json
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+openai.api_key = config["OPEN_AI_KEY"]
 
 
 class VariableValueModel:

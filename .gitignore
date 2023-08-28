@@ -28,3 +28,4 @@ nohup.out
 *.env
 test.py
 config.py
+config.json
