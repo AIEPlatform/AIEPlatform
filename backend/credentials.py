@@ -51,7 +51,7 @@ def getDataset(datasetId):
     return df
 
 def check_if_loggedin():
-    if 'access' in session and session['access'] is True or DEV_MODE:
+    if 'access' in session and session['access'] is True or config["DEV_MODE"]:
         return True
     else:
         return False
@@ -59,7 +59,7 @@ def check_if_loggedin():
 def get_username():
     if 'user' in session:
         return session['user']['email']
-    elif DEV_MODE:
+    elif config["DEV_MODE"]:
         return "chenpan"
     else:
         return None

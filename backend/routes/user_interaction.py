@@ -95,7 +95,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
     try:
         assigner = create_assigner_instance(user, the_assigner)
         version_to_show = assigner.choose_arm(user, where, other_information,request_different_arm)
-        if DEV_MODE:
+        if config["DEV_MODE"]:
             end_time = time.time()
             execution_time = end_time - start_time
             the_log = {
@@ -107,7 +107,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             TreatmentLog.insert_one(the_log)
         return version_to_show
     except Exception as e:
-        if DEV_MODE:
+        if config["DEV_MODE"]:
             the_log = {
                 "policy": the_assigner['policy'],
                 "error": True,
@@ -140,7 +140,7 @@ def get_reward(deployment_name, study_name, user, value, where = None, other_inf
     assigner = create_assigner_instance(user, the_assigner)
     response = assigner.get_reward(user, value, where, other_information)
 
-    if DEV_MODE:
+    if config["DEV_MODE"]:
         end_time = time.time()
         execution_time = end_time - start_time
 
