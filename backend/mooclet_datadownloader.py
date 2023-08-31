@@ -25,9 +25,9 @@ import pickle
 # WHERE client_addr = '99.227.240.244';
 
 
-client = MongoClient(MONGO_DB_CONNECTION_STRING)
-db = client['mooclet']
-Dataset = db['dataset']
+# client = MongoClient(MONGO_DB_CONNECTION_STRING)
+# db = client['mooclet']
+# Dataset = db['dataset']
 
 mooclet_datadownloader_api = Blueprint('mooclet_datadownloader_api', __name__)
 
@@ -240,52 +240,6 @@ def find_reward_variable(mooclet_name):
     return reward_variable_name
 
 
-@mooclet_datadownloader_api.route("/apis/analysis/data_downloader", methods=["POST"])
-def data_downloader():
-    if check_if_loggedin() is False:
-        return json_util.dumps({
-            "status_code": 403,
-        }), 403
-    try:
-        mooclet_name = request.get_json()['mooclet_name']
-        dataset_description = request.get_json()['dataset_description']
-        reward_variable = find_reward_variable(mooclet_name)
-        df = data_downloader_local_new(mooclet_name, reward_variable)
-
-        # Adding datasets to mongodb.
-        # data_dict = df.to_dict('records')
-
-        # Create document dictionary
-        print("*****************************")
-        binary_data = pickle.dumps(df)
-        document = {
-            'datasetDescription': dataset_description,
-            'dataset': binary_data, 
-            'mooclet': mooclet_name
-        }
-        Dataset.insert_one(document)
-        print("downloading...")
-        csv_string = df.to_csv(index=False)
-
-        # Create a Flask response object with the CSV data
-        response = make_response(csv_string)
-
-        # Set the headers to tell the browser to download the file as a CSV
-        response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
-        response.headers['Content-type'] = 'text/csv'
-        return response
-    except Exception as e:
-        print(e)
-        return json_util.dumps({
-            "status_code": 400, 
-            "message": e
-        }), 500
-    
-
-
-
-
-
 
 
 import zipfile
@@ -310,27 +264,20 @@ def download_multiple_datasets():
             df = data_downloader_local_new(mooclet_name, reward_variable_name)
             dfs.append(df)
 
-        df_ids = []
-        for index, df in enumerate(dfs):
-            binary_data = pickle.dumps(df)
-            document = {
-                'dataset': binary_data,
-                'mooclet': mooclet_names[index]
-            }
-            response = MultipleDatasetPieces.insert_one(document)
-            df_ids.append(response.inserted_id)
+        # make a random id.
+        file_id = str(uuid.uuid4()).replace("-", "_")
 
-        
-        document = {
-            'pieces': df_ids
-        }
+        # save dfs (which are csvs) in a .zip file, and save it locally.
 
-        response = MultipleDatasets.insert_one(document)
+        # save dfs in a .zip file, and save it locally.
 
+        with zipfile.ZipFile(f'../datasets/{file_id}.zip', "w") as zf:
+            for index, df in enumerate(dfs):
+                with zf.open(f"{mooclet_names[index]}.csv", "w") as buffer:
+                    df.to_csv(buffer,index=False)
 
-
-        subject = "Your MOOClets datasets are ready for download."
-        body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/download_multiple_datasets/{str(response.inserted_id)}'
+        subject = "[Expire in 10 mins] Your MOOClets datasets are ready for download."
+        body = f'Your MOOClets datasets are ready for download. Please visit this link: {ROOT_URL}/apis/analysis/download_multiple_datasets/{file_id}'
         sender = EMAIL_USERNAME
         recipients = [request.get_json()['email']]
         password = EMAIL_PASSWORD
@@ -341,21 +288,6 @@ def download_multiple_datasets():
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
             smtp_server.login(sender, password)
             smtp_server.sendmail(sender, recipients, msg.as_string())
-
-        # Create an in-memory buffer to write the zip file
-        # zip_buffer = io.BytesIO()
-
-        # # Create a zip file
-        # with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        #     # Write each dataframe as a separate CSV file in the zip
-        #     for index, df in enumerate(dfs):
-        #         csv_buffer = io.StringIO()
-        #         df.to_csv(csv_buffer, index=False)
-        #         zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
-
-        # # Reset the buffer's file pointer to the beginning
-        # zip_buffer.seek(0)
-        # return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
         return json_util.dumps({
             "status_code": 200,
         }), 200 
@@ -385,35 +317,15 @@ def download_multiple_datasets_get(id):
         return json_util.dumps({
             "status_code": 403,
         }), 403 
-    
-    print(id)
-    multiple_datasets = MultipleDatasets.find_one({"_id": ObjectId(id)})
 
-    pieceIds = multiple_datasets['pieces']
+    # Need to check if the id.zip exists in the datasets folder.
+    if os.path.exists(f'../datasets/{id}.zip'):
+        return send_file(f'../datasets/{id}.zip', download_name='datasets.zip', as_attachment=True)
 
-    mooclet_names = []
-    dfs = []
-
-    for pieceId in pieceIds:
-        piece = MultipleDatasetPieces.find_one({"_id": pieceId})
-        df = pickle.loads(piece['dataset'])
-        dfs.append(df)
-        mooclet_names.append(piece['mooclet'])
-        # Create an in-memory buffer to write the zip file
-    zip_buffer = io.BytesIO()
-
-    # Create a zip file
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        # Write each dataframe as a separate CSV file in the zip
-        for index, df in enumerate(dfs):
-            csv_buffer = io.StringIO()
-            df.to_csv(csv_buffer, index=False)
-            zip_file.writestr(f'{mooclet_names[index]}.csv', csv_buffer.getvalue())
-
-    # Reset the buffer's file pointer to the beginning
-    zip_buffer.seek(0)
-    return send_file(zip_buffer, download_name='datasets.zip', as_attachment=True)
-
+    else:
+        return json_util.dumps({
+            "status_code": 404,
+        }), 404
 
 
 @mooclet_datadownloader_api.route("/apis/get_mooclets", methods=["GET"])
