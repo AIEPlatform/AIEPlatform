@@ -15,7 +15,7 @@ import traceback
 import sys
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
 
 
@@ -24,8 +24,10 @@ USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
 class Greedy(Policy):
-    def choose_arm(self, user, where, other_information):
+    def choose_arm(self, user, where, other_information, request_different_arm):
+        print("hihihihi")
         try:
+            print("hihihihihih")
             if "batch_size" in self.parameters:
                 batch_size = self.parameters["batch_size"]
 
@@ -167,7 +169,7 @@ class Greedy(Policy):
 
                 print("new posteriors: ")
                 print(current_posteriors)
-                MOOCletModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
+                AssignerModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
                 self.parameters["current_posteriors"] = current_posteriors
                 session.commit_transaction()
                 LockModel.delete({"_id": new_lock_id})

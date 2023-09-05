@@ -8,6 +8,8 @@ from Policies.UniformRandom import UniformRandom
 from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
 from Policies.TSConfigurable import TSConfigurable
 from Policies.WeightedRandom import WeightedRandom
+from Policies.Greedy import Greedy
+from Policies.DoubleBanditsMaximin import DoubleBanditsMaximin
 from Policies.GPT import GPT
 import datetime
 import time
@@ -92,8 +94,10 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
     
     start_time = time.time()
     the_assigner = get_assigner_for_user(study, user)
+
     try:
         assigner = create_assigner_instance(user, the_assigner)
+
         version_to_show = assigner.choose_arm(user, where, other_information,request_different_arm)
         if config["DEV_MODE"]:
             end_time = time.time()
@@ -107,6 +111,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             TreatmentLog.insert_one(the_log)
         return version_to_show
     except Exception as e:
+        print(e)
         if config["DEV_MODE"]:
             the_log = {
                 "policy": the_assigner['policy'],

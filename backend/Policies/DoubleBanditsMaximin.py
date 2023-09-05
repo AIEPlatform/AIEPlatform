@@ -15,7 +15,7 @@ import traceback
 import sys
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
-from Models.MOOCletModel import MOOCletModel
+from Models.AssignerModel import AssignerModel
 from Models.LockModel import LockModel
 
 
@@ -29,9 +29,10 @@ class DoubleBanditsMaximin(Policy):
         
         super().__init__(user, **mooclet_obj_from_db)
         self.parameters['K'] = len(self.study['versions'])
-        self.parameters['Bmatrix'] = np.zeros(self.parameters['K'],self.parameters['K'] )
+        print(np.zeros([self.parameters['K'],self.parameters['K']]))
+        self.parameters['Bmatrix'] = np.zeros([self.parameters['K'],self.parameters['K']])
 
-    def choose_arm(self, user, where, other_information):
+    def choose_arm(self, user, where, other_information, request_different_arm):
         try:
 
             if "batch_size" in self.parameters:
@@ -103,7 +104,8 @@ class DoubleBanditsMaximin(Policy):
             return lucky_version 
 
         except Exception as e:
-            print(e)
+            # traceback
+            print(traceback.print_exc())
             return None
 
     def get_reward(self, user, value, where, other_information):
@@ -125,7 +127,7 @@ class DoubleBanditsMaximin(Policy):
             Bmatrix = self.parameters["Bmatrix"] 
             K = self.parameters['K']
 
-            theta_sample_one = np.zeros(K, K)
+            theta_sample_one = np.zeros([K, K])
             theta_sample_two = np.zeros((K, K))
 
 
