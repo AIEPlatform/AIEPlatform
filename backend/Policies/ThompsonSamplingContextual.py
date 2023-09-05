@@ -358,8 +358,6 @@ class ThompsonSamplingContextual(Policy):
                 "updatedPerMinute": current_params['updatedPerMinute'],
                 "regressionFormulaItems": current_params['regressionFormulaItems'],
             }}}, session=session)
-
-            # Release lock.
             session.commit_transaction()
             print(f'individual model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
             self.paramters = AssignerIndividualLevelInformation.find_one({"assignerId": self._id, "user": user})['parameters']
@@ -473,8 +471,6 @@ class ThompsonSamplingContextual(Policy):
                 "parameters.variance_a": posterior_vals['variance_a'],
                 "parameters.variance_b": posterior_vals['variance_b'],
             }, session)
-
-            # Release lock.
             print(f'group model updated successfully! Time spent: {(datetime.datetime.now() - current_time).total_seconds()} seconds')
             self.paramters = AssignerModel.find_assigner({"_id": self._id})['parameters']
             self.reinit()

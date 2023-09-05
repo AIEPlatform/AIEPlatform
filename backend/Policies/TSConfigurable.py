@@ -7,25 +7,16 @@ import numpy as np
 from scipy.stats import invgamma
 from helpers import *
 from multiprocessing import Process
-import os
-import time
-import threading
 from impute import *
 import traceback
-import sys
 from Models.VariableValueModel import VariableValueModel
 from Models.InteractionModel import InteractionModel
 from Models.AssignerModel import AssignerModel
-from Models.LockModel import LockModel
 from errors import *
 
 
 #TODO: Please add get_incomplete_consistent_assignment.
 
-
-
-USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
-lock = threading.Lock()
 
 class TSConfigurable(Policy):
 
