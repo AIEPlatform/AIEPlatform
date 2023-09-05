@@ -20,7 +20,7 @@ class WeightedRandom(Policy):
         
         return assigner
     
-    def choose_arm(self, user, where, other_information, request_different_arm = False):
+    def choose_arm_algorithm(self, user, where, other_information, request_different_arm = False):
         # TODO: Check if consistent assignment!
         try:
             all_versions = self.get_all_versions(user, where, request_different_arm)

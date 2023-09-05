@@ -35,7 +35,7 @@ class TSConfigurable(Policy):
     def validate_assigner(assigner):
         return assigner
     
-    def choose_arm(self, user, where, other_information, request_different_arm = False):
+    def choose_arm_algorithm(self, user, where, other_information, request_different_arm = False):
         try:
             # TODO: We may need to remove the non-existing versions (that were deleted.)
             #import models individually to avoid circular dependency
@@ -60,27 +60,7 @@ class TSConfigurable(Policy):
             # TODO: need to force batch_size not be 0.
             if batch_size ==0: 
                 batch_size = 1
-            if "current_posteriors" not in self.parameters or current_enrolled % batch_size == 0:
-                someone_is_updating = False
-                lock.acquire()
-                # TODO: check if it prevents the lock being occupied infinitely.
-                try:
-                    new_lock_id = check_lock(self._id)
-                except Exception as e:
-                    print(e)
-                    new_lock_id = None
-                if new_lock_id is None:
-                    someone_is_updating = True
-                lock.release()
-                if not someone_is_updating:
-                    p = threading.Thread(target=self.update_model, args=(new_lock_id, ))
-                    p.start()
-                    start_time = time.time()
-                    while p.is_alive():
-                        if (time.time() - start_time) > USER_CAN_WAIT_FOR_MODEL_UPDATE:
-                            # Timeout reached, proceed without waiting
-                            break
-                        time.sleep(0.5)  # Adjust the sleep interval if needed
+            
             all_versions = self.get_all_versions(user, where, request_different_arm)
             if len(all_versions) == 0:
                 raise NoDifferentTreatmentAvailable("There is no unassigned version left.")
@@ -192,73 +172,52 @@ class TSConfigurable(Policy):
             print(traceback.format_exc())
     
 
-    def update_model(self, new_lock_id):
+    def update_model_algorithm(self, session):
         #update policyparameters
         try:
-            with client.start_session() as session:
+            if "batch_size" in self.parameters:
+                batch_size = self.parameters["batch_size"]
+            current_enrolled = InteractionModel.get_num_participants_for_assigner(self._id)
+            if not("current_posteriors" not in self.parameters or current_enrolled % batch_size == 0): return
+            if self.autoZeroThreshold > 0:
+                five_minutes_ago = datetime.datetime.now() - datetime.timedelta(seconds=self.autoZeroThreshold)
 
-                # TODO: Auto Zero, if this is a parameter.
-                session.start_transaction()
-                if self.autoZeroThreshold > 0:
-                    five_minutes_ago = datetime.datetime.now() - datetime.timedelta(seconds=self.autoZeroThreshold)
+                # Step 3: Query and update the documents
+                filter_query = {
+                    "assignerId": self._id,  # Documents with assignerId as this Assigner
+                    "outcome": None,  # Documents with outcome as null
+                    "timestamp": {"$lte": five_minutes_ago}  # Documents with timestamp <= 5 minutes ago
+                }
+                update_query = {
+                    "$set": {"outcome": 0, "autoZero": True, "rewardTimestamp": datetime.datetime.now()}  # Set outcome to 0 for the matched documents
+                }
 
-                    # Step 3: Query and update the documents
-                    filter_query = {
-                        "assignerId": self._id,  # Documents with assignerId as this Assigner
-                        "outcome": None,  # Documents with outcome as null
-                        "timestamp": {"$lte": five_minutes_ago}  # Documents with timestamp <= 5 minutes ago
-                    }
-                    update_query = {
-                        "$set": {"outcome": 0, "autoZero": True, "rewardTimestamp": datetime.datetime.now()}  # Set outcome to 0 for the matched documents
-                    }
+                InteractionModel.auto_zero(filter_query, update_query)
+            current_posteriors = {}
+            min_rating, max_rating = self.parameters["min_rating"] if "min_rating" in self.parameters else 0, self.parameters['max_rating']
+            for version in self.study['versions']:
+                # TODO: Verify Pan's guess on used_choose_group: this is to filter out the ratings that are from this Assigner (policy), or from all policies of this study.
 
-                    InteractionModel.auto_zero(filter_query, update_query)
+                if "used_choose_group" in self.parameters and self.parameters["used_choose_group"] == True:
+                    student_ratings = InteractionModel.get_assigner_outcome_by_version(self._id, version)
+                else:
+                    student_ratings = list(InteractionModel.get_study_outcome_by_version(self.study["_id"], version))
 
-
-                current_posteriors = {}
-                min_rating, max_rating = self.parameters["min_rating"] if "min_rating" in self.parameters else 0, self.parameters['max_rating']
-                for version in self.study['versions']:
-                    # TODO: Verify Pan's guess on used_choose_group: this is to filter out the ratings that are from this Assigner (policy), or from all policies of this study.
-
-                    if "used_choose_group" in self.parameters and self.parameters["used_choose_group"] == True:
-                        student_ratings = InteractionModel.get_assigner_outcome_by_version(self._id, version)
-                    else:
-                        student_ratings = list(InteractionModel.get_study_outcome_by_version(self.study["_id"], version))
-
-                    print(student_ratings)
-                    if len(student_ratings) > 0:
-                        student_ratings = np.array(student_ratings)
-                        rating_count = len(student_ratings)
-                        sum_rewards = np.sum(student_ratings)
-                    else:
-                        rating_count = 0
-                        sum_rewards = 0
-                    success_update = (sum_rewards - rating_count * min_rating) / (max_rating - min_rating)
-                    successes = success_update
-                    failures = rating_count - success_update
-                    current_posteriors[version['name']] = {"successes":successes, "failures": failures}
-                AssignerModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()})
-                self.parameters["current_posteriors"] = current_posteriors
-                session.commit_transaction()
-                LockModel.delete({"_id": new_lock_id})
+                print(student_ratings)
+                if len(student_ratings) > 0:
+                    student_ratings = np.array(student_ratings)
+                    rating_count = len(student_ratings)
+                    sum_rewards = np.sum(student_ratings)
+                else:
+                    rating_count = 0
+                    sum_rewards = 0
+                success_update = (sum_rewards - rating_count * min_rating) / (max_rating - min_rating)
+                successes = success_update
+                failures = rating_count - success_update
+                current_posteriors[version['name']] = {"successes":successes, "failures": failures}
+            AssignerModel.update_policy_parameters(self._id, {"parameters.current_posteriors": current_posteriors, "updatedAt": datetime.datetime.now()}, session=session)
+            self.parameters["current_posteriors"] = current_posteriors
         except Exception as e:
             print("update model fail.")
             print(traceback.format_exc())
-            LockModel.delete({"_id": new_lock_id})
-            session.abort_transaction()
             return
-        
-
-def check_lock(assignerId):
-    # Check if lock exists
-    try:
-        lock_exists = LockModel.get_one({"assignerId": assignerId})
-        if lock_exists:
-            return None
-        else:
-            # Create lock
-            response = LockModel.create({"assignerId": assignerId})
-            return response.inserted_id
-    except Exception as e:
-        print(e)
-        return None

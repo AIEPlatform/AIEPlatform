@@ -76,23 +76,22 @@ def get_assigner_for_user(study, user):
     return inductive_get_assigner(root_assigner, user)
 
 def assign_treatment(deployment_name, study_name, user, where = None, other_information = None, request_different_arm = False, fromSimulation=False):
-
-    deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
-    if deployment is None:
-        raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
-    
-    study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
-
-    if study is None:
-        raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
-    
-    # check if the studyis stopped or not.
-    if not fromSimulation and study['status'] != 'running':
-        raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running at this moment.")
-    
-    start_time = time.time()
-    the_assigner = get_assigner_for_user(study, user)
     try:
+        deployment = DeploymentModel.get_one({'name': deployment_name}, public = True)
+        if deployment is None:
+            raise DeploymentNotFound(f"Deployment {deployment_name} not found or you don't have permission.")
+        
+        study = StudyModel.get_one({'deploymentId': ObjectId(deployment['_id']), 'name': study_name}, public = True)
+
+        if study is None:
+            raise StudyNotFound(f"Study {study_name} not found in {deployment_name}.")
+        
+        # check if the studyis stopped or not.
+        if not fromSimulation and study['status'] != 'running':
+            raise StudyStopped(f"Study {study_name} in {deployment_name} isn't running at this moment.")
+        
+        start_time = time.time()
+        the_assigner = get_assigner_for_user(study, user)
         assigner = create_assigner_instance(user, the_assigner)
         version_to_show = assigner.choose_arm(user, where, other_information,request_different_arm)
         if config["DEV_MODE"]:
@@ -107,6 +106,7 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
             TreatmentLog.insert_one(the_log)
         return version_to_show
     except Exception as e:
+        print(traceback.format_exc())
         if config["DEV_MODE"]:
             the_log = {
                 "policy": the_assigner['policy'],

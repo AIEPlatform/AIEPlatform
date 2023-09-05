@@ -6,12 +6,12 @@ class LockModel:
     # get a lock
     @staticmethod
     def get_one(filter, projection = {}, session = None):
-        return Lock.find_one(filter, projection, session=session)
+        return Lock.find_one(filter, session=session)
 
     # get many
     @staticmethod
     def get_many(filter, projection = {}, session = None):
-        return Lock.find(filter, projection, session=session)
+        return Lock.find(filter, session=session)
 
     # create
     @staticmethod
