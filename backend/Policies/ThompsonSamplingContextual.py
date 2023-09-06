@@ -73,6 +73,8 @@ class ThompsonSamplingContextual(Policy):
         regression_formula += ('+'.join(items))
         self.parameters['regression_formula'] = regression_formula
 
+        print(self.parameters['regression_formula'])
+
 
 
     def reinit(self):
@@ -207,7 +209,9 @@ class ThompsonSamplingContextual(Policy):
                     outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
                     if 'increase_weight_if_last_reward_one' in self.parameters and self.parameters['increase_weight_if_last_reward_one'] is True:
                         ratio_for_this_version = self.calculate_version_ratio(version)
-                    outcome *= 1/((1/outcome - 1) * np.exp(-ratio_for_this_version) + 1)
+                        outcome *= 1/((1/outcome - 1) * np.exp(-ratio_for_this_version) + 1)
+
+                    print(outcome)
                     if best_action is None or outcome > best_outcome:
                         best_outcome = outcome
                         best_action = version
@@ -436,7 +440,6 @@ class ThompsonSamplingContextual(Policy):
                     else:
                         independent_vars[contextual_var] = contextual_vars_dict[contextual_var]
 
-
                 versionName = interaction['treatment']['name']
                 # TODO: I don't want to use the versionJSON saved in the interaction, because the versionJSON might have changed. (and we shouldn't saved the version json in the interaction, we need to remove it for the future!)
                 version = next(version for version in all_versions if version['name'] == versionName)
@@ -465,6 +468,8 @@ class ThompsonSamplingContextual(Policy):
                         value = independent_vars[var]
 
                     design_matrix[i][j] = value
+            print(design_matrix)
+            
             posterior_vals = posteriors(numpy_rewards, design_matrix, coef_mean, coef_cov, variance_a, variance_b)
 
             # Update parameters in DB.
@@ -689,7 +694,6 @@ def posteriors(y, X, m_pre, V_pre, a1_pre, a2_pre):
     #priors input by users, but if no input then default
     #m_pre vector 0 v_pre is an identity matrix - np.identity(size of params) a1 & a2 both 2. save the updates
     #get the reward as a spearate vector. figure ut batch size issues (time based)
-
     # Data size
 
     datasize = len(y)
