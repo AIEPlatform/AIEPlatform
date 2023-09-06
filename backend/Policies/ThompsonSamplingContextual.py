@@ -205,6 +205,9 @@ class ThompsonSamplingContextual(Policy):
 
                     independent_vars = {**independent_vars, **version['versionJSON']} #TODO: CHECK
                     outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
+                    if 'increase_weight_if_last_reward_one' in self.parameters and self.parameters['increase_weight_if_last_reward_one'] is True:
+                        ratio_for_this_version = self.calculate_version_ratio(version)
+                    outcome *= 1/((1/outcome - 1) * np.exp(-ratio_for_this_version) + 1)
                     if best_action is None or outcome > best_outcome:
                         best_outcome = outcome
                         best_action = version
@@ -612,7 +615,20 @@ class ThompsonSamplingContextual(Policy):
             print(traceback.format_exc())
             return None
 
+    def calculate_version_ratio(self, version):
+        # 1. get the last **complete** interaction of this version.
+        # 2. if step 1 has reward = 0, return 1. Else, return value calculated in step 3.
+        # 3. 
 
+        last_complete_interaction = InteractionModel.find_last_complete_interaction_for_version_global(self.study, version)
+        
+        if last_complete_interaction is None: return 1
+        if last_complete_interaction['outcome'] == 0: return 1
+        num_versions = len(self.study['versions'])
+
+        num_positive_rewards = InteractionModel.get_num_positive_rewards_for_version(self.study, version)
+
+        return num_versions / num_positive_rewards
 # Compute expected reward given context and action of user
 # Inputs: (design matrix row as dict, coeff. vector, intercept, reg. eqn.)
 def calculate_outcome(var_dict, coef_list, include_intercept, formula):

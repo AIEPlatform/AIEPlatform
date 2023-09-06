@@ -21,6 +21,31 @@ class InteractionModel:
         })
         return the_interaction
     
+    @staticmethod
+    def find_last_complete_interaction_for_version_global(study, version, public = False, session = None):
+        assigners = AssignerModel.find_study_assigners(study, public, session)
+
+        # Find the latest interaction. And whose outcome is not null.
+        the_interaction = Interaction.find_one({
+            'assignerId': {'$in': [assigner['_id'] for assigner in assigners]},
+            'treatment': version,
+            'outcome': {'$ne': None}
+        })
+        return the_interaction
+    
+
+    @staticmethod
+    def get_num_positive_rewards_for_version(study, version, public = False, session = None):
+        assigners = AssignerModel.find_study_assigners(study, public, session)
+
+        # Find the latest interaction. And whose outcome is not null.
+        the_interactions = Interaction.find({
+            'assignerId': {'$in': [assigner['_id'] for assigner in assigners]},
+            'treatment': version,
+            'outcome': 1
+        })
+        return len(list(the_interactions))
+    
 
     # Get all the interactions for a given study (for datadownloader).
     @staticmethod

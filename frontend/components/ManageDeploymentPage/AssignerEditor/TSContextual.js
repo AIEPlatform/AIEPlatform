@@ -403,6 +403,13 @@ function TSContextual(props) {
                     }} />}
                     label="Include Intercept"
                 />
+                <FormControlLabel
+                    control={<Checkbox checked={assigner['parameters']['increase_weight_if_last_reward_one'] || false} onChange={(e) => {
+                        assigner['parameters']['increase_weight_if_last_reward_one'] = e.target.checked;
+                        sAssigners(tree);
+                    }} />}
+                    label="Increase the weights of the versions whose last complete interaction has reward 1. (only effective if the rewards are binary)."
+                />
                 <CommonAssignerAttribute
                     assigners={assigners}
                     myId={myId}
