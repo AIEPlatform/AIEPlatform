@@ -22,12 +22,10 @@ class InteractionModel:
         return the_interaction
     
     @staticmethod
-    def find_last_complete_interaction_for_version_global(study, version, public = False, session = None):
-        assigners = AssignerModel.find_study_assigners(study, public, session)
-
+    def find_last_complete_interaction_for_version_global(assigner_id, version, public = False, session = None):
         # Find the latest interaction. And whose outcome is not null.
         the_interaction = Interaction.find_one({
-            'assignerId': {'$in': [assigner['_id'] for assigner in assigners]},
+            'assignerId': assigner_id,
             'treatment': version,
             'outcome': {'$ne': None}
         })
@@ -35,21 +33,19 @@ class InteractionModel:
     
 
     @staticmethod
-    def get_num_positive_rewards_for_version(study, version, public = False, session = None):
-        assigners = AssignerModel.find_study_assigners(study, public, session)
-
+    def get_num_positive_rewards_for_version(assigner_id, version, public = False, session = None):
         # Find the latest interaction. And whose outcome is not null.
         the_interactions = Interaction.find({
-            'assignerId': {'$in': [assigner['_id'] for assigner in assigners]},
+            'assignerId': assigner_id,
             'treatment': version,
             'outcome': 1
         })
         return len(list(the_interactions))
     
 
-    # Get all the interactions for a given study (for datadownloader).
+    # Get all the interactions for a given study (for datadownloader). FOr this one, we can get all assigners.
     @staticmethod
-    def get_interactions(study, session = None):
+    def get_interactions_all_assigners(study, session = None):
         try:
             theassigners = list(Assigner.find({"studyId": study['_id']}, {"_id": 1}))
 
@@ -85,24 +81,24 @@ class InteractionModel:
     # Get the latest interaction for a given user at a study at a specific location.
     # TODO: We need to think about what happens if a user has been assigned to more than one Assigners. This's not supposed to happen, but what if a user was assigned to a assigner, and the assigner was deleted, and we have to assign them a different assigner?
     @staticmethod
-    def get_latest_interaction_for_where(assignerId, user, where = None):
+    def get_latest_interaction_for_where(assigner_id, user, where = None):
         try:
             if where is None:
-                return Interaction.find_one({"user": user, "assignerId": assignerId}, sort=[("timestamp", -1)])
+                return Interaction.find_one({"user": user, "assignerId": assigner_id}, sort=[("timestamp", -1)])
             else:
-                print({"user": user, "assignerId": assignerId, "where": where})
-                return Interaction.find_one({"user": user, "assignerId": assignerId, "where": where}, sort=[("timestamp", -1)])
+                print({"user": user, "assignerId": assigner_id, "where": where})
+                return Interaction.find_one({"user": user, "assignerId": assigner_id, "where": where}, sort=[("timestamp", -1)])
         except Exception as e:
             print(e)
             return None
 
     @staticmethod
-    def get_interactions_for_where(assignerId, user, where = None):
+    def get_interactions_for_where(assigner_id, user, where = None):
         try:
             if where is None:
-                return list(Interaction.find({"user": user, "assignerId": assignerId}))
+                return list(Interaction.find({"user": user, "assignerId": assigner_id}))
             else:
-                return list(Interaction.find({"user": user, "assignerId": assignerId, "where": where}))
+                return list(Interaction.find({"user": user, "assignerId": assigner_id, "where": where}))
         except Exception as e:
             print(e)
             return None
@@ -224,16 +220,13 @@ class InteractionModel:
         
     # return a list of all NON-NAN outcome for the given version from the given assignerId.
     @staticmethod
-    def get_study_outcome_by_version(studyId, version, session = None):
+    def get_study_outcome_by_version(assigner_id, version, session = None):
         try:
-            theAssigners = list(Assigner.find({"studyId": studyId}, {"_id": 1}))
-
-            theAssigners = [r['_id'] for r in theAssigners]
 
             result = Interaction.aggregate([
                 {
                     '$match': {
-                        'assignerId': {"$in": theAssigners},  # Specify the filter condition for collection1
+                        'assignerId': assigner_id,  # Specify the filter condition for collection1
                         'outcome': {'$ne': None},
                         'treatment': version
                     }

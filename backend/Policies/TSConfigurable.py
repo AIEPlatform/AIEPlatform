@@ -192,7 +192,7 @@ class TSConfigurable(Policy):
                 if "used_choose_group" in self.parameters and self.parameters["used_choose_group"] == True:
                     student_ratings = InteractionModel.get_assigner_outcome_by_version(self._id, version)
                 else:
-                    student_ratings = list(InteractionModel.get_study_outcome_by_version(self.study["_id"], version))
+                    student_ratings = list(InteractionModel.get_study_outcome_by_version(self._id, version))
 
                 print(student_ratings)
                 if len(student_ratings) > 0:

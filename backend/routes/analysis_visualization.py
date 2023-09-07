@@ -246,7 +246,7 @@ def create_df_from_mongo(study_name, deployment_name):
     the_deployment = DeploymentModel.get_one({"name": deployment_name})
     the_study = StudyModel.get_one({"name": study_name, "deploymentId": the_deployment['_id']})
 
-    result = InteractionModel.get_interactions(the_study)
+    result = InteractionModel.get_interactions_all_assigners(the_study)
 
     list_cur = list(result)
     df = pd.DataFrame(list_cur)

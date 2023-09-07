@@ -625,13 +625,13 @@ class ThompsonSamplingContextual(Policy):
         # 2. if step 1 has reward = 0, return 1. Else, return value calculated in step 3.
         # 3. 
 
-        last_complete_interaction = InteractionModel.find_last_complete_interaction_for_version_global(self.study, version)
+        last_complete_interaction = InteractionModel.find_last_complete_interaction_for_version_global(self._id, version)
         
         if last_complete_interaction is None: return 1
         if last_complete_interaction['outcome'] == 0: return 1
         num_versions = len(self.study['versions'])
 
-        num_positive_rewards = InteractionModel.get_num_positive_rewards_for_version(self.study, version)
+        num_positive_rewards = InteractionModel.get_num_positive_rewards_for_version(self._id, version)
 
         return num_versions / num_positive_rewards
 # Compute expected reward given context and action of user
