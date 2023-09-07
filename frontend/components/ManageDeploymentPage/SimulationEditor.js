@@ -154,6 +154,19 @@ function SimulationEditor(props) {
         )
     }
 
+    const exportToJson = () => {
+        const jsonData = JSON.stringify(simulationSetting);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+    
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'simulationSetting.json';
+        a.click();
+    
+        URL.revokeObjectURL(url);
+      };
+
     return (
         <Paper sx={{
             m: 1,
@@ -195,6 +208,7 @@ function SimulationEditor(props) {
             <Box sx={{ m: "auto", mt: 2 }}>
                 <Button sx={{ mr: 2}} onClick={handleSaveSimulationSetting} variant="outlined">Save</Button>
                 <Button sx={{ }} onClick={handleStopSimulation} variant="outlined" color="error">Stop Simulation</Button>
+                <button onClick={exportToJson}>Export Simulation Setting</button>
             </Box>
         </Paper>
     )

@@ -21,6 +21,7 @@ const CoefCovInput = (props) => {
 
 
     const renderMatrix = () => {
+        return;
 
         let items = theFormula.split("~");
         if (items.length > 1) {
@@ -94,7 +95,7 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
-
+        return;
         let items = theFormula.split("~");
         if (items.length > 1) {
             items = items[1];
@@ -177,31 +178,28 @@ function TSContextual(props) {
         sAssigners(tree)
 
     }
-
     const coefCovAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_cov']) {
-            assigner['parameters']['coef_cov'] = [];
+          assigner['parameters']['coef_cov'] = [];
         }
-
-        const n = assigner['parameters']['coef_cov'].length;
-        const expandedArray = Array(n + newItemSize)
-            .fill(null)
-            .map(() => Array(n + newItemSize).fill(0));
-
+      
+        const coef_cov = assigner['parameters']['coef_cov'];
+        const n = coef_cov.length;
+      
+        // Expand the existing coef_cov array if necessary
         for (let i = 0; i < n; i++) {
-            for (let j = 0; j < n; j++) {
-                expandedArray[i][j] = assigner['parameters']['coef_cov'][i][j];
-            }
+          coef_cov[i].length = n + newItemSize;
         }
-
-        for (let k = 0; k < newItemSize; k++) {
-            expandedArray[startPoint + k][startPoint + k] = 1;
+        coef_cov.length = n + newItemSize;
+      
+        // Fill the new elements with 0 and set the diagonal elements to 1
+        for (let i = n; i < n + newItemSize; i++) {
+          coef_cov[i] = Array(n + newItemSize).fill(0);
+          coef_cov[i][i] = 1;
         }
-
-        assigner['parameters']['coef_cov'] = expandedArray;
-
+      
         sAssigners(tree);
-    };
+      };
 
     const coefMeanAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_mean']) {
@@ -341,6 +339,102 @@ function TSContextual(props) {
 
     }, []);
 
+    const applyFullInteraction = () => {
+
+        function getCombinations(arr) {
+            let result = [];
+          
+            function backtrack(currentCombo, remainingElements) {
+              if (currentCombo.length === arr.length) {
+                result.push([...currentCombo]);
+                return;
+              }
+          
+              for (let i = 0; i < remainingElements.length; i++) {
+                currentCombo.push(remainingElements[i]);
+                backtrack(currentCombo, remainingElements.slice(i + 1));
+                currentCombo.pop();
+              }
+            }
+          
+            backtrack([], arr);
+            return result;
+          }
+        // So, we need to delete all regression formula items as the first step.
+        assigner['parameters']['regressionFormulaItems'] = [];
+        // if include intercept, keep the first row and first column, and delete the rest. Otherwise initialize the matrix with size 0.
+        if (assigner['parameters']['include_intercept']) {
+            assigner['parameters']['coef_cov'] = [[assigner['parameters']['coef_cov'][0][0]]];
+            assigner['parameters']['coef_mean'] = [assigner['parameters']['coef_mean'][0]];
+        }
+        else {
+            assigner['parameters']['coef_cov'] = [];
+            assigner['parameters']['coef_mean'] = [];
+        }
+
+        // Then, we need to:
+        // 1. add all variables to regression formula items.
+        // 2. add all factors to the regression formula items.
+        // 3. add all interactions [between every variable and every factor] to the regression formula items.
+
+        let allVariables = variables;
+        let allFactors = factors;
+
+        console.log(allVariables);
+        console.log(allFactors);
+
+        // Note that allVariables and allFactors are just strings, not objects. 
+        // 1. add all variables to regression formula items.
+        allVariables.forEach((variable) => {
+            assigner['parameters']['regressionFormulaItems'].push([variable]);
+        });
+
+        // 2. add all factors to the regression formula items.
+        allFactors.forEach((factor) => {
+            assigner['parameters']['regressionFormulaItems'].push([factor]);
+        });
+
+        const combinations = getCombinations(allVariables);
+
+        // For each combination, add every factors to it.
+
+        let combinationsPlusFactors = [];
+        combinations.forEach((combination) => {
+            allFactors.forEach((factor) => {
+                combinationsPlusFactors.push(combination.concat(factor));
+            });
+        });
+
+        combinationsPlusFactors.forEach((combination) => {
+            assigner['parameters']['regressionFormulaItems'].push(combination);
+        });
+
+        // Now, we need to update the coef_cov and coef_mean.
+        let size = 0;
+        for(let regressionFormulaItem of assigner['parameters']['regressionFormulaItems']) {
+            size += calculateFormulateItemSize(existingVariables, regressionFormulaItem);
+        }
+
+        console.log(size)
+
+        if (assigner['parameters']['include_intercept']) {
+            size += 1;
+        }
+
+        // make a coef_cov size of size * size, and fill the diagonal with 1.
+        assigner['parameters']['coef_cov'] = Array(size).fill(0).map(() => Array(size).fill(0));
+        for(let i = 0; i < size; i++) {
+            assigner['parameters']['coef_cov'][i][i] = 1;
+        }
+
+        // make a coef_mean of size size, and fill with 0.
+        assigner['parameters']['coef_mean'] = Array(size).fill(0);
+        // coefCovAddNewItem(0, size);
+        console.log("done")
+        // coefMeanAddNewItem(0, size);
+        sAssigners(tree);
+    }
+
 
 
     return (
@@ -449,7 +543,7 @@ function TSContextual(props) {
                 </Box>}
             </Box>
             <Box sx={{ m: 1 }}>
-                <Typography variant='h6'>Regression Formula Items</Typography>
+                <Typography variant='h6'>Regression Formula Items</Typography> <Button onClick={applyFullInteraction}>Apply a full interaction regression</Button>
                 {assigner['parameters']['regressionFormulaItems'] && assigner['parameters']['regressionFormulaItems'].length > 0 && <mark><small>Current regression formula: {writeRegressionFormula()}</small></mark>}
                 {assigner['parameters']['regressionFormulaItems'] && assigner['parameters']['regressionFormulaItems'].map((regressionFormulaItem, index) => {
                     return (

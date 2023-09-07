@@ -139,6 +139,49 @@ function StudyConfig(props) {
     const sRewardInformation = setStudyAttributes.bind('rewardInformation');
     const sAssigners = setStudyAttributes.bind('assigners');
 
+
+    const autoGenerateVersionJSON = () => {
+        // Check if any two versions have the same name.
+        // If so, return and alert.
+        // Every version has version['name'].
+
+
+        let data = [...study.versions];
+        let allFactors = [];
+        // for factors are version names;
+        for (let i = 0; i < data.length; i++) {
+            let factor = data[i]['name'];
+            allFactors.push(factor);
+        }
+
+        // get unique factors
+        let uniqueFactors = [...new Set(allFactors)];
+        if(uniqueFactors.length !== allFactors.length){
+            alert("Version names must be unique!");
+            return;
+        }
+
+        // for each version, the versionJSON is all factors, with its version name to be 1.
+
+        for (let i = 0; i < data.length; i++) {
+            let versionJSON = {};
+            for (let j = 0; j < uniqueFactors.length; j++) {
+                let factor = uniqueFactors[j];
+                if (factor === data[i]['name']) {
+                    versionJSON[factor] = 1;
+                } else {
+                    versionJSON[factor] = 0;
+                }
+            }
+            data[i]['versionJSON'] = versionJSON;
+        }
+
+        console.log(data)
+
+        sVersions(data);
+        sFactors(uniqueFactors);
+    }
+
     if (study === null) return (<div></div>);
     return (
         <Box sx={{ mb: 2 }}>
@@ -176,6 +219,7 @@ function StudyConfig(props) {
                     <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
+                    <Button onClick={(e) => autoGenerateVersionJSON()} variant="contained" color="primary" sx={{ m: 1 }}>!DANGER: WE DON'T KNOW HOW IT WILL AFFECT ON-GOING ASSIGNERS. DO IT WITH YOUR OWN RISK. Automatically generate version JSON</Button>
                     <FactorsEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
                     <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} />
                 </AccordionDetails>
