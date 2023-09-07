@@ -13,6 +13,8 @@ function SimulationEditor(props) {
     let simulationSetting = props.simulationSetting;
     let sSimulationSetting = props.sSimulationSetting;
 
+    const [jsonData, setJsonData] = useState(null);
+
     const addNewSimulatedContextualEffect = () => {
         let newSimulationSetting = { ...simulationSetting };
         newSimulationSetting['contextualEffects'].push({
@@ -167,6 +169,31 @@ function SimulationEditor(props) {
         URL.revokeObjectURL(url);
       };
 
+    const importToJson = () => {
+        
+    }
+
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+    
+          reader.onload = (event) => {
+            try {
+              const parsedData = JSON.parse(event.target.result);
+              setJsonData(parsedData);
+              console.log(parsedData)
+              sSimulationSetting(parsedData)
+            } catch (error) {
+              console.error('Error parsing JSON:', error);
+            }
+          };
+    
+          reader.readAsText(file);
+        }
+      };
+
     return (
         <Paper sx={{
             m: 1,
@@ -209,6 +236,19 @@ function SimulationEditor(props) {
                 <Button sx={{ mr: 2}} onClick={handleSaveSimulationSetting} variant="outlined">Save</Button>
                 <Button sx={{ }} onClick={handleStopSimulation} variant="outlined" color="error">Stop Simulation</Button>
                 <button onClick={exportToJson}>Export Simulation Setting</button>
+                <div>
+                <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileChange}
+                />
+                {jsonData && (
+                    <div>
+                    <h2>Parsed JSON Data:</h2>
+                    <pre>{JSON.stringify(jsonData, null, 2)}</pre>
+                    </div>
+                )}
+                </div>
             </Box>
         </Paper>
     )

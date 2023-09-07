@@ -143,16 +143,19 @@ def basic_reward_summary_table(df, selectedVariables, selectedAssigners = []):
     
     # Create a new DataFrame for overall statistics with no version
     overall_df = pd.DataFrame({"treatment": ["All versions"], 
-                               "Count": [df["outcome"].size],# size is the count including NA valuess
-                               "Mean": [round(df['outcome'].mean(),3)],
-                               "Count of non-response": [df['outcome'].isnull().sum()],
-                               "% of non-response": [round(df['outcome'].isnull().mean() * 100,3)],
+                               "Count": [data["outcome"].size],# size is the count including NA valuess
+                               "Mean": [round(data['outcome'].mean(),3)],
+                               "Count of non-response": [data['outcome'].isnull().sum()],
+                               "% of non-response": [round(data['outcome'].isnull().mean() * 100,3)],
                                "P value": [round(overall_p_value,3)],
-                               "Power": [calculate_statistical_power(df, 'outcome')]})
+                               "Power": [calculate_statistical_power(data, 'outcome')]})
 
     # Append the overall statistics DataFrame to the result DataFrame
     result_df = pd.concat([result_df, overall_df], ignore_index=True)
     # Fill NaN with ""
     result_df = result_df.fillna("")
     result_df = result_df.reindex([result_df.index[-1]] + list(result_df.index[:-1]))
+    # order by treatment.
+    result_df = result_df.sort_values(by= 'treatment', ascending=True)
+    print(result_df['treatment'])
     return result_df

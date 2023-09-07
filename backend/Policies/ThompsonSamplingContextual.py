@@ -209,7 +209,11 @@ class ThompsonSamplingContextual(Policy):
                     outcome = calculate_outcome(independent_vars, coef_draw, include_intercept, regression_formula)
                     if 'increase_weight_if_last_reward_one' in self.parameters and self.parameters['increase_weight_if_last_reward_one'] is True:
                         ratio_for_this_version = self.calculate_version_ratio(version)
-                        outcome *= 1/((1/outcome - 1) * np.exp(-ratio_for_this_version) + 1)
+                        #outcome *= 1/((1/outcome - 1) * np.exp(-ratio_for_this_version) + 1)
+                        #outcome *= 1/((1/outcome - 1)**(-ratio_for_this_version)+1)
+                        success_proportion = InteractionModel.calculate_success_proportion(self._id, version)
+                        failure_proportion = InteractionModel.calculate_failure_proportion(self._id, version)
+                        outcome = outcome * (1 + success_proportion) * (1 - failure_proportion)
 
                     print(outcome)
                     if best_action is None or outcome > best_outcome:

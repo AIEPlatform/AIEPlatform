@@ -28,8 +28,39 @@ class InteractionModel:
             'assignerId': assigner_id,
             'treatment': version,
             'outcome': {'$ne': None}
-        })
+        }, sort=[("rewardTimestamp", -1)])
         return the_interaction
+
+
+    @staticmethod
+    def calculate_success_proportion(assigner_id, version, public = False, session = None):
+        # Find the latest interaction. And whose outcome is not null.
+        the_interactions = Interaction.find({
+            'assignerId': assigner_id,
+            'outcome': 1
+        })
+
+        the_good_interactions = Interaction.find({
+            'assignerId': assigner_id,
+            'treatment': version,
+            'outcome': 1
+        })
+        return len(list(the_good_interactions)) / len(list(the_interactions))
+
+    @staticmethod
+    def calculate_failure_proportion(assigner_id, version, public = False, session = None):
+        # Find the latest interaction. And whose outcome is not null.
+        the_interactions = Interaction.find({
+            'assignerId': assigner_id,
+            'outcome': 0
+        })
+
+        the_bad_interactions = Interaction.find({
+            'assignerId': assigner_id,
+            'treatment': version,
+            'outcome': 0
+        })
+        return len(list(the_bad_interactions)) / len(list(the_interactions))
     
 
     @staticmethod
