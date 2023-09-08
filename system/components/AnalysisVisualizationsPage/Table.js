@@ -25,15 +25,18 @@ export default function BasicTable(props) {
   const [rows, sRows] = useState([]);
 
   const getTable = () => {
-    fetch('/apis/analysis/basic_reward_summary_table', {
+    fetch('/apis/analysis/analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         theDatasetId: theDataset['_id']['$oid'],
-        selectedVariables: analysis['selectedVariables'].map((variable) => variable['value']) , 
-        selectedAssigners: analysis['selectedAssigners'].map((variable) => variable['value'])
+        info: {
+          selectedVariables: analysis['selectedVariables'].map((variable) => variable['value']), 
+          selectedAssigners: analysis['selectedAssigners'].map((variable) => variable['value'])
+        },
+        analysisType: 'BasicRewardSummaryTable'
       })
     })
       .then(res => res.json())

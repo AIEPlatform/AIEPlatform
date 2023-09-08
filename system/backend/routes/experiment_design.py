@@ -14,32 +14,48 @@ from errors import *
 import pandas as pd
 from bson.objectid import ObjectId
 from flask import send_file, make_response
-from Analysis.basic_reward_summary_table import basic_reward_summary_table
-from Analysis.AverageRewardByTime import AverageRewardByTime
 from routes.user_interaction import give_variable_value, assign_treatment, get_reward
 
 # in ../../plugins/policies, there are a bunch of folders, each folder is a policy. We need to load classes from policyname/backend/algorithm.py
 import os
 import importlib.util
-# Loading all plugins of policies.
-policy_classes = {}
-for policy_name in os.listdir("../plugins/policies"):
-    print(policy_name)
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+# Create a function to load a policy module
+def load_policy_module(policy_name):
     policy_path = os.path.join("../plugins/policies", policy_name)
+    algorithm_module_path = os.path.join(policy_path, "backend", "algorithm.py")
     
-    # Check if it's a directory
-    if os.path.isdir(policy_path):
-        algorithm_module_path = os.path.join(policy_path, "backend", "algorithm.py")
-        
-        # Check if the algorithm module exists in this policy
-        if os.path.isfile(algorithm_module_path):
-            # Load the module dynamically
-            module_name = f"{policy_name}"
-            spec = importlib.util.spec_from_file_location(module_name, algorithm_module_path)
-            algorithm_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(algorithm_module)
-            policy_class = getattr(algorithm_module, policy_name, None)
-            policy_classes[policy_name] = policy_class
+    if os.path.isfile(algorithm_module_path):
+        module_name = f"{policy_name}"
+        spec = importlib.util.spec_from_file_location(module_name, algorithm_module_path)
+        algorithm_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(algorithm_module)
+        policy_class = getattr(algorithm_module, policy_name, None)
+        return policy_class
+    else:
+        return None
+
+# Create a function to reload the policy classes
+def reload_policy_classes():
+    global policy_classes
+    policy_classes = {policy_name: load_policy_module(policy_name) for policy_name in os.listdir("../plugins/policies") if os.path.isdir(os.path.join("../plugins/policies", policy_name))}
+
+# Create a watchdog event handler to watch for file changes
+class PluginChangeHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.is_directory:
+            # Reload the policy classes when a directory is modified
+            reload_policy_classes()
+
+# Create an observer to watch the policy directory
+observer = Observer()
+observer.schedule(PluginChangeHandler(), path="../plugins/policies", recursive=True)
+observer.start()
+
+# Initial loading of policy classes
+reload_policy_classes()
 
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)

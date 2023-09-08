@@ -19,10 +19,47 @@ import pandas as pd
 import pickle
 from bson.objectid import ObjectId
 from flask import send_file, make_response
-from Analysis.basic_reward_summary_table import basic_reward_summary_table
-from Analysis.AverageRewardByTime import AverageRewardByTime
-from Analysis.AverageRewardForOneVersion import AverageRewardForOneVersion
 from collections import Counter
+
+import os
+import importlib.util
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+# Create a function to load a policy module
+def load_policy_module(policy_name):
+    policy_path = os.path.join("../plugins/analysis", policy_name)
+    algorithm_module_path = os.path.join(policy_path, "backend", "analysis.py")
+    
+    if os.path.isfile(algorithm_module_path):
+        module_name = f"{policy_name}"
+        spec = importlib.util.spec_from_file_location(module_name, algorithm_module_path)
+        algorithm_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(algorithm_module)
+        policy_class = getattr(algorithm_module, policy_name, None)
+        return policy_class
+    else:
+        return None
+
+# Create a function to reload the analysis classes
+def reload_analysis_classes():
+    global analysis_classes
+    analysis_classes = {policy_name: load_policy_module(policy_name) for policy_name in os.listdir("../plugins/analysis") if os.path.isdir(os.path.join("../plugins/analysis", policy_name))}
+
+# Create a watchdog event handler to watch for file changes
+class PluginChangeHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.is_directory:
+            # Reload the analysis classes when a directory is modified
+            reload_analysis_classes()
+
+# Create an observer to watch the plugin directory
+observer = Observer()
+observer.schedule(PluginChangeHandler(), path="../plugins/analysis", recursive=True)
+observer.start()
+
+# Initial loading of analysis classes
+reload_analysis_classes()
 
 analysis_visualization_apis = Blueprint('analysis_visualization_apis', __name__)
 
@@ -166,13 +203,25 @@ def get_deployment_datasets():
     ), 200
 
 
-@analysis_visualization_apis.route("/apis/analysis/basic_reward_summary_table", methods = ["POST"])
-def basic_reward_summary_table_api():
+@analysis_visualization_apis.route("/apis/analysis/analysis", methods = ["POST"])
+def analysis():
     theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
     
-    selected_variables = request.json['selectedVariables'] if 'selectedVariables' in request.json else []
+    info = request.json['info'] if 'info' in request.json else {}
 
-    selected_assigners = request.json['selectedAssigners'] if 'selectedAssigners' in request.json else []
+    analytics_name = request.json['analysisType'] if 'analysisType' in request.json else None
+    if analytics_name is None:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "Please make sure analyticsName is provided."
+        }), 400
+    
+    if analytics_name not in analysis_classes:
+        return json_util.dumps({
+            "status_code": 400,
+            "message": "The analysis is not supported yet. Make sure that you have loaded the plugin."
+        }), 400
+    AnalysisClass = analysis_classes[analytics_name]
  
     if theDatasetId is None:
         return json_util.dumps({
@@ -181,14 +230,13 @@ def basic_reward_summary_table_api():
         }), 400
     else:
         df = getDataset(theDatasetId)
-        result_df = basic_reward_summary_table(df, selected_variables, selected_assigners)
+        info['df'] = df
+        analysis_instance = AnalysisClass(info)
+        the_result = analysis_instance.analysis()
         return json_util.dumps({
             "status_code": 200,
             "message": "Table returned.",
-            "result": {
-                "columns": list(result_df.columns), 
-                "rows": [tuple(r) for r in result_df.to_numpy()]
-            }
+            "result": the_result
         }), 200
 
 
