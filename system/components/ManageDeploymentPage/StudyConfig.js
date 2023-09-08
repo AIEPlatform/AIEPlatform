@@ -10,7 +10,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import RewardEditor from './RewardEditor';
-import validifyStudy from '../../helpers/validifyStudy';
 import ScaleIcon from '@mui/icons-material/Scale';
 import AttributionIcon from '@mui/icons-material/Attribution';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -41,13 +40,6 @@ function StudyConfig(props) {
         if (study === null) return;
         handleOpen(1);
     }, [study]);
-
-
-    useEffect(() => {
-        if (study === null) return;
-        let modifiedStudy = validifyStudy(study, existingVariables);
-        sStudy(modifiedStudy);
-    }, [study?.variables.length, study?.versions.length, study?.factors.length, existingVariables]); // also listen on the array of parameters of all assigners
 
     const handleDrop = (newTreeData) => {
         // check if two nodes have parent as 0. If so, alert user that they can't do that.

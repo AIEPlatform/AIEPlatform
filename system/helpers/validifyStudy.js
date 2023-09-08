@@ -2,10 +2,8 @@
 
 //calculateFormulateItemSize, coefCovRemoveItem, and coefMeanRemoveItem are helper functions from ../components/ManageDeploymentPage/AssignerEditor/TSCHelper.js
 
-function validifyStudy(study, existingVariables) {
+function validifyStudy(study, existingVariables, components) {
     let modifiedStudy = {...study};
-
-
     // We want to make sure that the factorss & versions are on the same page.
     // 1. remove factors from version json if the factor is deleted.
     // 2. Auto initialize the factor in version json if the factor is added.
@@ -60,52 +58,13 @@ function validifyStudy(study, existingVariables) {
     }
 
 
-    for (const element of modifiedStudy.assigners) {
-        element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions, existingVariables);
+    for (const assigner of modifiedStudy.assigners) {
+        // Call the assigner's policy's validify function.
+        //element.parameters = assignerHandleVersionOrVariableDeletion(element.policy, element.parameters, study.factors, study.variables, study.versions, existingVariables);
+        let validate = components[assigner.policy].validate;
+        if(validate) validate({assigner: assigner, factors: study.factors, variables: study.variables, versions: study.versions, existingVariables: existingVariables});
     }
-
-
-
     return modifiedStudy;
-
-}
-function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, variables, versions, existingVariables) {
-    if(policy === "UniformRandom") {
-        return parameters;
-    }
-    else if (policy === "WeightedRandom") {
-        for (const key in parameters) {
-            if (!versions.some(obj => obj['name'] === key)) {
-              delete parameters[key];
-            }
-          }
-        return parameters;
-    }
-    else if (policy === "ThompsonSamplingContextual") {
-    }
-
-
-    else if (policy === "TSConfigurable") {
-        if(!parameters['current_posteriors']) {
-            parameters['current_posteriors'] = {};
-        }
-        
-        for(let version of versions) {
-            if(!parameters['current_posteriors'][version['name']]) {
-                parameters['current_posteriors'][version['name']] = {"successes": 0, "failures": 0}
-            }
-        }
-
-        for (const key in parameters['current_posteriors']) {
-            if (!versions.some(obj => obj['name'] === key)) {
-              delete parameters['current_posteriors'][key];
-            }
-          }
-        return parameters;
-    }
-    else {
-        return parameters;
-    }
 }
 
 export default validifyStudy;

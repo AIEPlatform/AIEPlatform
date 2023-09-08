@@ -1,31 +1,12 @@
 import { React, useState } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, FormControl, InputLabel, Input } from '@mui/material';
 import Select from 'react-select';
-// import WeightedRandom from './WeightedRandom';
-// import TSContextual from './TSContextual';
-// import TSConfigurable from './TSConfigurable'
-// import GPT from './GPT'
-// import * as uniformRandomImports from '../../../plugins/policies/UniformRandom/frontend';
-// import * as weightedRandomImports from '../../../plugins/policies/Weighted/frontend';
 
 // Usage
-const components = {};
-let availablePolicies = [];
-
-const context = require.context('../../../plugins/policies', true, /\/frontend\/index\.js$/);
-context.keys().forEach((key) => {
-    const subfolderName = key.split('/')[1];
-    const componentModule = context(key);
-
-    // Assuming your components are exported as 'default'
-    components[subfolderName] = componentModule;
-    availablePolicies.push({
-        value: subfolderName,
-        label: componentModule.name
-    })
-});
 
 function AssignerEditor(props) {
+    let availablePolicies = props.availablePolicies;
+    let components = props.components;
     let study = props.study;
     let assigners = props.assigners;
     let myId = props.idToEdit;
@@ -36,6 +17,7 @@ function AssignerEditor(props) {
     let existingVariables = props.existingVariables;
 
     let assigner = assigners.find(assigner => assigner.id === myId);
+    console.log(assigner)
     const handleAssignerNameChange = (event) => {
         let data = [...assigners];
         assigner = data.find(assigner => assigner.id === myId);
@@ -96,7 +78,7 @@ function AssignerEditor(props) {
                 <div>
                     {Object.entries(components).map(([subfolderName, component]) => (
                         <div key={subfolderName}>
-                            {component && subfolderName === assigner.policy && <component.main versions={versions} factors={factors} existingVariables={existingVariables} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables} />}
+                            {component && subfolderName === assigner.policy && <component.main versions={versions} factors={factors} existingVariables={existingVariables} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables} />}
                         </div>
                     ))}
                 </div>

@@ -5,18 +5,28 @@ import SimulationEditor from './SimulationEditor';
 import EditIcon from '@mui/icons-material/Edit';
 import Modal from '@mui/material/Modal';
 import AssignerEditor from './AssignerEditor/AssignerEditor';
-import validifyStudy from '../../helpers/validifyStudy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import StopIcon from '@mui/icons-material/Stop';
 import StartIcon from '@mui/icons-material/Start';
+import validifyStudy from '../../helpers/validifyStudy';
 
-import {
-    Tree,
-    getBackendOptions,
-    MultiBackend,
-} from "@minoru/react-dnd-treeview";
-import { DndProvider } from "react-dnd";
+
+const components = {};
+let availablePolicies = [];
+
+const context = require.context('../../plugins/policies', true, /\/frontend\/index\.js$/);
+context.keys().forEach((key) => {
+    const subfolderName = key.split('/')[1];
+    const componentModule = context(key);
+
+    // Assuming your components are exported as 'default'
+    components[subfolderName] = componentModule;
+    availablePolicies.push({
+        value: subfolderName,
+        label: componentModule.name
+    })
+});
 
 function StudyEditor(props) {
 
@@ -46,12 +56,12 @@ function StudyEditor(props) {
         loadCurrentStudy();
     }, [theStudy]);
 
-
     useEffect(() => {
         if (study === null) return;
-        let modifiedStudy = validifyStudy(study, existingVariables);
+        let modifiedStudy = validifyStudy(study, existingVariables, components);
         sStudy(modifiedStudy);
     }, [study?.variables.length, study?.versions.length, study?.factors.length, existingVariables]); // also listen on the array of parameters of all assigners
+
 
     let [tabIndex, sTabIndex] = useState(0);
 
@@ -199,7 +209,7 @@ function StudyEditor(props) {
 
             >
                 <Box style={{ background: "white" }}>
-                    <AssignerEditor existingVariables = {existingVariables} study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
+                    <AssignerEditor components = {components} availablePolicies = {availablePolicies} existingVariables = {existingVariables} study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
                 </Box>
             </Modal>
         </Box >
