@@ -1,34 +1,29 @@
 import { React, useState } from 'react';
 import { Typography, Paper, TextField, Box, Grid, Divider, Button, Container, FormControl, InputLabel, Input } from '@mui/material';
 import Select from 'react-select';
-import WeightedRandom from './WeightedRandom';
-import TSContextual from './TSContextual';
-import TSConfigurable from './TSConfigurable'
-import GPT from './GPT'
-import UniformRandom from './UniformRandom';
-const availablePolicies = [
-    {
-        value: 'UniformRandom',
-        label: 'Uniform Sample',
-    },
-    {
-        value: 'WeightedRandom',
-        label: 'Weighted Random',
-    },
-    {
-        value: 'TSConfigurable',
-        label: 'TS Configurable',
-    },
-    {
-        value: 'ThompsonSamplingContextual',
-        label: 'Thompson Sampling Contextual'
-    },
-    {
-        value: 'GPT',
-        label: 'GPT'
-    }
-];
+// import WeightedRandom from './WeightedRandom';
+// import TSContextual from './TSContextual';
+// import TSConfigurable from './TSConfigurable'
+// import GPT from './GPT'
+// import * as uniformRandomImports from '../../../plugins/policies/UniformRandom/frontend';
+// import * as weightedRandomImports from '../../../plugins/policies/Weighted/frontend';
 
+// Usage
+const components = {};
+let availablePolicies = [];
+
+const context = require.context('../../../plugins/policies', true, /\/frontend\/index\.js$/);
+context.keys().forEach((key) => {
+    const subfolderName = key.split('/')[1];
+    const componentModule = context(key);
+
+    // Assuming your components are exported as 'default'
+    components[subfolderName] = componentModule;
+    availablePolicies.push({
+        value: subfolderName,
+        label: componentModule.name
+    })
+});
 
 function AssignerEditor(props) {
     let study = props.study;
@@ -98,11 +93,17 @@ function AssignerEditor(props) {
 
             <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Policy Parameters</Typography>
-                {assigner.policy === 'UniformRandom' && <UniformRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}>Uniform doesn't require a policy parameter!</UniformRandom>}
-                {assigner.policy === 'WeightedRandom' && <WeightedRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}></WeightedRandom>}
+                <div>
+                    {Object.entries(components).map(([subfolderName, component]) => (
+                        <div key={subfolderName}>
+                            {component && subfolderName === assigner.policy && <component.main versions={versions} factors={factors} existingVariables={existingVariables} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables} />}
+                        </div>
+                    ))}
+                </div>
+                {/* {assigner.policy === 'WeightedRandom' && <WeightedRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}></WeightedRandom>}
                 {assigner.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSConfigurable>}
                 {assigner.policy === 'ThompsonSamplingContextual' && <TSContextual existingVariables={existingVariables} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSContextual>}
-                {assigner.policy === 'GPT' && <GPT factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></GPT>}
+                {assigner.policy === 'GPT' && <GPT factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></GPT>} */}
 
 
             </Box>

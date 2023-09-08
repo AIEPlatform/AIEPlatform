@@ -28,12 +28,12 @@ else
 fi
 
 # start frontend
-cd frontend
+cd system
 npm install
 npm run build
 pm2 start npm --name $frontend_task -- start
 
-cd ../backend
+cd backend
 pip install -r requirements.txt
 pm2 start app.py --name $backend_task
 

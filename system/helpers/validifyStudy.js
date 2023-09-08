@@ -2,8 +2,6 @@
 
 //calculateFormulateItemSize, coefCovRemoveItem, and coefMeanRemoveItem are helper functions from ../components/ManageDeploymentPage/AssignerEditor/TSCHelper.js
 
-import {calculateFormulateItemSize, removeItemsFromSymmetricMatrix, coefCovRemoveItem} from './TSContextualHelpers';
-
 function validifyStudy(study, existingVariables) {
     let modifiedStudy = {...study};
 
@@ -84,53 +82,6 @@ function assignerHandleVersionOrVariableDeletion(policy, parameters, factors, va
         return parameters;
     }
     else if (policy === "ThompsonSamplingContextual") {
-
-        let original = JSON.parse(JSON.stringify(parameters));
-        // Step 1: remove the item from the formula items (two for loop, one for version one for variable).
-        // Step 2: remove the formula item that are empty. Reduce the corresponding parameters.
-
-        // Can do: prompt the user it's very risky to do when an experiment is running. They may want to keep a copy of the previous matrices
-
-        if(parameters['regressionFormulaItems'] === undefined) {
-            return parameters;
-        }
-        let allVariables = factors.concat(variables);
-
-        // if variables or versions changes, the regression formula items also need to be changed.
-        for(let i = 0; i < parameters['regressionFormulaItems'].length; i++) {
-            parameters['regressionFormulaItems'][i] = parameters['regressionFormulaItems'][i].filter(item => {
-                return allVariables.some(obj => obj === item);
-              });
-        }
-
-        // this is a little bit trick. because we may remove multiple items in the same time, we need to do it in a loop.
-        let deepCopy = JSON.parse(JSON.stringify(parameters));
-        for(let index = 0; index < deepCopy['regressionFormulaItems'].length; index++) {
-            if(deepCopy.regressionFormulaItems[index].length === 0) {
-
-                let startPoint = 0;
-                for (let i = 0; i < index; i++) {
-                    startPoint += calculateFormulateItemSize(existingVariables, original['regressionFormulaItems'][i]);
-                }
-        
-                if(original['include_intercept']) {
-                    startPoint += 1;
-                }
-                let sizeOfItem = calculateFormulateItemSize(existingVariables, original['regressionFormulaItems'][index]);
-                let temp = removeItemsFromSymmetricMatrix(deepCopy['coef_cov'], startPoint, sizeOfItem);
-
-
-                deepCopy['coef_cov'] = temp;
-                deepCopy['coef_mean'].splice(startPoint, sizeOfItem);
-                deepCopy['regressionFormulaItems'].splice(index, 1);
-
-
-                original['regressionFormulaItems'].splice(index, 1); // This step is important. Otherwise, the index will be wrong.
-                index--;
-            }
-        }
-
-        return deepCopy;
     }
 
 

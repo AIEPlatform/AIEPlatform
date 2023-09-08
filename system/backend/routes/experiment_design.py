@@ -18,11 +18,28 @@ from Analysis.basic_reward_summary_table import basic_reward_summary_table
 from Analysis.AverageRewardByTime import AverageRewardByTime
 from routes.user_interaction import give_variable_value, assign_treatment, get_reward
 
-from Policies.UniformRandom import UniformRandom
-from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
-from Policies.TSConfigurable import TSConfigurable
-from Policies.WeightedRandom import WeightedRandom
-from Policies.GPT import GPT
+# in ../../plugins/policies, there are a bunch of folders, each folder is a policy. We need to load classes from policyname/backend/algorithm.py
+import os
+import importlib.util
+# Loading all plugins of policies.
+policy_classes = {}
+for policy_name in os.listdir("../plugins/policies"):
+    print(policy_name)
+    policy_path = os.path.join("../plugins/policies", policy_name)
+    
+    # Check if it's a directory
+    if os.path.isdir(policy_path):
+        algorithm_module_path = os.path.join(policy_path, "backend", "algorithm.py")
+        
+        # Check if the algorithm module exists in this policy
+        if os.path.isfile(algorithm_module_path):
+            # Load the module dynamically
+            module_name = f"{policy_name}"
+            spec = importlib.util.spec_from_file_location(module_name, algorithm_module_path)
+            algorithm_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(algorithm_module)
+            policy_class = getattr(algorithm_module, policy_name, None)
+            policy_classes[policy_name] = policy_class
 
 
 experiment_design_apis = Blueprint('experiment_design_apis', __name__)
@@ -459,7 +476,7 @@ def checkIfAssignersAreValid(assigners):
     # TODO: Need different cases, need to call static functions of each class.
 
     for i in range(len(assigners)):
-        cls = globals().get(assigners[i]['policy'])
+        cls = policy_classes[assigners[i]['policy']]
         assigners[i] = cls.validate_assigner(assigners[i])
 
     return assigners

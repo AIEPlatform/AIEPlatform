@@ -4,11 +4,30 @@ from flask import request
 from bson import json_util
 from bson.objectid import ObjectId
 from helpers import *
-from Policies.UniformRandom import UniformRandom
-from Policies.ThompsonSamplingContextual import ThompsonSamplingContextual
-from Policies.TSConfigurable import TSConfigurable
-from Policies.WeightedRandom import WeightedRandom
-from Policies.GPT import GPT
+# in ../../plugins/policies, there are a bunch of folders, each folder is a policy. We need to load classes from policyname/backend/algorithm.py
+import os
+import importlib.util
+# Loading all plugins of policies.
+policy_classes = {}
+for policy_name in os.listdir("../plugins/policies"):
+    print(policy_name)
+    policy_path = os.path.join("../plugins/policies", policy_name)
+    
+    # Check if it's a directory
+    if os.path.isdir(policy_path):
+        algorithm_module_path = os.path.join(policy_path, "backend", "algorithm.py")
+        
+        # Check if the algorithm module exists in this policy
+        if os.path.isfile(algorithm_module_path):
+            # Load the module dynamically
+            module_name = f"{policy_name}"
+            spec = importlib.util.spec_from_file_location(module_name, algorithm_module_path)
+            algorithm_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(algorithm_module)
+            policy_class = getattr(algorithm_module, policy_name, None)
+            policy_classes[policy_name] = policy_class
+
+            
 import datetime
 import time
 import threading
@@ -44,7 +63,7 @@ def before_request():
         return response
 
 def create_assigner_instance(user, the_assigner):
-    cls = globals().get(the_assigner['policy'])
+    cls = policy_classes[the_assigner['policy']]
     if cls:
         return cls(user, **the_assigner)
     else:
