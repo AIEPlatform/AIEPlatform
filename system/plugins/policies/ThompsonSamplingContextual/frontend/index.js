@@ -21,9 +21,10 @@ const CoefCovInput = (props) => {
 
 
     const renderMatrix = () => {
-        return;
 
         let items = theFormula.split("~");
+
+        console.log(items)
         if (items.length > 1) {
             items = items[1];
             items = items.split("+").map(function (item) {
@@ -38,9 +39,10 @@ const CoefCovInput = (props) => {
 
 
         return (assigner['parameters']['coef_cov'] || []).map((row, rowIndex) => (
-            <Box key={rowIndex} style={{ display: 'flex' }}>
+            <Box key={rowIndex}>
                 {row.map((cell, colIndex) => (
-                    <Tooltip title={`${items[rowIndex]}, ${items[colIndex]}`}>
+                    <Box key={colIndex} display="inline-block" sx={{ m: 1 }}>
+                        <Typography style={{ minWidth: "100px", maxWidth: "100px", padding: "5px" }}>{items[rowIndex]} vs {items[colIndex]}</Typography>
                         <Input
                             key={colIndex}
                             value={cell}
@@ -67,7 +69,7 @@ const CoefCovInput = (props) => {
                                 }
                             }}
                         />
-                    </Tooltip>
+                    </Box>
                 ))}
             </Box>
         ));
@@ -95,7 +97,6 @@ const CoefMeanInput = (props) => {
 
 
     const renderMatrix = () => {
-        return;
         let items = theFormula.split("~");
         if (items.length > 1) {
             items = items[1];
@@ -109,10 +110,12 @@ const CoefMeanInput = (props) => {
         }
 
         return (
-            <Box style={{ display: 'flex' }}>
+            <Box>
                 {(assigner['parameters']['coef_mean'] || []).map((cell, index) => (
-                    <Tooltip title={`${items[index]}`}>
-                        <Input
+
+                <Box key={index} display="inline-block" sx={{ m: 1 }}>
+                <Typography style={{ minWidth: "100px", maxWidth: "100px", padding: "5px" }}>{items[index]}</Typography>
+                <Input
                             key={index}
                             value={cell}
                             type={"number"}
@@ -138,7 +141,7 @@ const CoefMeanInput = (props) => {
                                 }
                             }}
                         />
-                    </Tooltip>
+                </Box>
                 ))
                 }
             </Box >
@@ -166,29 +169,29 @@ export function validate(props) {
 
     // Can do: prompt the user it's very risky to do when an experiment is running. They may want to keep a copy of the previous matrices
 
-    if(parameters['regressionFormulaItems'] === undefined) {
+    if (parameters['regressionFormulaItems'] === undefined) {
         return parameters;
     }
     let allVariables = factors.concat(variables);
 
     // if variables or versions changes, the regression formula items also need to be changed.
-    for(let i = 0; i < parameters['regressionFormulaItems'].length; i++) {
+    for (let i = 0; i < parameters['regressionFormulaItems'].length; i++) {
         parameters['regressionFormulaItems'][i] = parameters['regressionFormulaItems'][i].filter(item => {
             return allVariables.some(obj => obj === item);
-          });
+        });
     }
 
     // this is a little bit trick. because we may remove multiple items in the same time, we need to do it in a loop.
     let deepCopy = JSON.parse(JSON.stringify(parameters));
-    for(let index = 0; index < deepCopy['regressionFormulaItems'].length; index++) {
-        if(deepCopy.regressionFormulaItems[index].length === 0) {
+    for (let index = 0; index < deepCopy['regressionFormulaItems'].length; index++) {
+        if (deepCopy.regressionFormulaItems[index].length === 0) {
 
             let startPoint = 0;
             for (let i = 0; i < index; i++) {
                 startPoint += calculateFormulateItemSize(existingVariables, original['regressionFormulaItems'][i]);
             }
-    
-            if(original['include_intercept']) {
+
+            if (original['include_intercept']) {
                 startPoint += 1;
             }
             let sizeOfItem = calculateFormulateItemSize(existingVariables, original['regressionFormulaItems'][index]);
@@ -239,26 +242,26 @@ export function main(props) {
     }
     const coefCovAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_cov']) {
-          assigner['parameters']['coef_cov'] = [];
+            assigner['parameters']['coef_cov'] = [];
         }
-      
+
         const coef_cov = assigner['parameters']['coef_cov'];
         const n = coef_cov.length;
-      
+
         // Expand the existing coef_cov array if necessary
         for (let i = 0; i < n; i++) {
-          coef_cov[i].length = n + newItemSize;
+            coef_cov[i].length = n + newItemSize;
         }
         coef_cov.length = n + newItemSize;
-      
+
         // Fill the new elements with 0 and set the diagonal elements to 1
         for (let i = n; i < n + newItemSize; i++) {
-          coef_cov[i] = Array(n + newItemSize).fill(0);
-          coef_cov[i][i] = 1;
+            coef_cov[i] = Array(n + newItemSize).fill(0);
+            coef_cov[i][i] = 1;
         }
-      
+
         sAssigners(tree);
-      };
+    };
 
     const coefMeanAddNewItem = (startPoint, newItemSize) => {
         if (!assigner['parameters']['coef_mean']) {
@@ -402,23 +405,23 @@ export function main(props) {
 
         function getCombinations(arr) {
             let result = [];
-          
+
             function backtrack(currentCombo, remainingElements) {
-              if (currentCombo.length === arr.length) {
-                result.push([...currentCombo]);
-                return;
-              }
-          
-              for (let i = 0; i < remainingElements.length; i++) {
-                currentCombo.push(remainingElements[i]);
-                backtrack(currentCombo, remainingElements.slice(i + 1));
-                currentCombo.pop();
-              }
+                if (currentCombo.length === arr.length) {
+                    result.push([...currentCombo]);
+                    return;
+                }
+
+                for (let i = 0; i < remainingElements.length; i++) {
+                    currentCombo.push(remainingElements[i]);
+                    backtrack(currentCombo, remainingElements.slice(i + 1));
+                    currentCombo.pop();
+                }
             }
-          
+
             backtrack([], arr);
             return result;
-          }
+        }
         // So, we need to delete all regression formula items as the first step.
         assigner['parameters']['regressionFormulaItems'] = [];
         // if include intercept, keep the first row and first column, and delete the rest. Otherwise initialize the matrix with size 0.
@@ -470,7 +473,7 @@ export function main(props) {
 
         // Now, we need to update the coef_cov and coef_mean.
         let size = 0;
-        for(let regressionFormulaItem of assigner['parameters']['regressionFormulaItems']) {
+        for (let regressionFormulaItem of assigner['parameters']['regressionFormulaItems']) {
             size += calculateFormulateItemSize(existingVariables, regressionFormulaItem);
         }
 
@@ -482,7 +485,7 @@ export function main(props) {
 
         // make a coef_cov size of size * size, and fill the diagonal with 1.
         assigner['parameters']['coef_cov'] = Array(size).fill(0).map(() => Array(size).fill(0));
-        for(let i = 0; i < size; i++) {
+        for (let i = 0; i < size; i++) {
             assigner['parameters']['coef_cov'][i][i] = 1;
         }
 
