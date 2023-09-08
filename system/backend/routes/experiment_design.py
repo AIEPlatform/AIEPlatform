@@ -1001,6 +1001,7 @@ import json
 import requests
 from Models.InteractionModel import InteractionModel
 requestSession = requests.Session()
+# TODO: fake data may not work as expected.
 @experiment_design_apis.route("/apis/experimentDesign/runSimulation", methods=["POST"])
 def run_simulation():
     # TODO: before allowing a simulation to be started, check if there is sufficient threads available.
@@ -1012,7 +1013,7 @@ def run_simulation():
         assignerids = list(
             Assigner.find({"studyId": the_study['_id']}).distinct("_id")
         )
-        the_interactions = list(InteractionModel.get_many({"assignerId": {"$in": assignerids}}, public=True).sort("timestamp", pymongo.ASCENDING))
+        the_interactions = list(InteractionModel.get_many({"assignerId": {"$in": assignerids}}, public=True).sort("timestamp", pymongo.DESCENDING))
         # change the rewardTimestamp this way:
         # first 20% of the interactions, change the rewardTimestamp to four days ago.
         # second 20% of the interactions, change the rewardTimestamp to three days ago.
@@ -1024,7 +1025,8 @@ def run_simulation():
         time_assigner_lists = [[] for i in range(numDays)]
         
         for i in range(0, len(the_interactions)):
-            if the_interactions[i]['rewardTimestamp'] is None: continue
+            print(the_interactions[i])
+            if 'rewardTimestamp' not in the_interactions[i] is None: continue
 
             for day in range(numDays):
                 if i < 1/numDays * day * len(list(the_interactions)):

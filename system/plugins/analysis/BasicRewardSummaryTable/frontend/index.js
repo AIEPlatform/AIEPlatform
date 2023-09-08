@@ -12,8 +12,9 @@ import { useEffect, useState } from 'react';
 import { Stack, Typography, IconButton } from '@mui/material';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 
+export const name = "Basic Reward Summary Table";
 
-export default function BasicTable(props) {
+export function main(props) {
 
   const theDataset = props.theDataset;
   const analysis = props.analysis;

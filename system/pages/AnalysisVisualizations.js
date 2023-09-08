@@ -7,42 +7,37 @@ import { Container, Typography, Box, Button, Paper, Icon } from '@mui/material';
 import Layout from '../components/layout';
 import Select from 'react-select';
 import Head from 'next/head';
-import AverageRewardByTime from "../components/AnalysisVisualizationsPage/AverageRewardByTime";
-import Table from "../components/AnalysisVisualizationsPage/Table";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UpgradeIcon from '@mui/icons-material/Upgrade';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-
 import { UserContext } from "../contexts/UserContextWrapper";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import getConfig from 'next/config';
-import AverageRewardByTimeForOneVersion from '../components/AnalysisVisualizationsPage/AverageRewardByTimeForOneVersion';
-
 
 const { publicRuntimeConfig } = getConfig();
 const websiteName = publicRuntimeConfig.websiteName;
 
-const availableAnalysises = [
-  {
-    value: 'basicRewardTable',
-    label: 'Basic Reward Table',
-  },
-  {
-    value: 'averageRewardByTime',
-    label: 'Average Reward By Time',
-  }, 
-  {
-    value: 'averageRewardByTimeForOneVersion', 
-    label: 'Average Reward By Time For One Version (with error bar)'
-  }
-];
+const components = {};
+let availableAnalysises = [];
+
+const context = require.context('../plugins/analysis', true, /\/frontend\/index\.js$/);
+context.keys().forEach((key) => {
+  const subfolderName = key.split('/')[1];
+  const componentModule = context(key);
+
+  // Assuming your components are exported as 'default'
+  components[subfolderName] = componentModule;
+  availableAnalysises.push({
+    value: subfolderName,
+    label: componentModule.name
+  })
+});
 
 const formatDate = (dateString) => {
   const formattedDate = new Date(dateString);
@@ -387,33 +382,19 @@ export default function DataAnalysis(props) {
                                 style={{ maxWidth: '100%' }}
                                 elevation={7}
                               >
-                                {item['label'] === 'Average Reward By Time For One Version (with error bar)' && (
-                                  <AverageRewardByTimeForOneVersion
-                                    theDataset={theDataset}
-                                    analysis={item}
-                                    sAnalysises={sAnalysises}
-                                    analysises={analysises}
-                                    closeButtonClickHandler={handleDeleteAnalysis}
-                                  />
-                                )}
-                                {item['label'] === 'Average Reward By Time' && (
-                                  <AverageRewardByTime
-                                    theDataset={theDataset}
-                                    analysis={item}
-                                    sAnalysises={sAnalysises}
-                                    analysises={analysises}
-                                    closeButtonClickHandler={handleDeleteAnalysis}
-                                  />
-                                )}
-                                {item['label'] === 'Basic Reward Table' && (
-                                  <Table
-                                    theDataset={theDataset}
-                                    analysis={item}
-                                    sAnalysises={sAnalysises}
-                                    analysises={analysises}
-                                    closeButtonClickHandler={handleDeleteAnalysis}
-                                  />
-                                )}
+                                <div>
+                                  {item.value}
+                                  {Object.entries(components).map(([subfolderName, component]) => (
+                                    <div key={subfolderName}>
+                                      {component && item.value.includes(subfolderName) && <component.main theDataset={theDataset}
+                                        analysis={item}
+                                        sAnalysises={sAnalysises}
+                                        analysises={analysises}
+                                        closeButtonClickHandler={handleDeleteAnalysis} />}
+                                    </div>
+                                  ))}
+                                </div>
+
                               </Paper>
                             </div>
                           )}

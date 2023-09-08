@@ -82,11 +82,6 @@ function AssignerEditor(props) {
                         </div>
                     ))}
                 </div>
-                {/* {assigner.policy === 'WeightedRandom' && <WeightedRandom versions={versions} assigners={assigners} sAssigners={sAssigners} myId={myId}></WeightedRandom>}
-                {assigner.policy === 'TSConfigurable' && <TSConfigurable versions={versions} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSConfigurable>}
-                {assigner.policy === 'ThompsonSamplingContextual' && <TSContextual existingVariables={existingVariables} factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></TSContextual>}
-                {assigner.policy === 'GPT' && <GPT factors={factors} assigners={assigners} sAssigners={sAssigners} myId={myId} variables={variables}></GPT>} */}
-
 
             </Box>
         </Paper>

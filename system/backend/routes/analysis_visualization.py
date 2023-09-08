@@ -239,57 +239,6 @@ def analysis():
             "result": the_result
         }), 200
 
-
-@analysis_visualization_apis.route("/apis/analysis/AverageRewardByTime", methods = ["POST"])
-def AverageRewardByTime_api():
-    theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
-    selectedVersions = request.json['selectedVersions'] if 'selectedVersions' in request.json else [] # This is the id.
-    selectedAssigners = request.json['selectedAssigners'] if 'selectedAssigners' in request.json else [] # This is the id.
-    perDay = request.json['perDay'] if 'perDay' in request.json else "D" # This is the id.
- 
-    if theDatasetId is None:
-        return json_util.dumps({
-            "status_code": 400,
-            "message": "Please make sure the_study_basic_info, selected_variables are provided."
-        }), 400
-    else:
-        df = getDataset(theDatasetId)
-        result_df, groups = AverageRewardByTime(df, selectedAssigners, selectedVersions, perDay)
-        return json_util.dumps({
-            "status_code": 200,
-            "message": "Table returned.",
-            "data": result_df, 
-            "groups": groups
-        }), 200
-    
-
-@analysis_visualization_apis.route("/apis/analysis/AverageRewardForOneVersion", methods = ["POST"])
-def AverageRewardForOneVersion_api():
-    theDatasetId = request.json['theDatasetId'] if 'theDatasetId' in request.json else None # This is the id.
-    selectedVersion = request.json['selectedVersion'] if 'selectedVersion' in request.json else None # This is the id.
-    selectedVariables = request.json['selectedVariable'] if 'selectedVariable' in request.json else None # This is the id.
-    selectedPolicy = request.json['selectedPolicy'] if 'selectedPolicy' in request.json else None # This is the id.
-    perDay = request.json['perDay'] if 'perDay' in request.json else "D" # This is the id.
-    
- 
-    if theDatasetId is None:
-        return json_util.dumps({
-            "status_code": 400,
-            "message": "Please make sure the_study_basic_info, selected_variables are provided."
-        }), 400
-    else:
-        df = getDataset(theDatasetId)
-        result_df = AverageRewardForOneVersion(df, selectedVersion, selectedVariable, selectedPolicy, perDay)
-        return json_util.dumps({
-            "status_code": 200,
-            "message": "Table returned.", 
-            "data": result_df
-        }), 200
-    
-
-
-
-
 def create_df_from_mongo(study_name, deployment_name):
     the_deployment = DeploymentModel.get_one({"name": deployment_name})
     the_study = StudyModel.get_one({"name": study_name, "deploymentId": the_deployment['_id']})

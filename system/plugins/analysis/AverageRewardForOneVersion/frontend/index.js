@@ -9,7 +9,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const distinctColors = ["red", "blue", "green", "orange", "purple", "pink", "cyan", "magenta", "teal"];
 
-export default function AverageRewardByTimeForOneVersion(props) {
+export const name = "Average Reward By Time For One Version (Not Complete Yet)"
+
+export function main(props) {
   const theDataset = props.theDataset;
   const analysis = props.analysis;
   const closeButtonClickHandler = props.closeButtonClickHandler;
@@ -17,7 +19,7 @@ export default function AverageRewardByTimeForOneVersion(props) {
   const [groups, sGroups] = useState([]);
   useEffect(() => {
     if (theDataset == null) return;
-    fetch('/apis/analysis/AverageRewardByTime', {
+    fetch('/apis/analysis/analysis', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -28,8 +30,8 @@ export default function AverageRewardByTimeForOneVersion(props) {
     })
       .then(res => res.json())
       .then(data => {
-        sResultDf(data['data']);
-        sGroups(data['groups']);
+        sResultDf(data['result']['data']);
+        sGroups(data['result']['groups']);
       })
       .catch(err => console.log(err))
   }, [theDataset,props.datasetTime])
