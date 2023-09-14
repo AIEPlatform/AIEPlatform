@@ -499,7 +499,7 @@ def checkIfAssignersAreValid(assigners):
 
     return assigners
 
-@experiment_design_apis.route("/apis/experimentDesign/study", methods = ["PUT"])
+@experiment_design_apis.route("/apis/experimentDesign/study", methods=["PUT"])
 def modify_existing_study():
     # load from request body.
     deployment = 'deployment' in request.json and request.json['deployment'] or None # Name
@@ -524,6 +524,22 @@ def modify_existing_study():
             studyName = study['name']
             status = study['status'] if 'status' in study else 'stopped'
 
+            rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else {'name': 'reward', 'min': 0, 'max': 1}
+
+            try:
+                rewardInformation['min'] = float(rewardInformation['min'])
+                rewardInformation['max'] = float(rewardInformation['max'])
+                if rewardInformation['min'] >= rewardInformation['max']:
+                    return json_util.dumps({
+                        "status_code": 400,
+                        "message": "Please make sure that the min and max of reward are valid numbers and min must be smaller than max."
+                    }), 400
+            except ValueError:
+                return json_util.dumps({
+                    "status_code": 400,
+                    "message": "Please make sure that the min and max of reward are valid numbers and min must be smaller than max."
+                }), 400
+
             the_deployment = DeploymentModel.get_one({"name": deployment})
             the_study = StudyModel.get_one({"name": studyName, "deploymentId": the_deployment['_id']})
 
@@ -536,7 +552,8 @@ def modify_existing_study():
                 'versions': versions, 
                 'variables': variables,
                 'factors': factors,
-                'status': status
+                'status': status,
+                'rewardInformation': rewardInformation
                 }}, session=session)
             
             # get all assigners of this study. Remove assigners whose _id are not present in the assigners list.
