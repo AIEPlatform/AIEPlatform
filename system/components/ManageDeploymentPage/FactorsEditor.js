@@ -1,18 +1,27 @@
-import { React } from 'react';
+import { React, useState } from 'react';
 import { Paper, TextField, Button, Box } from '@mui/material';
 
 function VersionEditor(props) {
+    let [newFactor, sNewFactor] = useState("");
     let factors = props.factors;
     let sFactors = props.sFactors;
 
-    const handleVersionNameChange = (index, event) => {
-        let data = [...factors];
-        data[index] = event.target.value;
-        sFactors(data);
-    }
-
     const addFields = () => {
-        sFactors([...factors, `factor${factors.length + 1}`]);
+        try {
+            // check if new factor exists aready.
+            for (let i = 0; i < factors.length; i++) {
+                if (factors[i] === newFactor) {
+                    alert("Factor already exists.");
+                    return;
+                }
+            }
+            if (newFactor === "") sFactors([...factors, `factor${factors.length + 1}`]);
+            else sFactors([...factors, newFactor]);
+            sNewFactor("");
+        }
+        catch (e) {
+            alert("Error when adding new factors. Please try again later.");
+        }
     }
 
     const removeFields = (index) => {
@@ -23,23 +32,23 @@ function VersionEditor(props) {
 
     return (
         <Paper sx={{
-            m:1, 
+            m: 1,
             p: 2,
             display: 'flex',
             flexDirection: 'column'
         }}>
             {factors.map((factor, index) => {
                 return (
-                    <Box key={factor} margin = "10px 0" style={{position: "relative"}}>
-                        <TextField sx = {{mb: 2, mr: 2}} label="Factor" variant="standard" value = {factor} InputLabelProps={{ shrink: true }} onChange={(e) => handleVersionNameChange(index, e)}/>
-                        <Button onClick={() => removeFields(index)} variant="contained" style={{marginTop: "10px"}} color="error">Remove this factor</Button>
+                    <Box key={factor} margin="10px 0" style={{ position: "relative" }}>
+                        <TextField sx={{ mb: 2, mr: 2 }} label="Factor" variant="standard" value={factor} InputLabelProps={{ shrink: true }} disabled={true} />
+                        <Button onClick={() => removeFields(index)} variant="contained" style={{ marginTop: "10px" }} color="error">Remove</Button>
                     </Box>
                 )
             })}
-
-        <Button onClick = {(e) => addFields()} variant="contained" color="primary" sx = {{m: 1}}>Add a factor</Button>
-
-        <mark>Renaming an existing factor is equivalent to removing this factor and creating another!</mark>
+            <Box>
+            <TextField sx={{ mb: 2, mr: 2 }} label="New factor name" variant="standard" value={newFactor} InputLabelProps={{ shrink: true }} onChange={(e) => sNewFactor(e.target.value)} />
+                <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ m: 1 }}>Add a factor</Button>
+            </Box>
         </Paper>
     )
 }

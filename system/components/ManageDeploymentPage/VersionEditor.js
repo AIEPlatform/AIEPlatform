@@ -71,14 +71,14 @@ function VersionEditor(props) {
                                     sx={{mr: 2, mb: 2}}
                                     key={factor}
                                     label={factor}
-                                    value={input['versionJSON'][factor]}
+                                    value={input['versionJSON'][factor] ? input['versionJSON'][factor]: ""}
                                     type="number"
                                     onChange={(e) => { handleVersionJSONChange(index, factor, e)}}
                                 />
                             ))}
                         </Box>
                         <Button onClick={() => removeFields(index)} variant="contained" style={{ marginTop: "10px" }} color="error">Remove</Button>
-                        <Button onClick={() => setTinyMCEEditorIndex(index) } variant="contained" style={{ marginTop: "10px" }} color="primary">Edit</Button>
+                        <Button onClick={() => setTinyMCEEditorIndex(index) } variant="contained" style={{ marginTop: "10px", marginLeft: "10px" }} color="primary">Edit</Button>
                     </Box>
                 )
             })}

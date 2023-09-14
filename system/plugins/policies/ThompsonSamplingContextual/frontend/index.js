@@ -163,6 +163,8 @@ export function validate(props) {
     let versions = props.versions;
     let existingVariables = props.existingVariables;
 
+    console.log("Hello")
+
     let original = JSON.parse(JSON.stringify(parameters));
     // Step 1: remove the item from the formula items (two for loop, one for version one for variable).
     // Step 2: remove the formula item that are empty. Reduce the corresponding parameters.
