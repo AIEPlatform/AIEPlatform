@@ -1,5 +1,5 @@
 import { React, useState } from 'react';
-import { Paper, TextField, Button, Box } from '@mui/material';
+import { Paper, TextField, Button, Box, Typography } from '@mui/material';
 
 function VersionEditor(props) {
     let [newFactor, sNewFactor] = useState("");
@@ -37,6 +37,12 @@ function VersionEditor(props) {
             display: 'flex',
             flexDirection: 'column'
         }}>
+
+            <Box>
+                <TextField sx={{ mb: 2, mr: 2 }} label="New factor name" variant="standard" value={newFactor} InputLabelProps={{ shrink: true }} onChange={(e) => sNewFactor(e.target.value)} />
+                <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ marginTop: "10px" }}>Add a factor</Button>
+            </Box>
+            <Typography variant="h5">Current Factors</Typography>
             {factors.map((factor, index) => {
                 return (
                     <Box key={factor} margin="10px 0" style={{ position: "relative" }}>
@@ -45,10 +51,6 @@ function VersionEditor(props) {
                     </Box>
                 )
             })}
-            <Box>
-            <TextField sx={{ mb: 2, mr: 2 }} label="New factor name" variant="standard" value={newFactor} InputLabelProps={{ shrink: true }} onChange={(e) => sNewFactor(e.target.value)} />
-                <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ m: 1 }}>Add a factor</Button>
-            </Box>
         </Paper>
     )
 }

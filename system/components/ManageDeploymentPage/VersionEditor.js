@@ -1,10 +1,12 @@
-import { React } from 'react';
-import { Paper, TextField, Button, Box } from '@mui/material';
+import { React, useState } from 'react';
+import { Paper, TextField, Button, Box, Typography } from '@mui/material';
 
 function VersionEditor(props) {
     let versions = props.versions;
     let sVersions = props.sVersions;
     let factors = props.factors;
+
+    let [newVersionName, sNewVersionName] = useState("");
 
     const handleFormChange = (index, event) => {
         let data = [...versions];
@@ -12,20 +14,32 @@ function VersionEditor(props) {
         sVersions(data);
     }
 
-    const handleVersionNameChange = (index, event) => {
-        let data = [...versions];
-        data[index]['name'] = event.target.value;
-        sVersions(data);
-    }
-
     const addFields = () => {
-        let versionJSON = {};
-        factors.forEach((factor) => {
-            versionJSON[factor] = 0;
-        })
-        let newfield = { name: `version${versions.length + 1}`, content: '', versionJSON: versionJSON }
-        sVersions([...versions, newfield]);
-        // Need to set all factors to 0 for this new version.
+        // check if version name already exists.
+        try {
+            for (let i = 0; i < versions.length; i++) {
+                if (versions[i]['name'] === newVersionName) {
+                    alert("Version name already exists.");
+                    return;
+                }
+            }
+            let versionJSON = {};
+            factors.forEach((factor) => {
+                versionJSON[factor] = 0;
+            })
+
+            let name = `version${versions.length + 1}`;
+            if (newVersionName !== "") {
+                name = newVersionName;
+            }
+            let newfield = { name: name, content: '', versionJSON: versionJSON }
+            sVersions([...versions, newfield]);
+            sNewVersionName("");
+            // Need to set all factors to 0 for this new version.
+        }
+        catch (e) {
+            alert("Error when adding new version. Please try again later.");
+        }
     }
 
     const removeFields = (index) => {
@@ -50,10 +64,22 @@ function VersionEditor(props) {
             display: 'flex',
             flexDirection: 'column'
         }}>
+
+            <Box>
+                <TextField sx={{ mb: 2, mr: 2 }} label="New version name" variant="standard" value={newVersionName} InputLabelProps={{ shrink: true }} onChange={(e) => sNewVersionName(e.target.value)} />
+                <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ marginTop: "10px" }}>Add a new version</Button>
+            </Box>
+            <Typography variant="h5">Current Versions</Typography>
             {versions.map((input, index) => {
                 return (
+                    // add a seperator line.
                     <Box key={index} margin="10px 0" style={{ position: "relative" }}>
-                        <TextField sx={{ mb: 2 }} label="Version Name" variant="standard" value={input['name']} InputLabelProps={{ shrink: true }} onChange={(e) => handleVersionNameChange(index, e)} />
+                        <Typography variant="h6" sx={{ m: 1 }}>{input['name']}</Typography>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'row', mb: 2 }}>
+                            <Button onClick={() => removeFields(index)} variant="contained" style={{ marginTop: "10px" }} color="error">Remove</Button>
+                            <Button onClick={() => setTinyMCEEditorIndex(index)} variant="contained" style={{ marginTop: "10px", marginLeft: "10px" }} color="primary">Edit</Button>
+                        </Box>
                         <TextField
                             required
                             label={`${input['name']}`}
@@ -64,29 +90,22 @@ function VersionEditor(props) {
                             fullWidth
                         />
 
-                        <Box sx = {{mt: 2, mr: 2}}>
+                        <Box sx={{ mt: 2, mr: 2 }}>
                             <p>Version JSON</p>
                             {factors.map((factor, _) => (
                                 <TextField
-                                    sx={{mr: 2, mb: 2}}
+                                    sx={{ mr: 2, mb: 2 }}
                                     key={factor}
                                     label={factor}
-                                    value={input['versionJSON'][factor] ? input['versionJSON'][factor]: ""}
+                                    value={input['versionJSON'][factor] ? input['versionJSON'][factor] : ""}
                                     type="number"
-                                    onChange={(e) => { handleVersionJSONChange(index, factor, e)}}
+                                    onChange={(e) => { handleVersionJSONChange(index, factor, e) }}
                                 />
                             ))}
                         </Box>
-                        <Button onClick={() => removeFields(index)} variant="contained" style={{ marginTop: "10px" }} color="error">Remove</Button>
-                        <Button onClick={() => setTinyMCEEditorIndex(index) } variant="contained" style={{ marginTop: "10px", marginLeft: "10px" }} color="primary">Edit</Button>
                     </Box>
                 )
             })}
-
-            <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ m: 1 }}>Add More Versions</Button>
-
-
-            
         </Paper>
     )
 }
