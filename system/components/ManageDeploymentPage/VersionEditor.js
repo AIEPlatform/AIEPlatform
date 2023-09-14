@@ -69,7 +69,7 @@ function VersionEditor(props) {
                 <TextField sx={{ mb: 2, mr: 2 }} label="New version name" variant="standard" value={newVersionName} InputLabelProps={{ shrink: true }} onChange={(e) => sNewVersionName(e.target.value)} />
                 <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ marginTop: "10px" }}>Add a new version</Button>
             </Box>
-            <Typography variant="h5">Current Versions</Typography>
+            <Typography variant="h5">Current {versions.length} Version{versions.length > 1 ? "s": ""}</Typography>
             {versions.map((input, index) => {
                 return (
                     // add a seperator line.
