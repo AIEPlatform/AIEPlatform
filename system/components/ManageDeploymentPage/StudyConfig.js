@@ -33,6 +33,8 @@ function StudyConfig(props) {
     let setStudyAttributes = props.setStudyAttributes;
     let sAssignerModalOpen = props.sAssignerModalOpen;
 
+    let setTinyMCEEditorIndex = props.setTinyMCEEditorIndex;
+
     const treeRef = useRef(null);
     let handleOpen = (nodeId) => treeRef.current.open(nodeId);
 
@@ -213,7 +215,7 @@ function StudyConfig(props) {
                 <AccordionDetails>
                     <Button onClick={(e) => autoGenerateVersionJSON()} variant="contained" color="primary" sx={{ m: 1 }}>!DANGER: WE DON'T KNOW HOW IT WILL AFFECT ON-GOING ASSIGNERS. DO IT WITH YOUR OWN RISK. Automatically generate version JSON</Button>
                     <FactorsEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
-                    <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} />
+                    <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} setTinyMCEEditorIndex={setTinyMCEEditorIndex} />
                 </AccordionDetails>
             </Accordion>
             <Accordion>

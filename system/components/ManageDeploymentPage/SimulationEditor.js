@@ -4,13 +4,14 @@ import { Typography, Paper, Button, Box, FormControl, NativeSelect } from '@mui/
 function SimulationEditor(props) {
     // TODO: make this saved to DB.
     // TODO: handle when variable and version changes.
-    let versions = props.versions;
-    let variables = props.variables;
+    let theStudy = props.study;
+    let study = theStudy.name;
+    let versions = theStudy.versions;
+    let variables = theStudy.variables;
     let deployment = props.deploymentName;
-    let study = props.studyName;
 
     let [sampleSize, sSampleSize] = useState(100);
-    let simulationSetting = props.simulationSetting;
+    let simulationSetting = theStudy.simulationSetting;
     let sSimulationSetting = props.sSimulationSetting;
 
     const [jsonData, setJsonData] = useState(null);
@@ -222,7 +223,7 @@ function SimulationEditor(props) {
                         </Box>
                     )
                 })}
-                <Typography variant="h6">Contextual Effects</Typography>
+                <Typography variant="h6">Contextual Effects {simulationSetting['contextualEffects'].length}</Typography>
                 {simulationSetting['contextualEffects'].map((contextualEffect, index) => {
                     return contextualEffectEditor(contextualEffect, index);
                 })}

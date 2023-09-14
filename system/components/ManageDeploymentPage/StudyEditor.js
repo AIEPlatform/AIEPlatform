@@ -11,6 +11,8 @@ import StopIcon from '@mui/icons-material/Stop';
 import StartIcon from '@mui/icons-material/Start';
 import validifyStudy from '../../helpers/validifyStudy';
 
+import AdvancedVersionEditor from './AdvancedVerionEditor';
+
 
 const components = {};
 let availablePolicies = [];
@@ -79,6 +81,8 @@ function StudyEditor(props) {
             .then(response => response.json())
             .then(data => {
                 sStudy(data['study']);
+
+                console.log(data['study']['simulationSetting']['contextualEffects'])
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -172,6 +176,8 @@ function StudyEditor(props) {
     const sAssigners = setStudyAttributes.bind('assigners');
     const sSimulationSetting = setStudyAttributes.bind('simulationSetting');
 
+    let [tinyMCEEditorIndex, setTinyMCEEditorIndex] = useState(-1);
+
     if (study === null) return (<div></div>);
     return (
         <Box>
@@ -194,12 +200,12 @@ function StudyEditor(props) {
                     </Tabs>
                 </Container>}
 
-                {tabIndex === 0 && <StudyConfig study={study} sStudy={sStudy} sIdToEdit={sIdToEdit} existingVariables = {existingVariables} sExistingVariables={sExistingVariables} setStudyAttributes = {setStudyAttributes} sAssignerModalOpen={sAssignerModalOpen}></StudyConfig>}
+                {tabIndex === 0 && <StudyConfig study={study} sStudy={sStudy} sIdToEdit={sIdToEdit} existingVariables = {existingVariables} sExistingVariables={sExistingVariables} setStudyAttributes = {setStudyAttributes} sAssignerModalOpen={sAssignerModalOpen} setTinyMCEEditorIndex = {setTinyMCEEditorIndex}></StudyConfig>}
 
 
 
-                {tabIndex === 1 &&
-                    <SimulationEditor studyName={study.name} deploymentName={deploymentName} versions={study.versions} variables={study.variables} simulationSetting={study.simulationSetting} sSimulationSetting={sSimulationSetting} />
+                {tabIndex === 1 && 
+                    <SimulationEditor study = {study} deploymentName = {deploymentName} sSimulationSetting={sSimulationSetting} />
                 }
             </Box>
             <Modal
@@ -210,6 +216,18 @@ function StudyEditor(props) {
             >
                 <Box style={{ background: "white" }}>
                     <AssignerEditor components = {components} availablePolicies = {availablePolicies} existingVariables = {existingVariables} study={study} assigners={study.assigners} sAssigners={sAssigners} idToEdit={idToEdit} variables={study.variables} factors={study.factors} versions={study.versions}></AssignerEditor>
+                </Box>
+            </Modal>
+
+
+            <Modal
+                open={tinyMCEEditorIndex !== -1}
+                onClose={() => { setTinyMCEEditorIndex(-1) }}
+                style={{ overflow: 'scroll', height: "80%", width: "80%", margin: "5% auto" }}
+
+            >
+                <Box style={{ background: "white" }}>
+                    <AdvancedVersionEditor study={study} sStudy={sStudy} tinyMCEEditorIndex={tinyMCEEditorIndex} ></AdvancedVersionEditor>
                 </Box>
             </Modal>
         </Box >

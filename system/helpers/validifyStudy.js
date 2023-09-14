@@ -47,12 +47,14 @@ function validifyStudy(study, existingVariables, components) {
 
         for(let i = 0; i < modifiedStudy.simulationSetting.contextualEffects.length; i++) {
             let contextualEffect = modifiedStudy.simulationSetting.contextualEffects[i];
-            if(!study.versions.some(obj => obj.name === contextualEffect.version)) {
+            if(contextualEffect.version != null && !study.versions.some(obj => obj.name === contextualEffect.version)) {
                 //remove by index
+                console.log(contextualEffect.version)
                 modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
             }
-            if(!study.variables.some(obj => obj.name === contextualEffect.variable)) {
+            if(contextualEffect.variable != null &&  !study.variables.some(obj => obj.name === contextualEffect.variable)) {
                 modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
+                console.log(contextualEffect.variable)
             }
         }
     }

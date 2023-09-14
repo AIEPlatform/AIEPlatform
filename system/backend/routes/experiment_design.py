@@ -433,6 +433,8 @@ def load_existing_study():
     theStudy = StudyModel.get_one({"name": study, "deploymentId": the_deployment['_id']})
     assigners = build_json_for_study(theStudy['_id'])
     theStudy['assigners'] = assigners # Note that in DB, we only save the root assigner!
+
+    print(len(theStudy['simulationSetting']['contextualEffects']))
     return json_util.dumps(
         {
         "status_code": 200,

@@ -8,6 +8,7 @@ import theme from '../src/theme';
 import createEmotionCache from '../src/createEmotionCache';
 import UserContextWrapper from "../contexts/UserContextWrapper";
 import getConfig from 'next/config';
+import 'react-quill/dist/quill.snow.css'
 
 const { publicRuntimeConfig } = getConfig();
 const websiteName = publicRuntimeConfig.websiteName;

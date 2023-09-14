@@ -40,6 +40,9 @@ function VersionEditor(props) {
         sVersions(data);
     }
 
+    // state: tinymce version index.
+    let setTinyMCEEditorIndex = props.setTinyMCEEditorIndex;
+
     return (
         <Paper sx={{
             m: 1,
@@ -75,11 +78,15 @@ function VersionEditor(props) {
                             ))}
                         </Box>
                         <Button onClick={() => removeFields(index)} variant="contained" style={{ marginTop: "10px" }} color="error">Remove</Button>
+                        <Button onClick={() => setTinyMCEEditorIndex(index) } variant="contained" style={{ marginTop: "10px" }} color="primary">Edit</Button>
                     </Box>
                 )
             })}
 
             <Button onClick={(e) => addFields()} variant="contained" color="primary" sx={{ m: 1 }}>Add More Versions</Button>
+
+
+            
         </Paper>
     )
 }
