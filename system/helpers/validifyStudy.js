@@ -52,9 +52,10 @@ function validifyStudy(study, existingVariables, components) {
                 console.log(contextualEffect.version)
                 modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
             }
-            if(contextualEffect.variable != null &&  !study.variables.some(obj => obj.name === contextualEffect.variable)) {
-                modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
+            if(contextualEffect.variable != null && !study.variables.includes(contextualEffect.variable)) {
                 console.log(contextualEffect.variable)
+                console.log(study.variables)
+                modifiedStudy.simulationSetting.contextualEffects.splice(i, 1);
             }
         }
     }

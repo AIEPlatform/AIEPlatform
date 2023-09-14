@@ -59,7 +59,7 @@ function StudyEditor(props) {
     }, [theStudy]);
 
     useEffect(() => {
-        if (study === null) return;
+        if (study === null || existingVariables === null) return;
         let modifiedStudy = validifyStudy(study, existingVariables, components);
         sStudy(modifiedStudy);
     }, [study?.variables.length, study?.versions.length, study?.factors.length, existingVariables]); // also listen on the array of parameters of all assigners
@@ -81,8 +81,6 @@ function StudyEditor(props) {
             .then(response => response.json())
             .then(data => {
                 sStudy(data['study']);
-
-                console.log(data['study']['simulationSetting']['contextualEffects'])
             })
             .catch((error) => {
                 console.error('Error:', error);
