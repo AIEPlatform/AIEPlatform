@@ -26,7 +26,7 @@ class TSConfigurable(Policy):
     def validate_assigner(assigner):
         return assigner
     
-    def choose_arm_algorithm(self, user, where, other_information, request_different_arm = False):
+    def choose_arm_algorithm(self, user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm = False):
         try:
             # TODO: We may need to remove the non-existing versions (that were deleted.)
             #import models individually to avoid circular dependency
@@ -68,71 +68,21 @@ class TSConfigurable(Policy):
                 if "uniform_threshold" in self.parameters and current_enrolled < self.parameters["uniform_threshold"]:
                     lucky_version = random.choice(all_versions)
                     # # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": {'sampleMethod': 'uniform_random_cold_start'}, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict
-                    }
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
+                    return lucky_version, None
                 
 
                 # check if epsilon exploration.
                 if 'epsilon' in self.parameters and np.random.uniform() < self.parameters['epsilon']:
                     lucky_version = random.choice(all_versions)
                     # # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": {'sampleMethod': 'epsilon_exploration'}, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict
-                    }
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
+                    return lucky_version, None
                 
                 if True or 'tspostdiff_threshold'not in self.parameters or self.parameters['tspostdiff_threshold'] == 0:
                     lucky_version = self.ts_sample()
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": {"sampleMethod": "non-tspostdiff"}, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict
-                    }
-
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
+                    return lucky_version, None
                 else:
                     lucky_version, sample_method = self.ts_postdiff_sample()
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": {"sampleMethod": "tspostdiff"}, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict
-                    }
-
-                    InteractionModel.insert_one(new_interaction)
-            return lucky_version
+            return lucky_version, None
 
         except Exception as e:
             print(e)

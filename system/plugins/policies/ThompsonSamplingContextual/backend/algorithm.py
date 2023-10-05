@@ -90,7 +90,7 @@ class ThompsonSamplingContextual(Policy):
         self.parameters['regression_formula'] = regression_formula
 
 
-    def choose_arm_algorithm(self, user, where, other_information, request_different_arm = False):
+    def choose_arm_algorithm(self, user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm = False):
         try:
             current_time = datetime.datetime.now()
             lucky_version = self.get_incomplete_consistent_assignment(user, where)
@@ -113,67 +113,10 @@ class ThompsonSamplingContextual(Policy):
 
                 include_intercept = parameters['include_intercept']
                 # Store contextual variables
-                
-                contextual_vars = self.study['variables']
-                # Get the contextual variables for the learner (most recent ones), or auto init ones.
-                
-                result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
-                
-                # Iterate over the array list
-                for value in contextual_vars:
-                    has_document = False
-
-                    # Check if a document exists for the current value
-                    for document in result:
-                        if document['variable'] == value:
-                            has_document = True
-                            break
-
-                    
-                    imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
-
-                    # Insert a document into the other collection if no document exists
-                    # get deployment_name
-
-                    the_deployment = Deployment.find_one({"_id": self.study['deploymentId']})
-                    if not has_document:
-                        document_to_insert = {
-                            'deployment': the_deployment['name'],
-                            "variable": value, 
-                            'value': imputed_value,   # TODO: impute based on a better rule.
-                            'user': user,
-                            'where': 'auto init', 
-                            'timestamp': current_time
-                        }
-                        VariableValueModel.insert_variable_value(document_to_insert)
-                    
-                contextual_values = VariableValueModel.get_latest_variable_values(contextual_vars, user)
-
-                contextual_vars_dict = {}
-                contextual_vars_id_dict = {}
-
-                for contextual_value in contextual_values:
-                    contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-                    contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
 
                 if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
-                    
                     lucky_version = random.choice(all_versions)
-                    # # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": other_information, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict, 
-                        'isUniform': True
-                    }
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
+                    return lucky_version, {"isUniform": True}
                 
                 mean = parameters['coef_mean']
                 cov = parameters['coef_cov']
@@ -232,21 +175,7 @@ class ThompsonSamplingContextual(Policy):
             # – otherInformation
             
             # Insert a record for the interaction.
-
-                new_interaction = {
-                    "user": user,
-                    "treatment": lucky_version,
-                    "outcome": None,
-                    "where": where,
-                    "assignerId": self._id,
-                    "timestamp": datetime.datetime.now(),
-                    "otherInformation": other_information, 
-                    "contextuals": contextual_vars_dict,
-                    "contextualIds": contextual_vars_id_dict
-                }
-
-                InteractionModel.insert_one(new_interaction)
-            return lucky_version
+            return lucky_version, None
         except:
             print(traceback.format_exc())
 
@@ -493,7 +422,7 @@ class ThompsonSamplingContextual(Policy):
 
 
     # get_num_participants_for_assigner_individual
-    def choose_arm_algorithm_individual(self, user, where, other_information):
+    def choose_arm_algorithm_individual(self, user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm = False):
         current_time = datetime.datetime.now()
         try:
             # because it's TS Contextual, 
@@ -550,21 +479,7 @@ class ThompsonSamplingContextual(Policy):
 
                 if "uniform_threshold" in parameters and current_enrolled < float(parameters["uniform_threshold"]):
                     lucky_version = random.choice(self.study['versions'])
-                    # # TODO: Make a new interaction. Remember to indicate this is from uniform.
-                    new_interaction = {
-                        "user": user,
-                        "treatment": lucky_version,
-                        "outcome": None,
-                        "where": where,
-                        "assignerId": self._id,
-                        "timestamp": datetime.datetime.now(),
-                        "otherInformation": other_information, 
-                        "contextuals": contextual_vars_dict,
-                        "contextualIds": contextual_vars_id_dict, 
-                        'isUniform': True
-                    }
-                    InteractionModel.insert_one(new_interaction)
-                    return lucky_version
+                    return lucky_version, {"isUniform": True}
                 
                 mean = parameters['coef_mean']
                 cov = parameters['coef_cov']
@@ -604,22 +519,7 @@ class ThompsonSamplingContextual(Policy):
             # – timestamp
             # – otherInformation
             
-            # Insert a record for the interaction.
-
-            new_interaction = {
-                "user": user,
-                "treatment": lucky_version,
-                "outcome": None,
-                "where": where,
-                "assignerId": self._id,
-                "timestamp": datetime.datetime.now(),
-                "otherInformation": other_information, 
-                "contextuals": contextual_vars_dict,
-                "contextualIds": contextual_vars_id_dict
-            }
-
-            InteractionModel.insert_one(new_interaction)
-            return lucky_version
+            return lucky_version, None
         except Exception as e:
             print(traceback.format_exc())
             return None

@@ -5,7 +5,10 @@ from errors import *
 import threading
 import time
 from Models.LockModel import LockModel
+from Models.VariableValueModel import VariableValueModel
+from impute import random_imputation
 import traceback
+import datetime
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
@@ -57,7 +60,27 @@ class Policy(ABC):
 							# Timeout reached, proceed without waiting
 							break
 						time.sleep(0.5)  # Adjust the sleep interval if needed
-				lucky_version = self.choose_arm_algorithm(user, where, other_information, request_different_arm)
+				contextual_vars_dict, contextual_vars_id_dict = self.get_or_impute_contextuals(user, where)
+				lucky_version, extra_info = self.choose_arm_algorithm(user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm)
+
+				# Insert new interaction
+				new_interaction = {
+					"user": user,
+					"treatment": lucky_version,
+					"outcome": None,
+					"where": where,
+					"assignerId": self._id,
+					"timestamp": datetime.datetime.now(),
+					"otherInformation": other_information, 
+					"contextuals": contextual_vars_dict,
+					"contextualIds": contextual_vars_id_dict
+				}
+
+				# extra_info is a dictionary or None
+				if extra_info is not None:
+					new_interaction.update(extra_info)
+
+				InteractionModel.insert_one(new_interaction)
 				LockModel.delete({"_id": new_lock_id}, session)
 				session.commit_transaction()
 				return lucky_version
@@ -81,7 +104,7 @@ class Policy(ABC):
 			return None
 
 	@abstractmethod
-	def choose_arm_algorithm(self, user, where, other_information, request_different_arm = False):
+	def choose_arm_algorithm(self, user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm = False):
 		pass
 
 	def update_model(self):
@@ -121,7 +144,7 @@ class Policy(ABC):
 			
 		if not self.isConsistent: return None
 		last_interaction = self.get_latest_interaction(user, where)
-		if last_interaction is None and last_interaction['treatment'] in self.study['versions']:
+		if last_interaction is None or last_interaction['treatment'] not in self.study['versions']:
 			return None
 		else:
 			return last_interaction['treatment']
@@ -139,3 +162,50 @@ class Policy(ABC):
 			else:
 				unassigned_versions = [version for version in self.study['versions'] if version not in assigned_versions]
 				return unassigned_versions
+			
+	def get_or_impute_contextuals(self, user, where):
+		current_time = datetime.datetime.now()
+		contextual_vars = self.study['variables']
+		# Get the contextual variables for the learner (most recent ones), or auto init ones.
+		
+		result = VariableValueModel.get_latest_variable_values(contextual_vars, user)
+		
+		# Iterate over the array list
+		for value in contextual_vars:
+			has_document = False
+
+			# Check if a document exists for the current value
+			for document in result:
+				if document['variable'] == value:
+					has_document = True
+					break
+
+			
+			imputed_value = random_imputation(value) # TODO: in the future we need to check the Assigner's configuration to see which imputer to use.
+
+			# Insert a document into the other collection if no document exists
+			# get deployment_name
+
+			the_deployment = Deployment.find_one({"_id": self.study['deploymentId']})
+			if not has_document:
+				document_to_insert = {
+					'deployment': the_deployment['name'],
+					"variable": value, 
+					'value': imputed_value,   # TODO: impute based on a better rule.
+					'user': user,
+					'where': 'auto init', 
+					'timestamp': current_time
+				}
+				VariableValueModel.insert_variable_value(document_to_insert)
+			
+		contextual_values = VariableValueModel.get_latest_variable_values(contextual_vars, user)
+
+		contextual_vars_dict = {}
+		contextual_vars_id_dict = {}
+
+		for contextual_value in contextual_values:
+			contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+			contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
+
+		return contextual_vars_dict, contextual_vars_id_dict
+			

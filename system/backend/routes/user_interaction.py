@@ -129,6 +129,8 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
         
         start_time = time.time()
         the_assigner = get_assigner_for_user(study, user)
+
+        print(the_assigner)
         assigner = create_assigner_instance(user, the_assigner)
         version_to_show = assigner.choose_arm(user, where, other_information,request_different_arm)
         if config["DEV_MODE"]:
@@ -146,7 +148,6 @@ def assign_treatment(deployment_name, study_name, user, where = None, other_info
         print(traceback.format_exc())
         if config["DEV_MODE"]:
             the_log = {
-                "policy": the_assigner['policy'],
                 "error": True,
                 "error_message": str(e),
                 "traceback": traceback.format_exc(),
@@ -312,6 +313,7 @@ def give_reward():
         user = request.json['user'] if 'user' in request.json else None
         where = request.json['where'] if 'where' in request.json else None
         other_information = request.json['other_information'] if 'other_information' in request.json else None
+        print(request.json)
         value = float(request.json['value']) if 'value' in request.json else None
 
         if deployment is None or study is None or user is None or value is None:

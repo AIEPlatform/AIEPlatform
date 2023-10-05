@@ -38,7 +38,7 @@ class GPT(Policy):
 	def validate_assigner(assigner):
 		return assigner
     
-	def choose_arm(self, user, where, other_information, request_different_arm = False):
+	def choose_arm(self, user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm = False):
 		# TODO: Check if consistent assignment!
 		all_versions = self.get_all_versions(user, where, request_different_arm)
 		if len(all_versions) == 0:
@@ -49,17 +49,21 @@ class GPT(Policy):
 				self.parameters['messages'].append({"role": "system", "content": self.parameters['initialPrompt']})
 				AssignerModel.update_policy_parameters(self._id, {'parameters': self.parameters})
 
-			contextual_values = VariableValueModel.get_latest_variable_values(self.study['variables'], user)
-			contextual_vars_dict = {}
-			contextual_vars_id_dict = {}
 
-			prompt = self.parameters['prompt']
-			for contextual_value in contextual_values:
-				contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
-				contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
+			# TODO: GPT should be able to handle contextual variables.
 
-				if contextual_value['variable'] == "gender":
-					prompt = prompt.replace("{gender}", str(contextual_value['value']))
+
+			# contextual_values = VariableValueModel.get_latest_variable_values(self.study['variables'], user)
+			# contextual_vars_dict = {}
+			# contextual_vars_id_dict = {}
+
+			# prompt = self.parameters['prompt']
+			# for contextual_value in contextual_values:
+			# 	contextual_vars_dict[contextual_value['variable']] = {"value": contextual_value['value'], "timestamp": contextual_value['timestamp']}
+			# 	contextual_vars_id_dict[contextual_value['variable']] = contextual_value['_id']
+
+			# 	if contextual_value['variable'] == "gender":
+			# 		prompt = prompt.replace("{gender}", str(contextual_value['value']))
 			# only get version names
 			versions = [version['name'] for version in all_versions]
 			
@@ -75,39 +79,11 @@ class GPT(Policy):
 				# do unifoirm
 				lucky_version = random.choice(all_versions)
 			
-			new_interaction = {
-				"user": user,
-				"treatment": lucky_version,
-				"outcome": None,
-				"where": where,
-				"assignerId": self._id,
-				"timestamp": datetime.datetime.now(),
-				"otherInformation": other_information,
-				"contextuals": contextual_vars_dict,
-				"contextualIds": contextual_vars_id_dict
-			}
-
-			InteractionModel.insert_one(new_interaction)
-			return lucky_version
+			return lucky_version, None
 		except Exception as e:
 			print(e)
 			lucky_version = random.choice(all_versions)
-			
-			new_interaction = {
-				"user": user,
-				"treatment": lucky_version,
-				"outcome": None,
-				"where": where,
-				"assignerId": self._id,
-				"timestamp": datetime.datetime.now(),
-				"otherInformation": other_information,
-				"contextuals": contextual_vars_dict,
-				"contextualIds": contextual_vars_id_dict, 
-				"gptError": True
-			}
-
-			InteractionModel.insert_one(new_interaction)
-			return lucky_version
+			return lucky_version, {"gptError": True}
 		
 	def get_reward(self, user, value, where, other_information):
 		current_time = datetime.datetime.now()
