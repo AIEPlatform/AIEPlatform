@@ -3,9 +3,9 @@ import json
 
 from pymongo import MongoClient
 # check if backend/config.py exists. If not, make a new one.
-if not os.path.isfile('system/backend/config.json'):
+if not os.path.isfile('backend/config.json'):
     # create a new config.py file
-    with open('system/backend/config.json', 'w') as f:
+    with open('backend/config.json', 'w') as f:
         # write an empty json object
         empty_config = {}
         json.dump(empty_config, f, indent=4)
@@ -32,7 +32,7 @@ def handle(variable, config):
         else:
             print("Skipping " + variable + "...")
 
-with open('system/backend/config.json', 'r') as f:
+with open('backend/config.json', 'r') as f:
     config = json.load(f)
     if "OPEN_AI_KEY" not in config: config["OPEN_AI_KEY"] = None
     for variable in ["MONGO_DB_CONNECTION_STRING", "DB_NAME"]:
@@ -68,5 +68,5 @@ with open('system/backend/config.json', 'r') as f:
     
 
 # write the config back to the file.
-with open('system/backend/config.json', 'w') as f:
+with open('backend/config.json', 'w') as f:
     json.dump(config, f, indent=4)
