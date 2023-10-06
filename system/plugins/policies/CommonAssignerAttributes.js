@@ -1,7 +1,5 @@
-import { React, useState } from 'react';
-import { Typography, Paper, TextField, Bo, Button, Box, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
-import Select from 'react-select';
-
+import { React } from 'react';
+import { TextField, Box, Checkbox, FormControlLabel } from '@mui/material';
 
 function CommonAssignerAttribute(props) {
     let assigners = props.assigners;

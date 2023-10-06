@@ -523,6 +523,7 @@ def modify_existing_study():
             factors = study['factors']
             studyName = study['name']
             status = study['status'] if 'status' in study else 'stopped'
+            AIContent = study['AIContent'] if 'AIContent' in study else False
 
             rewardInformation = study['rewardInformation'] if 'rewardInformation' in study else {'name': 'reward', 'min': 0, 'max': 1}
 
@@ -553,7 +554,8 @@ def modify_existing_study():
                 'variables': variables,
                 'factors': factors,
                 'status': status,
-                'rewardInformation': rewardInformation
+                'rewardInformation': rewardInformation, 
+                'AIContent': AIContent
                 }}, session=session)
             
             # get all assigners of this study. Remove assigners whose _id are not present in the assigners list.

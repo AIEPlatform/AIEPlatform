@@ -1,5 +1,5 @@
 import { React, useState, useRef, useEffect } from 'react';
-import { Typography, Box, Button, Input } from '@mui/material';
+import { Typography, Box, Button, Input, FormControlLabel, Checkbox } from '@mui/material';
 import VariableEditor from '../ManageDeploymentPage/VariableEditor';
 import FactorsEditor from './FactorsEditor';
 import VersionEditor from './VersionEditor';
@@ -132,7 +132,7 @@ function StudyConfig(props) {
     const sFactors = setStudyAttributes.bind('factors');
     const sRewardInformation = setStudyAttributes.bind('rewardInformation');
     const sAssigners = setStudyAttributes.bind('assigners');
-
+    const sAIContent = setStudyAttributes.bind('AIContent');
 
     const autoGenerateVersionJSON = () => {
         // Check if any two versions have the same name.
@@ -150,7 +150,7 @@ function StudyConfig(props) {
 
         // get unique factors
         let uniqueFactors = [...new Set(allFactors)];
-        if(uniqueFactors.length !== allFactors.length){
+        if (uniqueFactors.length !== allFactors.length) {
             alert("Version names must be unique!");
             return;
         }
@@ -169,8 +169,6 @@ function StudyConfig(props) {
             }
             data[i]['versionJSON'] = versionJSON;
         }
-
-        console.log(data)
 
         sVersions(data);
         sFactors(uniqueFactors);
@@ -213,7 +211,13 @@ function StudyConfig(props) {
                     <Typography variant='h6' sx={{ display: 'flex', alignItems: 'center' }}><AbcIcon sx={{ mr: 1 }}></AbcIcon>Factors & Versions</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Button onClick={(e) => autoGenerateVersionJSON()} variant="contained" color="primary" sx={{ m: 1 }}>!DANGER: WE DON'T KNOW HOW IT WILL AFFECT ON-GOING ASSIGNERS. DO IT WITH YOUR OWN RISK. Automatically generate version JSON</Button>
+                    <FormControlLabel
+                        control={<Checkbox checked={study.AIContent || false} onChange={(e) => {
+                            sAIContent(e.target.checked);
+                        }} />}
+                        label="Automatically generate content by AI."
+                    />
+                    <Button onClick={(e) => autoGenerateVersionJSON()} color="primary" sx={{ m: 1 }}>Generate Version JSON(s) automatically</Button>
                     <FactorsEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} sFactors={sFactors} versions={study.versions} sVersions={sVersions} />
                     <VersionEditor allowVersionNameChange={study['status'] === "reset"} factors={study.factors} versions={study.versions} sVersions={sVersions} setTinyMCEEditorIndex={setTinyMCEEditorIndex} />
                 </AccordionDetails>

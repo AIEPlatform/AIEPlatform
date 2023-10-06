@@ -9,6 +9,7 @@ from Models.VariableValueModel import VariableValueModel
 from impute import random_imputation
 import traceback
 import datetime
+from helpers import *
 USER_CAN_WAIT_FOR_MODEL_UPDATE = 0.5
 lock = threading.Lock()
 
@@ -62,6 +63,11 @@ class Policy(ABC):
 						time.sleep(0.5)  # Adjust the sleep interval if needed
 				contextual_vars_dict, contextual_vars_id_dict = self.get_or_impute_contextuals(user, where)
 				lucky_version, extra_info = self.choose_arm_algorithm(user, where, other_information, contextual_vars_dict, contextual_vars_id_dict, request_different_arm)
+
+
+				# check if AIContent is true.
+				if 'AIContent' in self.study and self.study['AIContent']:
+					lucky_version = generate_content_ai(lucky_version)
 
 				# Insert new interaction
 				new_interaction = {
